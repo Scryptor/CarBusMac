@@ -1,0 +1,184 @@
+object frameBase64Tasks: TframeBase64Tasks
+  Height = 329
+  ExplicitHeight = 329
+  object pnTransmit: TPanel
+    Top = 176
+    Height = 153
+    ExplicitTop = 176
+    ExplicitHeight = 153
+    object pnButtons: TPanel
+      Height = 153
+      ExplicitHeight = 153
+      DesignSize = (166 153)
+    end
+    object pnTask: TPanel
+      Height = 153
+      ExplicitHeight = 153
+      DesignSize = (785 153)
+      object pnMsg: TPanel
+        Left = 80
+        Top = 0
+        Width = 518
+        Height = 165
+        Anchors = [akLeft, akTop, akRight]
+        BevelOuter = bvNone
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        TabOrder = 1
+        object lMsgID: TLabel
+          Left = 0
+          Top = 0
+          Width = 11
+          Height = 13
+          Caption = 'ID'
+          FocusControl = edMsgID
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+        end
+        object lDLC: TLabel
+          Left = 86
+          Top = 0
+          Width = 19
+          Height = 13
+          Caption = 'DLC'
+        end
+        object lData: TLabel
+          Left = 129
+          Top = 0
+          Width = 23
+          Height = 13
+          Caption = 'Data'
+          FocusControl = frameData.ed00
+        end
+        object lComment: TLabel
+          Left = 77
+          Top = 132
+          Width = 45
+          Height = 13
+          Alignment = taRightJustify
+          Caption = 'Comment'
+          FocusControl = edComment
+        end
+        object edMsgID: TExNumberEdit
+          Left = 0
+          Top = 16
+          Width = 77
+          Height = 22
+          Alignment = taRightJustify
+          Base = 16
+          Capitalize = True
+          FillZero = True
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'Consolas'
+          Font.Style = []
+          MaxLength = 3
+          MaxValue = '7FF'
+          ParentFont = False
+          TabOrder = 0
+          Text = '000'
+          OnChange = edMsgIDChange
+        end
+        object edComment: TEdit
+          Left = 128
+          Top = 128
+          Width = 385
+          Height = 22
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'Consolas'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 3
+          OnChange = edCommentChange
+        end
+        object frameData: TframeData64
+          Left = 128
+          Top = 16
+          Width = 385
+          Height = 107
+          TabOrder = 2
+          ExplicitLeft = 128
+          ExplicitTop = 16
+        end
+        object cbDLC: TComboBox
+          Left = 83
+          Top = 16
+          Width = 39
+          Height = 22
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'Consolas'
+          Font.Style = []
+          MaxLength = 2
+          ParentFont = False
+          TabOrder = 1
+          OnChange = cbDLCChange
+          OnExit = cbDLCExit
+          OnKeyDown = cbDLCKeyDown
+          OnKeyPress = cbDLCKeyPress
+        end
+      end
+      object pnMsgCfg: TPanel
+        Left = 600
+        Top = 16
+        Width = 180
+        Height = 57
+        TabOrder = 2
+        ExplicitLeft = 600
+        ExplicitTop = 16
+        ExplicitWidth = 180
+        ExplicitHeight = 57
+        object lPeriod: TLabel
+          Left = 21
+          Top = 3
+          ExplicitLeft = 21
+          ExplicitTop = 3
+        end
+        object lValue: TLabel
+          Left = 48
+          Top = 31
+          ExplicitLeft = 48
+          ExplicitTop = 31
+        end
+        object edPeriod: TExNumberEdit
+          Left = 78
+          Top = 0
+          ExplicitLeft = 78
+          ExplicitTop = 0
+        end
+        object edValue: TExNumberEdit
+          Left = 78
+          Top = 28
+          Width = 25
+          ExplicitLeft = 78
+          ExplicitTop = 28
+          ExplicitWidth = 25
+        end
+        object btnFillData: TButton
+          Left = 108
+          Top = 27
+          Width = 66
+          ExplicitLeft = 108
+          ExplicitTop = 27
+          ExplicitWidth = 66
+        end
+      end
+    end
+  end
+  object dgTransmit: TDrawGrid
+    Height = 170
+    ExplicitHeight = 170
+  end
+end

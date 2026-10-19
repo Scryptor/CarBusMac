@@ -1,0 +1,61 @@
+object frameGatewayDevice: TframeGatewayDevice
+  Left = 0
+  Top = 0
+  Width = 264
+  Height = 405
+  TabOrder = 0
+  object tvRules: TTreeView
+    Left = 0
+    Top = 24
+    Width = 264
+    Height = 381
+    Align = alClient
+    CheckBoxes = True
+    Indent = 19
+    ReadOnly = True
+    TabOrder = 0
+    OnClick = tvRulesClick
+    OnCollapsing = tvRulesCollapsing
+    OnCreateNodeClass = tvRulesCreateNodeClass
+    OnDblClick = tvRulesDblClick
+    OnEnter = tvRulesEnter
+  end
+  object tbFilterActions: TToolBar
+    Left = 0
+    Top = 0
+    Width = 264
+    Height = 24
+    ButtonHeight = 24
+    ButtonWidth = 50
+    DisabledImages = dmBase.ilMainGray
+    Images = dmBase.ilMain
+    TabOrder = 1
+    object tbLoadGatewayFilters: TToolButton
+      Left = 0
+      Top = 0
+      ImageIndex = 19
+      ImageName = '19 - Load'
+      OnClick = tbLoadGatewayFiltersClick
+    end
+    object tbSaveGatewayFilters: TToolButton
+      Left = 50
+      Top = 0
+      ImageIndex = 20
+      ImageName = '20 - Save'
+      OnClick = tbSaveGatewayFiltersClick
+    end
+    object tbSeparator2: TToolButton
+      Left = 100
+      Top = 0
+      Width = 4
+      Style = tbsSeparator
+    end
+    object tbEditGatewayFilter: TToolButton
+      Left = 104
+      Top = 0
+      ImageIndex = 42
+      ImageName = '42 - FilterEdit'
+      OnClick = tbEditGatewayFilterClick
+    end
+  end
+end

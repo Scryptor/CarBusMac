@@ -1,0 +1,93 @@
+object dlgGatewayEdit: TdlgGatewayEdit
+  Left = 0
+  Top = 0
+  BorderStyle = bsDialog
+  Caption = 'Gateway mode'
+  ClientHeight = 137
+  ClientWidth = 256
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  Position = poOwnerFormCenter
+  PixelsPerInch = 96
+  TextHeight = 13
+  object lFromChannel: TLabel
+    Left = 12
+    Top = 12
+    Width = 68
+    Height = 13
+    Alignment = taRightJustify
+    Caption = 'From channel:'
+  end
+  object lFromChannelNumber: TLabel
+    Left = 92
+    Top = 12
+    Width = 6
+    Height = 13
+    Caption = '1'
+  end
+  object lToChannel: TLabel
+    Left = 24
+    Top = 31
+    Width = 56
+    Height = 13
+    Alignment = taRightJustify
+    Caption = 'To channel:'
+  end
+  object lToChannelNumber: TLabel
+    Left = 92
+    Top = 31
+    Width = 6
+    Height = 13
+    Caption = '2'
+  end
+  object rbAccept: TRadioButton
+    Left = 12
+    Top = 50
+    Width = 113
+    Height = 17
+    Caption = 'Accept all'
+    Checked = True
+    TabOrder = 0
+    TabStop = True
+  end
+  object rbReject: TRadioButton
+    Left = 131
+    Top = 50
+    Width = 113
+    Height = 17
+    Caption = 'Reject all'
+    TabOrder = 1
+  end
+  object cbEnabled: TCheckBox
+    Left = 12
+    Top = 73
+    Width = 232
+    Height = 17
+    Caption = 'Enable gateway'
+    TabOrder = 2
+  end
+  object btnOk: TButton
+    Left = 43
+    Top = 100
+    Width = 75
+    Height = 25
+    Caption = 'Ok'
+    Default = True
+    ModalResult = 1
+    TabOrder = 3
+  end
+  object btnCancel: TButton
+    Left = 138
+    Top = 100
+    Width = 75
+    Height = 25
+    Cancel = True
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 4
+  end
+end

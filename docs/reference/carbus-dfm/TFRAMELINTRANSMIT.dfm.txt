@@ -1,0 +1,30 @@
+object frameLINTransmit: TframeLINTransmit
+  PixelsPerInch = 96
+  object pnTransmit: TPanel
+    object pnTask: TPanel
+      object pnMsgCfg: TPanel
+        object edPeriod: TExNumberEdit
+          Text = '100'
+        end
+        object btnProtectId: TButton
+          Left = 0
+          Top = 0
+          Width = 75
+          Height = 23
+          Caption = 'Protect ID'
+          TabOrder = 3
+          OnClick = btnProtectIdClick
+        end
+      end
+      object pnMsg: TPanel
+        object lData: TLabel
+          FocusControl = frameData.ed00
+        end
+        object edMsgID: TExNumberEdit
+          MaxLength = 2
+          Text = '00'
+        end
+      end
+    end
+  end
+end

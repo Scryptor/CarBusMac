@@ -1,0 +1,149 @@
+object frameReceive: TframeReceive
+  Left = 0
+  Top = 0
+  Width = 679
+  Height = 415
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  ParentFont = False
+  TabOrder = 0
+  object dgReceive: TDrawGrid
+    AlignWithMargins = True
+    Left = 3
+    Top = 3
+    Width = 673
+    Height = 409
+    Align = alClient
+    ColCount = 1
+    DoubleBuffered = True
+    FixedCols = 0
+    RowCount = 2
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Consolas'
+    Font.Style = []
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRowSelect]
+    ParentDoubleBuffered = False
+    ParentFont = False
+    PopupMenu = pmPopup
+    TabOrder = 0
+    OnFixedCellClick = dgReceiveFixedCellClick
+    OnKeyDown = dgReceiveKeyDown
+    OnMouseDown = dgReceiveMouseDown
+  end
+  object tmrQueueRead: TTimer
+    Enabled = False
+    OnTimer = tmrQueueReadTimer
+    Left = 423
+    Top = 44
+  end
+  object tmrDropMarker: TTimer
+    Interval = 250
+    OnTimer = tmrDropMarkerTimer
+    Left = 425
+    Top = 118
+  end
+  object pmPopup: TPopupMenu
+    Images = dmBase.ilMain
+    OnPopup = pmPopupPopup
+    Left = 232
+    Top = 132
+    object miSaveRXList: TMenuItem
+      Caption = 'Save RX-list'
+      ImageIndex = 20
+      ImageName = '20 - Save'
+      Visible = False
+      OnClick = miSaveRXListClick
+    end
+    object miStreamLoad: TMenuItem
+      Caption = 'Load stream data'
+      ImageIndex = 17
+      ImageName = '17 - StreamLoad'
+      OnClick = miStreamLoadClick
+    end
+    object miStreamSave: TMenuItem
+      Caption = 'Save stream data'
+      ImageIndex = 18
+      ImageName = '18 - StreamSave'
+      Visible = False
+      OnClick = miStreamSaveClick
+    end
+    object miStreamToTracer: TMenuItem
+      Caption = 'Open stream in tracer'
+      ImageIndex = 3
+      ImageName = '03 - Tracer'
+      Visible = False
+      OnClick = miStreamToTracerClick
+    end
+    object miClear: TMenuItem
+      Caption = 'Clear table'
+      ImageIndex = 4
+      ImageName = '04 - New'
+      OnClick = miClearClick
+    end
+    object miSeparator3: TMenuItem
+      Caption = '-'
+    end
+    object miMsgBitMap: TMenuItem
+      Caption = 'View message bit-map'
+      ImageIndex = 5
+      ImageName = '05 - MsgDetails'
+      OnClick = miMsgBitMapClick
+    end
+    object miMessageSignalsShow: TMenuItem
+      Caption = 'Show message signals'
+      Enabled = False
+      Visible = False
+    end
+    object miComment: TMenuItem
+      Caption = 'Set message comment'
+      ImageIndex = 9
+      ImageName = '09 - Comment'
+      OnClick = miCommentClick
+    end
+    object miSplitter1: TMenuItem
+      Caption = '-'
+    end
+    object miCopy: TMenuItem
+      Caption = 'Copy message to TX-List'
+      ImageIndex = 8
+      ImageName = '08 - ToTransmit'
+      ShortCut = 16424
+      OnClick = miCopyClick
+    end
+    object miToFilter: TMenuItem
+      Caption = 'Add message ID to filter'
+      ImageIndex = 41
+      ImageName = '41 - FilterAdd'
+      Visible = False
+      OnClick = miToFilterClick
+    end
+    object miSplitter2: TMenuItem
+      Caption = '-'
+    end
+    object miHexMsgID: TMenuItem
+      Caption = 'Message ID in HEX'
+      OnClick = miHexMsgIDClick
+    end
+    object miClearProtect: TMenuItem
+      Tag = 1
+      Caption = 'Clear protect bits'
+      Visible = False
+      OnClick = miClearProtectClick
+    end
+    object miSort: TMenuItem
+      Tag = 2
+      Caption = 'Sort received messages'
+      OnClick = miSortClick
+    end
+    object miGroupByChannel: TMenuItem
+      Tag = 4
+      Caption = 'Group by channel'
+      OnClick = miGroupByChannelClick
+    end
+  end
+end

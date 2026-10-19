@@ -1,0 +1,23 @@
+object frmTransmit: TfrmTransmit
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu, biMinimize]
+  Caption = 'Transmit'
+  ClientHeight = 310
+  ClientWidth = 960
+  Color = clBtnFace
+  Constraints.MinHeight = 348
+  Constraints.MinWidth = 972
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  OnActivate = FormActivate
+  OnAfterMonitorDpiChanged = FormAfterMonitorDpiChanged
+  OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
+  OnDeactivate = FormDeactivate
+  OnShow = FormShow
+  TextHeight = 15
+end

@@ -1,0 +1,48 @@
+object dlgDeviceInfo: TdlgDeviceInfo
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  Caption = 'Device information'
+  ClientHeight = 480
+  ClientWidth = 488
+  Color = clBtnFace
+  Constraints.MaxWidth = 504
+  Constraints.MinHeight = 400
+  Constraints.MinWidth = 504
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  Position = poOwnerFormCenter
+  OnShow = FormShow
+  DesignSize = (488 480)
+  TextHeight = 14
+  object mDeviceInfo: TMemo
+    Left = 4
+    Top = 4
+    Width = 480
+    Height = 441
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Consolas'
+    Font.Style = []
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssVertical
+    TabOrder = 0
+  end
+  object btnClose: TButton
+    Left = 409
+    Top = 450
+    Width = 75
+    Height = 25
+    Anchors = [akRight, akBottom]
+    Cancel = True
+    Caption = 'Close'
+    ModalResult = 2
+    TabOrder = 1
+  end
+end

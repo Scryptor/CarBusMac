@@ -1,0 +1,1143 @@
+object frmMain: TfrmMain
+  Left = 0
+  Top = 0
+  Caption = 'Car BUS Analyzer'
+  ClientHeight = 642
+  ClientWidth = 1218
+  Color = clBtnFace
+  Constraints.MinHeight = 700
+  Constraints.MinWidth = 1230
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  KeyPreview = True
+  Menu = mmMain
+  ShowHint = True
+  OnActivate = FormActivate
+  OnAfterMonitorDpiChanged = FormAfterMonitorDpiChanged
+  OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnDeactivate = FormDeactivate
+  OnKeyDown = FormKeyDown
+  OnResize = FormResize
+  OnShow = FormShow
+  TextHeight = 13
+  object bvBevel: TSplitter
+    Left = 963
+    Top = 51
+    Width = 5
+    Height = 570
+    Align = alRight
+    AutoSnap = False
+    Beveled = True
+    MinSize = 250
+    Visible = False
+    OnCanResize = bvBevelCanResize
+  end
+  object bvBevelBottom: TBevel
+    Left = 0
+    Top = 621
+    Width = 1218
+    Height = 2
+    Align = alBottom
+    Shape = bsTopLine
+  end
+  object tbMain: TToolBar
+    Left = 0
+    Top = 25
+    Width = 1218
+    Height = 26
+    Margins.Left = 6
+    Margins.Top = 0
+    Margins.Right = 0
+    Margins.Bottom = 0
+    ButtonHeight = 24
+    ButtonWidth = 50
+    DisabledImages = dmBase.ilMainGray
+    EdgeBorders = [ebBottom]
+    Images = dmBase.ilMain
+    TabOrder = 2
+    Wrapable = False
+    OnCustomDrawButton = tbMainCustomDrawButton
+    object imgAbout: TImage
+      Left = 0
+      Top = 0
+      Width = 47
+      Height = 24
+      Cursor = crHelp
+      OnClick = miAboutClick
+    end
+    object tbSeparator1: TToolButton
+      Left = 47
+      Top = 0
+      Width = 5
+      Style = tbsSeparator
+    end
+    object tbConnect: TToolButton
+      AlignWithMargins = True
+      Left = 52
+      Top = 0
+      Hint = 'Connect/Disconnect'
+      ImageIndex = 33
+      ImageName = '33 - Disconnect'
+      OnClick = miConnectClick
+    end
+    object tbDeviceChannelOptions: TToolButton
+      Left = 102
+      Top = 0
+      Hint = 'Switch channel options'
+      DropdownMenu = pmDeviceChannelOptions
+      Enabled = False
+      ImageIndex = 51
+      ImageName = '51 - Options'
+      Style = tbsDropDown
+      Visible = False
+      OnClick = tbDeviceChannelOptionsClick
+    end
+    object tbSeparator2: TToolButton
+      Left = 167
+      Top = 0
+      Width = 5
+      Style = tbsSeparator
+    end
+    object tbGateway: TToolButton
+      Left = 172
+      Top = 0
+      ImageIndex = 46
+      ImageName = '46 - Gateway'
+      Visible = False
+      OnClick = tbGatewayClick
+    end
+    object tbClear: TToolButton
+      Left = 222
+      Top = 0
+      Hint = 'Clear received data (Ctrl+N)'
+      ImageIndex = 4
+      ImageName = '04 - New'
+      OnClick = tbClearClick
+    end
+    object tbDBCManager: TToolButton
+      Left = 272
+      Top = 0
+      Hint = 'Open DBC manager'
+      ImageIndex = 88
+      ImageName = '88- DBC'
+      OnClick = miDBCManagerClick
+    end
+    object tbStream: TToolButton
+      Left = 322
+      Top = 0
+      Hint = 'Open received data stream (F2)'
+      ImageIndex = 12
+      ImageName = '12 - MonitorStream'
+      Visible = False
+      OnClick = miStreamClick
+    end
+    object tbTracer: TToolButton
+      Left = 372
+      Top = 0
+      Hint = 'Open tracer (F12)'
+      ImageIndex = 3
+      ImageName = '03 - Tracer'
+      Visible = False
+      OnClick = tbTracerClick
+    end
+    object tbTransmit: TToolButton
+      Left = 422
+      Top = 0
+      Hint = 'Open transmit window'
+      Caption = 'Transmit'
+      Enabled = False
+      ImageIndex = 84
+      ImageName = '84 - Transmit'
+      OnClick = tbTransmitClick
+    end
+    object tbFilter: TToolButton
+      Left = 472
+      Top = 0
+      Hint = 'Set hardware CAN-Filter (Ctrl+F)'
+      Enabled = False
+      ImageIndex = 2
+      ImageName = '02 - Filter'
+      OnClick = tbFilterClick
+    end
+    object tbLogs: TToolButton
+      Left = 522
+      Top = 0
+      Hint = 'Stream logging settings'
+      DropdownMenu = pmLogs
+      Enabled = False
+      ImageIndex = 83
+      ImageName = '83 - LogSettings'
+      Style = tbsDropDown
+      OnClick = tbLogsClick
+    end
+  end
+  object pnFilter: TPanel
+    Left = 968
+    Top = 51
+    Width = 250
+    Height = 570
+    Align = alRight
+    BevelOuter = bvNone
+    TabOrder = 1
+    Visible = False
+    object pcFilter: TPageControl
+      Left = 0
+      Top = 21
+      Width = 250
+      Height = 549
+      ActivePage = tsRangeFilter
+      Align = alClient
+      Style = tsFlatButtons
+      TabOrder = 1
+      object tsRangeFilter: TTabSheet
+        ImageIndex = 2
+        TabVisible = False
+        object freRangeFilter: TframeRangeFilter
+          Left = 0
+          Top = 0
+          Width = 242
+          Height = 539
+          Align = alClient
+          TabOrder = 0
+          ExplicitWidth = 242
+          ExplicitHeight = 539
+          object tvRangeFilter: TTreeView
+            Width = 242
+            Height = 515
+            ExplicitWidth = 242
+            ExplicitHeight = 515
+          end
+          object tbToolBar: TToolBar
+            Width = 242
+            ExplicitWidth = 242
+          end
+        end
+      end
+      object tsHardwareFilter: TTabSheet
+        TabVisible = False
+        object freHardwareFilter: TframeHardwareFilter
+          Left = 0
+          Top = 0
+          Width = 242
+          Height = 539
+          Align = alClient
+          Constraints.MinWidth = 220
+          TabOrder = 0
+          ExplicitWidth = 242
+          ExplicitHeight = 539
+          object dgFilter: TDrawGrid
+            Width = 242
+            Height = 515
+            ExplicitWidth = 242
+            ExplicitHeight = 515
+          end
+          object tbFilterActions: TToolBar
+            Width = 242
+            ExplicitWidth = 242
+          end
+        end
+      end
+      object tsDeviceGateway: TTabSheet
+        ImageIndex = 2
+        TabVisible = False
+        object freDeviceGateway: TframeGatewayDevice
+          Left = 0
+          Top = 0
+          Width = 242
+          Height = 539
+          Align = alClient
+          TabOrder = 0
+          ExplicitWidth = 242
+          ExplicitHeight = 539
+          object tvRules: TTreeView
+            Width = 242
+            Height = 515
+            ExplicitWidth = 242
+            ExplicitHeight = 515
+          end
+          object tbFilterActions: TToolBar
+            Width = 242
+            ExplicitWidth = 242
+          end
+        end
+      end
+    end
+    object pnFilterType: TPanel
+      Left = 0
+      Top = 0
+      Width = 250
+      Height = 21
+      Align = alTop
+      BevelOuter = bvNone
+      TabOrder = 0
+      object bbPinFilter: TSpeedButton
+        Left = 229
+        Top = 0
+        Width = 21
+        Height = 21
+        Align = alRight
+        ImageIndex = 63
+        ImageName = '63 - Pin'
+        Images = dmBase.ilMain
+        Flat = True
+        OnClick = bbPinFilterClick
+      end
+      object tsFilterType: TTabSet
+        Left = 0
+        Top = 0
+        Width = 229
+        Height = 21
+        Align = alClient
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        SoftTop = True
+        Style = tsSoftTabs
+        Tabs.Strings = ('Range Filter' 'Filter by ID/Mask' 'Gateway')
+        TabIndex = 0
+        TabPosition = tpTop
+        OnChange = tsFilterTypeChange
+      end
+    end
+  end
+  object sbStatus: TStatusBar
+    Left = 0
+    Top = 623
+    Width = 1218
+    Height = 19
+    Panels = <10 items>
+    OnDrawPanel = sbStatusDrawPanel
+  end
+  object pnWorkArea: TPanel
+    Left = 0
+    Top = 51
+    Width = 963
+    Height = 570
+    Align = alClient
+    BevelOuter = bvNone
+    Constraints.MinWidth = 959
+    TabOrder = 0
+    object spTR: TSplitter
+      Left = 0
+      Top = 263
+      Width = 963
+      Height = 5
+      Cursor = crVSplit
+      Align = alBottom
+      AutoSnap = False
+      Beveled = True
+      MinSize = 271
+      Visible = False
+    end
+    object pcReceive: TPageControl
+      Left = 0
+      Top = 0
+      Width = 963
+      Height = 263
+      ActivePage = tsReceive
+      Align = alClient
+      Style = tsFlatButtons
+      TabOrder = 1
+      object tsReceive: TTabSheet
+        Caption = 'Receive'
+        TabVisible = False
+        object gvReceive: TGroupBox
+          AlignWithMargins = True
+          Left = 2
+          Top = 0
+          Width = 953
+          Height = 253
+          Margins.Left = 2
+          Margins.Top = 0
+          Margins.Right = 0
+          Margins.Bottom = 0
+          Align = alClient
+          Caption = ' Receive '
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 0
+          object freReceive: TframeReceive
+            Left = 2
+            Top = 15
+            Width = 949
+            Height = 236
+            Margins.Left = 0
+            Margins.Right = 0
+            Margins.Bottom = 0
+            Align = alClient
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = []
+            ParentFont = False
+            TabOrder = 0
+            ExplicitLeft = 2
+            ExplicitTop = 15
+            ExplicitWidth = 949
+            ExplicitHeight = 236
+            object dgReceive: TDrawGrid
+              Width = 943
+              Height = 230
+              ExplicitWidth = 943
+              ExplicitHeight = 230
+            end
+            object tmrQueueRead: TTimer
+              Left = 799
+              Top = 48
+            end
+            object tmrDropMarker: TTimer
+              Left = 801
+              Top = 102
+            end
+            object pmPopup: TPopupMenu
+              Left = 528
+              Top = 96
+            end
+          end
+        end
+      end
+      object tsSeparateReceive: TTabSheet
+        Caption = 'Separate receive'
+        ImageIndex = 1
+        TabVisible = False
+        object freSplitReceive: TframeSplitReceive
+          Left = 0
+          Top = 0
+          Width = 955
+          Height = 253
+          Align = alClient
+          TabOrder = 0
+          ExplicitWidth = 955
+          ExplicitHeight = 253
+          object sbChannels: TScrollBox
+            Width = 955
+            Height = 253
+            ExplicitWidth = 955
+            ExplicitHeight = 253
+          end
+        end
+      end
+    end
+    object pnTransmit: TPanel
+      Left = 0
+      Top = 268
+      Width = 963
+      Height = 302
+      Align = alBottom
+      BevelOuter = bvNone
+      TabOrder = 0
+      Visible = False
+      object pnPages: TPanel
+        Left = 0
+        Top = 0
+        Width = 963
+        Height = 21
+        Align = alTop
+        BevelOuter = bvNone
+        TabOrder = 0
+        object bbPinTransmit: TSpeedButton
+          Left = 942
+          Top = 0
+          Width = 21
+          Height = 21
+          Align = alRight
+          ImageIndex = 63
+          ImageName = '63 - Pin'
+          Images = dmBase.ilMain
+          Flat = True
+          OnClick = bbPinTransmitClick
+        end
+        object tsPages: TTabSet
+          Left = 0
+          Top = 0
+          Width = 942
+          Height = 21
+          Align = alClient
+          AutoScroll = False
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          SoftTop = True
+          Style = tsSoftTabs
+          Tabs.Strings = ('CAN-FD Transmit' 'CAN Transmit' 'LIN Transmit' 'LIN Response')
+          TabIndex = 0
+          TabPosition = tpTop
+          Visible = False
+          OnChange = tsPagesChange
+        end
+      end
+      object pcTransmit: TPageControl
+        Left = 0
+        Top = 21
+        Width = 963
+        Height = 281
+        ActivePage = tsCANTasks
+        Align = alClient
+        Constraints.MinHeight = 261
+        Style = tsFlatButtons
+        TabOrder = 1
+        object tsCANTasks: TTabSheet
+          Caption = 'CAN Transmit'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabVisible = False
+          object freCANTasks: TframeCANTasks
+            Left = 0
+            Top = 0
+            Width = 955
+            Height = 271
+            Align = alClient
+            TabOrder = 0
+            ExplicitWidth = 955
+            ExplicitHeight = 271
+            object pnTransmit: TPanel
+              Top = 170
+              Width = 955
+              ExplicitTop = 170
+              ExplicitWidth = 955
+              object pnButtons: TPanel
+                Left = 789
+                ExplicitLeft = 789
+              end
+              object pnTask: TPanel
+                Width = 789
+                ExplicitWidth = 789
+                object pnMsg: TPanel
+                  object lData: TLabel
+                    FocusControl = freCANTasks.frameData.ed00
+                  end
+                  object edComment: TEdit
+                    Width = 389
+                    ExplicitWidth = 389
+                  end
+                end
+                object pnTrigger: TPanel
+                  Width = 789
+                  ExplicitWidth = 789
+                end
+              end
+            end
+            object dgTransmit: TDrawGrid
+              Width = 949
+              Height = 164
+              ExplicitWidth = 949
+              ExplicitHeight = 164
+            end
+            object tmrRefresh: TTimer
+              Left = 810
+              Top = 56
+            end
+            object alTasks: TActionList
+              Left = 276
+              Top = 56
+            end
+          end
+        end
+        object tsLINTasks: TTabSheet
+          Caption = 'LIN Transmit'
+          ImageIndex = 2
+          TabVisible = False
+          object freLINTasks: TframeLINTransmit
+            Left = 0
+            Top = 0
+            Width = 955
+            Height = 271
+            Align = alClient
+            TabOrder = 0
+            ExplicitWidth = 955
+            ExplicitHeight = 271
+            object pnTransmit: TPanel
+              Top = 170
+              Width = 955
+              ExplicitTop = 170
+              ExplicitWidth = 955
+              object pnButtons: TPanel
+                Left = 789
+                ExplicitLeft = 789
+              end
+              object pnTask: TPanel
+                Width = 789
+                ExplicitWidth = 789
+                object pnMsg: TPanel
+                  Width = 598
+                  ExplicitWidth = 598
+                  object lData: TLabel
+                    FocusControl = freLINTasks.frameData.ed00
+                  end
+                  object edComment: TEdit
+                    Width = 287
+                    ExplicitWidth = 287
+                  end
+                end
+              end
+            end
+            object dgTransmit: TDrawGrid
+              Width = 949
+              Height = 164
+              ExplicitWidth = 949
+              ExplicitHeight = 164
+            end
+          end
+        end
+        object tsLINBruteForce: TTabSheet
+          Caption = 'LIN Response'
+          ImageIndex = 3
+          TabVisible = False
+          object pnLINCustom: TPanel
+            Left = 0
+            Top = 0
+            Width = 325
+            Height = 271
+            Align = alLeft
+            BevelOuter = bvNone
+            TabOrder = 0
+            object gbLINResponse: TGroupBox
+              Left = 0
+              Top = 0
+              Width = 325
+              Height = 124
+              Align = alTop
+              Caption = ' LIN Response '
+              TabOrder = 0
+              object freLINResponse: TframeLINResponse
+                Left = 2
+                Top = 15
+                Width = 321
+                Height = 107
+                Align = alClient
+                TabOrder = 0
+                ExplicitLeft = 2
+                ExplicitTop = 15
+                ExplicitWidth = 321
+                ExplicitHeight = 107
+                object lDLC: TLabel
+                  Width = 19
+                  Height = 13
+                  ExplicitWidth = 19
+                  ExplicitHeight = 13
+                end
+                object lData: TLabel
+                  Width = 23
+                  Height = 13
+                  ExplicitWidth = 23
+                  ExplicitHeight = 13
+                end
+              end
+            end
+          end
+        end
+        object tsFDTasks: TTabSheet
+          Caption = 'FD Transmit'
+          ImageIndex = 4
+          TabVisible = False
+          object freFDTasks: TframeFDTasks
+            Left = 0
+            Top = 0
+            Width = 955
+            Height = 271
+            Align = alClient
+            TabOrder = 0
+            ExplicitWidth = 955
+            ExplicitHeight = 271
+            object pnTransmit: TPanel
+              Top = 118
+              Width = 955
+              ExplicitTop = 118
+              ExplicitWidth = 955
+              object pnButtons: TPanel
+                Left = 789
+                ExplicitLeft = 789
+              end
+              object pnTask: TPanel
+                Width = 789
+                ExplicitWidth = 789
+                object pnMsg: TPanel
+                  Width = 521
+                  ExplicitWidth = 521
+                  object lData: TLabel
+                    FocusControl = freFDTasks.frameData.ed00
+                  end
+                end
+              end
+            end
+            object dgTransmit: TDrawGrid
+              Width = 949
+              Height = 112
+              ExplicitWidth = 949
+              ExplicitHeight = 112
+            end
+          end
+        end
+      end
+    end
+    object tbActionBar: TToolBar
+      Left = 168
+      Top = 2
+      Width = 465
+      Height = 22
+      Align = alNone
+      DisabledImages = dmBase.ilMainGray
+      Images = dmBase.ilMain
+      TabOrder = 2
+      object tbActionSeparator1: TToolButton
+        Left = 0
+        Top = 0
+        Width = 4
+        Style = tbsSeparator
+      end
+      object tbReceiveSwitch: TToolButton
+        Left = 4
+        Top = 0
+        Hint = 'Stream/Monitor switcher (F2)'
+        ImageIndex = 12
+        ImageName = '12 - MonitorStream'
+        Visible = False
+        OnClick = miStreamClick
+      end
+      object tbActionSeparator4: TToolButton
+        Left = 27
+        Top = 0
+        Width = 4
+        Style = tbsSeparator
+        Visible = False
+      end
+      object tbMsgBitMap: TToolButton
+        Left = 31
+        Top = 0
+        Hint = 'View bit-map for selected message (F3)'
+        Enabled = False
+        ImageIndex = 5
+        ImageName = '05 - MsgDetails'
+        OnClick = tbMsgBitMapClick
+      end
+      object tbDBCChart: TToolButton
+        Left = 54
+        Top = 0
+        Enabled = False
+        ImageIndex = 75
+        ImageName = '75 - Chart'
+        Visible = False
+      end
+      object tbMsgDetail: TToolButton
+        Left = 77
+        Top = 0
+        Hint = 'View frames for selected message (Ctrl-F3)'
+        Enabled = False
+        ImageIndex = 6
+        ImageName = '06 - MsgFrames'
+        Visible = False
+        OnClick = tbMsgDetailClick
+      end
+      object tbCopy: TToolButton
+        Left = 100
+        Top = 0
+        Hint = 'Copy to TX-List'
+        Enabled = False
+        ImageIndex = 8
+        ImageName = '08 - ToTransmit'
+        OnClick = tbCopyClick
+      end
+      object tbComment: TToolButton
+        Left = 123
+        Top = 0
+        Hint = 'Set comment for selected message (F4)'
+        DropdownMenu = pmComment
+        ImageIndex = 9
+        ImageName = '09 - Comment'
+        Style = tbsDropDown
+        OnClick = tbCommentClick
+      end
+      object tbActionSeparator5: TToolButton
+        Left = 161
+        Top = 0
+        Width = 4
+        Style = tbsSeparator
+      end
+      object tbSplitReceive: TToolButton
+        Left = 165
+        Top = 0
+        Hint = 'Split received messages to channels'
+        ImageIndex = 7
+        ImageName = '07 - SideBySide'
+        Visible = False
+        OnClick = tbSplitReceiveClick
+      end
+      object tbRarelyData: TToolButton
+        Left = 188
+        Top = 0
+        Hint = 'Monitor rarely changing data'
+        DropdownMenu = pmRarelyData
+        ImageIndex = 80
+        ImageName = '80 - LongTime'
+        Style = tbsDropDown
+        OnClick = tbRarelyDataClick
+      end
+      object tbRecord: TToolButton
+        Left = 226
+        Top = 0
+        Hint = 'Record / Pause (F5)'
+        ImageIndex = 13
+        ImageName = '13 - Record'
+        Visible = False
+        OnClick = tbRecordClick
+      end
+      object tbToTracer: TToolButton
+        Left = 249
+        Top = 0
+        Hint = 'Move trace to Tracer (Ctrl+F12)'
+        Enabled = False
+        ImageIndex = 85
+        ImageName = '85 - ToTracer'
+        Visible = False
+        OnClick = tbToTracerClick
+      end
+      object tbSetLabel: TToolButton
+        Left = 272
+        Top = 0
+        Hint = 'Add breakpoint / Set marker (F8 / Automatic marker - F9)'
+        Enabled = False
+        ImageIndex = 15
+        ImageName = '15 - Tag'
+        Visible = False
+        OnClick = tbSetLabelClick
+      end
+      object tbAllLabels: TToolButton
+        Left = 295
+        Top = 0
+        Hint = 'Show all markers'
+        ImageIndex = 16
+        ImageName = '16 - TagList'
+        Visible = False
+        OnClick = tbAllLabelsClick
+      end
+      object tbActionSeparator2: TToolButton
+        Left = 318
+        Top = 0
+        Width = 4
+        ImageIndex = 16
+        ImageName = '16 - TagList'
+        Style = tbsSeparator
+        Visible = False
+      end
+      object tbLoadStream: TToolButton
+        Left = 322
+        Top = 0
+        Hint = 'Load stream from file'
+        DropdownMenu = pmOpenStreamRecent
+        ImageIndex = 17
+        ImageName = '17 - StreamLoad'
+        Style = tbsDropDown
+        Visible = False
+        OnClick = tbLoadStreamClick
+      end
+      object tbSaveStream: TToolButton
+        Left = 360
+        Top = 0
+        Hint = 'Save stream to file'
+        ImageIndex = 18
+        ImageName = '18 - StreamSave'
+        Visible = False
+        OnClick = tbSaveStreamClick
+      end
+      object tbActionSeparator3: TToolButton
+        Left = 383
+        Top = 0
+        Width = 4
+        ImageIndex = 18
+        ImageName = '18 - StreamSave'
+        Style = tbsSeparator
+      end
+    end
+  end
+  object pnMessage: TPanel
+    Left = 0
+    Top = 0
+    Width = 1218
+    Height = 25
+    Align = alTop
+    BevelOuter = bvNone
+    Color = clInfoBk
+    ParentBackground = False
+    TabOrder = 4
+    Visible = False
+    OnDblClick = btnCloseMessageClick
+    object lMessage: TLabel
+      Left = 8
+      Top = 6
+      Width = 3
+      Height = 13
+    end
+    object btnCloseMessage: TPanel
+      Left = 762
+      Top = 0
+      Width = 16
+      Height = 16
+      BevelOuter = bvNone
+      Caption = '×'
+      Color = clInfoBk
+      TabOrder = 0
+      Visible = False
+      OnClick = btnCloseMessageClick
+      OnMouseDown = btnCloseMessageMouseDown
+      OnMouseEnter = btnCloseMessageMouseEnter
+      OnMouseLeave = btnCloseMessageMouseLeave
+      OnMouseUp = btnCloseMessageMouseUp
+    end
+  end
+  object mmMain: TMainMenu
+    Tag = 256
+    Left = 56
+    Top = 96
+    object miFile: TMenuItem
+      Caption = 'File'
+      object miSaveReceive: TMenuItem
+        Caption = 'Save receive list'
+        OnClick = miSaveReceiveClick
+      end
+      object miSeparator3: TMenuItem
+        Caption = '-'
+      end
+      object miLoadTransmit: TMenuItem
+        Caption = 'Load transmit'
+        Visible = False
+        OnClick = miLoadTransmitClick
+      end
+      object miSaveTransmit: TMenuItem
+        Caption = 'Save transmit'
+        Visible = False
+        OnClick = miSaveTransmitClick
+      end
+      object miSeparator2: TMenuItem
+        Caption = '-'
+        Visible = False
+      end
+      object miLoadComments: TMenuItem
+        Caption = 'Load comments'
+        OnClick = miCommentsLoadClick
+      end
+      object miSaveComments: TMenuItem
+        Caption = 'Save comments'
+        OnClick = miCommentsSaveClick
+      end
+      object miSeparator1: TMenuItem
+        Caption = '-'
+      end
+      object miQuit: TMenuItem
+        Caption = 'Quit'
+        OnClick = miQuitClick
+      end
+    end
+    object miConnect: TMenuItem
+      Caption = 'Connect'
+      OnClick = miConnectClick
+    end
+    object miStream: TMenuItem
+      Caption = 'Stream'
+      Visible = False
+      OnClick = miStreamClick
+    end
+    object miTracer: TMenuItem
+      Caption = 'Tracer'
+      Visible = False
+      OnClick = tbTracerClick
+    end
+    object miGateway: TMenuItem
+      Caption = 'Gateway'
+      Visible = False
+    end
+    object miBruteForce: TMenuItem
+      Caption = 'Bomber'
+      object miBruteForceCAN: TMenuItem
+        Caption = 'CAN'
+        Enabled = False
+        OnClick = miBruteForceCANClick
+      end
+      object miBruteForceLIN: TMenuItem
+        Caption = 'LIN'
+        Enabled = False
+        OnClick = miBruteForceLINClick
+      end
+    end
+    object miDBC: TMenuItem
+      Caption = 'DBC'
+      Visible = False
+      object miDBCManager: TMenuItem
+        Caption = 'Manager'
+        OnClick = miDBCManagerClick
+      end
+      object miDBCSignalViewer: TMenuItem
+        Caption = 'Signal viewer'
+        Enabled = False
+        OnClick = miDBCSignalViewerClick
+        object miSignalViewerSeparator: TMenuItem
+          Tag = 256
+          Caption = '-'
+        end
+      end
+    end
+    object miSettings: TMenuItem
+      Caption = 'Settings'
+      object miAppSettings: TMenuItem
+        Caption = 'Options'
+        OnClick = miAppSettingsClick
+      end
+      object miVehicleDB: TMenuItem
+        Caption = 'Vehicles DB'
+        Enabled = False
+        OnClick = miVehicleDBClick
+      end
+      object miSettingsSeparator2: TMenuItem
+        Caption = '-'
+        Visible = False
+      end
+      object miAdvancedMode: TMenuItem
+        Caption = 'Advanced mode'
+        Visible = False
+        OnClick = miAdvancedModeClick
+      end
+      object miSettingsSeparator: TMenuItem
+        Caption = '-'
+        Visible = False
+      end
+      object miLanguage: TMenuItem
+        Caption = 'Language'
+        Visible = False
+        object miLanguageEnglish: TMenuItem
+          Tag = -1
+          Caption = 'English'
+          OnClick = miLangChangeClick
+        end
+      end
+    end
+    object miAboutGroup: TMenuItem
+      Caption = '?'
+      object miDeviceLoad: TMenuItem
+        Caption = 'Device load'
+        Visible = False
+        OnClick = miDeviceLoadClick
+      end
+      object miDeviceInfo: TMenuItem
+        Caption = 'Device info'
+        Enabled = False
+        Visible = False
+        OnClick = miDeviceInfoClick
+      end
+      object miSeparatorAbout: TMenuItem
+        Caption = '-'
+        Visible = False
+      end
+      object miRegister: TMenuItem
+        Caption = 'Register...'
+        Visible = False
+      end
+      object miCheckVersion: TMenuItem
+        Caption = 'Check for Updates...'
+        OnClick = miCheckVersionClick
+      end
+      object miAbout: TMenuItem
+        Caption = 'About'
+        OnClick = miAboutClick
+      end
+    end
+  end
+  object tmr500Clock: TTimer
+    Interval = 500
+    OnTimer = tmr500ClockTimer
+    Left = 938
+  end
+  object tmrMessage: TTimer
+    Enabled = False
+    Interval = 50
+    OnTimer = tmrMessageTimer
+    Left = 1036
+  end
+  object pmDeviceChannelOptions: TPopupMenu
+    OnClose = pmDeviceChannelOptionsClose
+    OnPopup = pmDeviceChannelOptionsPopup
+    Left = 150
+    Top = 92
+  end
+  object pmLogs: TPopupMenu
+    Images = dmBase.ilMain
+    Left = 612
+    Top = 65532
+    object miLogSettingsOpen: TMenuItem
+      Caption = 'Open settings'
+      ImageIndex = 19
+      ImageName = '19 - Load'
+    end
+    object miLogSettingsRecent: TMenuItem
+      Caption = 'Open recent'
+    end
+    object miLogSettingsSplitter: TMenuItem
+      Caption = '-'
+    end
+  end
+  object tmrStart: TTimer
+    Enabled = False
+    Interval = 100
+    OnTimer = tmrStartTimer
+    Left = 988
+  end
+  object pmRarelyData: TPopupMenu
+    Images = dmBase.ilMain
+    OnPopup = pmRarelyDataPopup
+    Left = 366
+    Top = 92
+    object miRarelyData: TMenuItem
+      Caption = 'Rare data highlighting'
+      ImageIndex = 80
+      ImageName = '80 - LongTime'
+      OnClick = tbRarelyDataClick
+    end
+    object miRarelyDataTime: TMenuItem
+      Caption = 'Set rare data period'
+      OnClick = miRarelyDataTimeClick
+    end
+  end
+  object pmOpenStreamRecent: TPopupMenu
+    Left = 494
+    Top = 96
+  end
+  object pmComment: TPopupMenu
+    Left = 298
+    Top = 92
+    object miCommentsLoad: TMenuItem
+      Caption = 'Open comments'
+      OnClick = miCommentsLoadClick
+    end
+    object miCommentsLoadRecent: TMenuItem
+      Caption = 'Open recent'
+    end
+    object miCommentsSeparator: TMenuItem
+      Caption = '-'
+    end
+    object miCommentsSave: TMenuItem
+      Caption = 'Save comments'
+      OnClick = miCommentsSaveClick
+    end
+    object miCommentsClear: TMenuItem
+      Caption = 'Clear'
+      OnClick = miCommentsClearClick
+    end
+  end
+end

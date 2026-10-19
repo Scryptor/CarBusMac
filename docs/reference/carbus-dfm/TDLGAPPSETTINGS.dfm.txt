@@ -1,0 +1,578 @@
+object dlgAppSettings: TdlgAppSettings
+  Left = 0
+  Top = 0
+  BorderStyle = bsDialog
+  Caption = 'Options'
+  ClientHeight = 256
+  ClientWidth = 549
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  Position = poOwnerFormCenter
+  OnCreate = FormCreate
+  OnShow = FormShow
+  DesignSize = (549 256)
+  TextHeight = 13
+  object bvBevel: TBevel
+    Left = 231
+    Top = 211
+    Width = 314
+    Height = 2
+  end
+  object btnOk: TButton
+    Left = 377
+    Top = 223
+    Width = 75
+    Height = 25
+    Anchors = [akLeft, akBottom]
+    Caption = 'Ok'
+    Default = True
+    ModalResult = 1
+    TabOrder = 2
+    OnClick = btnOkClick
+  end
+  object btnCancel: TButton
+    Left = 465
+    Top = 223
+    Width = 75
+    Height = 25
+    Anchors = [akLeft, akBottom]
+    Cancel = True
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 3
+  end
+  object pcOptions: TPageControl
+    Left = 231
+    Top = 2
+    Width = 314
+    Height = 209
+    ActivePage = tsTheme
+    Anchors = [akLeft, akTop, akBottom]
+    Style = tsFlatButtons
+    TabOrder = 1
+    object tsTheme: TTabSheet
+      Caption = 'Interface style'
+      ImageIndex = 7
+      object lTheme: TLabel
+        Left = 0
+        Top = 21
+        Width = 24
+        Height = 13
+        Caption = 'Style'
+        FocusControl = cbTheme
+      end
+      object cbSyncWithOS: TCheckBox
+        Left = 0
+        Top = 0
+        Width = 305
+        Height = 17
+        Caption = 'Sync with OS'
+        Checked = True
+        State = cbChecked
+        TabOrder = 0
+        OnClick = cbSyncWithOSClick
+      end
+      object cbTheme: TComboBox
+        Left = 60
+        Top = 18
+        Width = 245
+        Height = 21
+        Style = csDropDownList
+        Enabled = False
+        TabOrder = 1
+      end
+    end
+    object tsGridFont: TTabSheet
+      Caption = 'Grid font'
+      object lFontName: TLabel
+        Left = 0
+        Top = 3
+        Width = 55
+        Height = 13
+        Caption = 'Font name:'
+        FocusControl = cbFonts
+      end
+      object lFontSize: TLabel
+        Left = 0
+        Top = 35
+        Width = 47
+        Height = 13
+        Caption = 'Font size:'
+        FocusControl = cbFontSize
+      end
+      object lSample: TLabel
+        Left = 0
+        Top = 68
+        Width = 38
+        Height = 13
+        Caption = 'Sample:'
+      end
+      object cbFonts: TComboBox
+        Left = 68
+        Top = 0
+        Width = 237
+        Height = 21
+        Style = csDropDownList
+        TabOrder = 0
+        OnChange = cbFontsChange
+      end
+      object cbFontSize: TComboBox
+        Left = 68
+        Top = 32
+        Width = 81
+        Height = 21
+        Style = csDropDownList
+        TabOrder = 1
+        OnChange = cbFontSizeChange
+      end
+      object pSample: TPanel
+        Left = 0
+        Top = 87
+        Width = 305
+        Height = 49
+        BevelInner = bvRaised
+        BevelOuter = bvLowered
+        Caption = '01234567890ABCDEF'
+        TabOrder = 2
+      end
+    end
+    object tsReceive: TTabSheet
+      Caption = 'Receive data'
+      object lClearAfter: TLabel
+        Left = 20
+        Top = 53
+        Width = 82
+        Height = 13
+        AutoSize = False
+        Caption = 'Clear after'
+        FocusControl = edClearAfter
+      end
+      object lMS: TLabel
+        Left = 200
+        Top = 53
+        Width = 13
+        Height = 13
+        Caption = 'ms'
+      end
+      object lMarkColor: TLabel
+        Left = 20
+        Top = 77
+        Width = 82
+        Height = 13
+        AutoSize = False
+        Caption = 'Mark color'
+      end
+      object lbStreamInWindow: TLabel
+        Left = 17
+        Top = 114
+        Width = 138
+        Height = 13
+        Caption = '(application restart required)'
+        OnClick = lbStreamInWindowClick
+      end
+      object lbFrameCounter: TLabel
+        Left = 17
+        Top = 17
+        Width = 138
+        Height = 13
+        Caption = '(application restart required)'
+        OnClick = lbFrameCounterClick
+      end
+      object cbFrameCounter: TCheckBox
+        Left = 0
+        Top = 0
+        Width = 305
+        Height = 17
+        Caption = 'Activate unique frame counter'
+        TabOrder = 0
+      end
+      object cbMarkChangedBytes: TCheckBox
+        Left = 0
+        Top = 32
+        Width = 305
+        Height = 17
+        Caption = 'Mark changed bytes'
+        TabOrder = 1
+      end
+      object udClearMS: TUpDown
+        Left = 177
+        Top = 50
+        Width = 17
+        Height = 21
+        Associate = edClearAfter
+        Min = 500
+        Max = 10000
+        Increment = 100
+        Position = 2000
+        TabOrder = 3
+        Thousands = False
+      end
+      object edClearAfter: TExNumberEdit
+        Left = 140
+        Top = 50
+        Width = 37
+        Height = 21
+        Base = 10
+        MaxLength = 5
+        MaxValue = '10000'
+        MinValue = '500'
+        TabOrder = 2
+        Text = '2000'
+        OnMouseWheel = edClearAfterMouseWheel
+      end
+      object cbColor: TComboBox
+        Left = 140
+        Top = 74
+        Width = 163
+        Height = 22
+        Style = csOwnerDrawFixed
+        TabOrder = 4
+        OnChange = cbColorChange
+        OnDrawItem = cbColorDrawItem
+        Items.Strings = ('Custom')
+      end
+      object cbStreamInWindow: TCheckBox
+        Left = 0
+        Top = 98
+        Width = 305
+        Height = 17
+        Caption = 'Open stream in separate window'
+        TabOrder = 5
+      end
+    end
+    object tsTransmit: TTabSheet
+      Caption = 'Transmit data'
+      ImageIndex = 4
+      object cbRestoreTransmit: TCheckBox
+        Left = 0
+        Top = 18
+        Width = 305
+        Height = 17
+        Caption = 'Restore transmit list on start'
+        TabOrder = 1
+      end
+      object cbTransmitInWindow: TCheckBox
+        Left = 0
+        Top = 0
+        Width = 305
+        Height = 17
+        Caption = 'Open transmit in separate window'
+        TabOrder = 0
+        OnClick = cbFilterInWindowClick
+      end
+    end
+    object tsStreamTracer: TTabSheet
+      Caption = 'Stream && Tracer'
+      ImageIndex = 5
+      object lEndOfLine: TLabel
+        Left = 20
+        Top = 21
+        Width = 118
+        Height = 13
+        Caption = 'Stream/Trace end of line'
+      end
+      object cbUseSecconds: TCheckBox
+        Left = 0
+        Top = 0
+        Width = 305
+        Height = 17
+        Caption = 'Max 1sec in tracer for delays between messages'
+        TabOrder = 0
+      end
+      object cbEndOfLine: TComboBox
+        Left = 180
+        Top = 18
+        Width = 123
+        Height = 21
+        Style = csDropDownList
+        TabOrder = 1
+        Items.Strings = (' CR        \\r' ' LF         \\n' ' CRLF     \\r\\n')
+      end
+      object GroupBox1: TGroupBox
+        Left = 0
+        Top = 40
+        Width = 303
+        Height = 93
+        Caption = ' Copy rows format '
+        TabOrder = 2
+        object lFmtMasgID: TLabel
+          Left = 20
+          Top = 35
+          Width = 102
+          Height = 13
+          Caption = 'MsgID, PGN, Src, Dst'
+        end
+        object lData: TLabel
+          Left = 20
+          Top = 53
+          Width = 23
+          Height = 13
+          Caption = 'Data'
+        end
+        object lCRC: TLabel
+          Left = 20
+          Top = 71
+          Width = 21
+          Height = 13
+          Caption = 'CRC'
+        end
+        object cbColumnNames: TCheckBox
+          Left = 20
+          Top = 16
+          Width = 269
+          Height = 17
+          Caption = 'First row with column names'
+          TabOrder = 0
+        end
+        object pnMsgID: TPanel
+          Left = 142
+          Top = 34
+          Width = 133
+          Height = 18
+          BevelOuter = bvNone
+          TabOrder = 1
+          object rbMsgIDHex: TRadioButton
+            Left = 0
+            Top = 0
+            Width = 57
+            Height = 17
+            Caption = 'HEX'
+            Checked = True
+            TabOrder = 0
+            TabStop = True
+          end
+          object rbMsgIDDec: TRadioButton
+            Left = 76
+            Top = 0
+            Width = 57
+            Height = 17
+            Caption = 'DEC'
+            TabOrder = 1
+          end
+        end
+        object pnData: TPanel
+          Left = 142
+          Top = 52
+          Width = 133
+          Height = 18
+          BevelOuter = bvNone
+          TabOrder = 2
+          object rbDataHex: TRadioButton
+            Left = 0
+            Top = 0
+            Width = 57
+            Height = 17
+            Caption = 'HEX'
+            Checked = True
+            TabOrder = 0
+            TabStop = True
+          end
+          object rbDataDec: TRadioButton
+            Left = 76
+            Top = 0
+            Width = 57
+            Height = 17
+            Caption = 'DEC'
+            TabOrder = 1
+          end
+        end
+        object pnCRC: TPanel
+          Left = 142
+          Top = 70
+          Width = 133
+          Height = 18
+          BevelOuter = bvNone
+          TabOrder = 3
+          object rbCRCHex: TRadioButton
+            Left = 0
+            Top = 0
+            Width = 57
+            Height = 17
+            Caption = 'HEX'
+            Checked = True
+            TabOrder = 0
+            TabStop = True
+          end
+          object rbCRCDec: TRadioButton
+            Left = 76
+            Top = 0
+            Width = 57
+            Height = 17
+            Caption = 'DEC'
+            TabOrder = 1
+          end
+        end
+      end
+    end
+    object tsFilter: TTabSheet
+      Caption = 'Gateway && Filter'
+      object cbFilterInWindow: TCheckBox
+        Left = 0
+        Top = 0
+        Width = 305
+        Height = 17
+        Caption = 'Open gateway && filter in separate window'
+        TabOrder = 0
+        OnClick = cbFilterInWindowClick
+      end
+      object cbFilterOnTop: TCheckBox
+        Left = 18
+        Top = 18
+        Width = 287
+        Height = 17
+        Caption = 'Always on top'
+        TabOrder = 1
+      end
+      object cbFilterAutoEnabled: TCheckBox
+        Left = 0
+        Top = 36
+        Width = 305
+        Height = 17
+        Caption = 'Set new filter active automatically'
+        TabOrder = 2
+      end
+      object cbRestoreFilter: TCheckBox
+        Left = 0
+        Top = 54
+        Width = 305
+        Height = 17
+        Caption = 'Restore filter on start'
+        TabOrder = 3
+      end
+      object cbFilterSimpleMode: TCheckBox
+        Left = 0
+        Top = 72
+        Width = 305
+        Height = 17
+        Caption = 'Simple mode ( exclude filter mask )'
+        TabOrder = 4
+      end
+    end
+    object tsStreamLogging: TTabSheet
+      Caption = 'Stream logging settings'
+      ImageIndex = 6
+      object cbStreamSaveMetaInfo: TCheckBox
+        Left = 0
+        Top = 0
+        Width = 305
+        Height = 17
+        Caption = 'Configure and save meta information'
+        TabOrder = 0
+      end
+      object cbStreamAddLinFilter: TCheckBox
+        Left = 0
+        Top = 18
+        Width = 305
+        Height = 17
+        Caption = 'Add LIN filter configuration'
+        TabOrder = 1
+      end
+    end
+    object tsExperimental: TTabSheet
+      Caption = 'Experimental'
+      ImageIndex = 8
+      object lExpCANSpeed: TLabel
+        Left = 16
+        Top = 16
+        Width = 272
+        Height = 13
+        Caption = 'Required update the device firmware to version 2.3.x.x.'
+      end
+      object lExpNonISOFD: TLabel
+        Left = 16
+        Top = 52
+        Width = 283
+        Height = 52
+        Caption = 'Allow select frame format between ISO 11898-1:2015 and Bosch CAN FD Specification V1.0.\rRequired update the CH-P-FDL2/CH-OBD-FD devices to latest firmware version.'
+        WordWrap = True
+      end
+      object cbExpCANSpeed: TCheckBox
+        Left = 0
+        Top = 0
+        Width = 305
+        Height = 17
+        Caption = 'Autodetect speed on CH-3.x/CH-OBD/CH-P devices'
+        TabOrder = 0
+      end
+      object cbExpNonISOFD: TCheckBox
+        Left = 0
+        Top = 35
+        Width = 305
+        Height = 17
+        Caption = 'Allow select CAN-FD frame format'
+        TabOrder = 1
+      end
+    end
+    object tsUpdates: TTabSheet
+      Caption = 'Updates'
+      ImageIndex = 3
+      object lbPreferred: TLabel
+        Left = 18
+        Top = 39
+        Width = 123
+        Height = 13
+        Caption = 'Preferred update channel'
+        Enabled = False
+        FocusControl = cbPreferred
+      end
+      object cbCheckUpdates: TCheckBox
+        Left = 0
+        Top = 0
+        Width = 305
+        Height = 17
+        Caption = 'Automatic check for updates'
+        TabOrder = 0
+        OnClick = cbCheckUpdatesClick
+      end
+      object cbCheckFWUpdates: TCheckBox
+        Left = 0
+        Top = 58
+        Width = 305
+        Height = 17
+        Caption = 'Automatic check for firmware updates'
+        TabOrder = 1
+        Visible = False
+      end
+      object cbDownloadInstall: TCheckBox
+        Left = 18
+        Top = 18
+        Width = 287
+        Height = 17
+        Caption = 'Download and install updates'
+        Enabled = False
+        TabOrder = 2
+      end
+      object cbPreferred: TComboBox
+        Left = 224
+        Top = 36
+        Width = 81
+        Height = 21
+        Style = csDropDownList
+        Enabled = False
+        TabOrder = 3
+        Items.Strings = ('Auto' 'Release' 'Test')
+      end
+    end
+  end
+  object tvTabSheet: TTreeView
+    Left = 8
+    Top = 8
+    Width = 217
+    Height = 205
+    Anchors = [akLeft, akTop, akBottom]
+    DoubleBuffered = True
+    HideSelection = False
+    Indent = 19
+    ParentDoubleBuffered = False
+    ReadOnly = True
+    RowSelect = True
+    ShowLines = False
+    TabOrder = 0
+    OnChange = tvTabSheetChange
+    OnChanging = tvTabSheetChanging
+  end
+end

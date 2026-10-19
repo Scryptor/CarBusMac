@@ -1,0 +1,807 @@
+object frmBruteForceCAN: TfrmBruteForceCAN
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = bsSingle
+  Caption = 'CAN Bomber'
+  ClientHeight = 440
+  ClientWidth = 772
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  ShowHint = True
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  TextHeight = 13
+  object cbStop: TCheckBox
+    Left = 367
+    Top = 362
+    Width = 194
+    Height = 17
+    Caption = 'Stop when received'
+    TabOrder = 3
+    OnClick = cbStopClick
+  end
+  object btnInc: TButton
+    Tag = 1
+    Left = 453
+    Top = 411
+    Width = 75
+    Height = 25
+    Caption = 'Step +'
+    Enabled = False
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 7
+    OnClick = btnIncDecClick
+  end
+  object btnDec: TButton
+    Tag = -1
+    Left = 533
+    Top = 411
+    Width = 75
+    Height = 25
+    Caption = 'Step -'
+    Enabled = False
+    TabOrder = 8
+    OnClick = btnIncDecClick
+  end
+  object btnShot: TButton
+    Left = 613
+    Top = 411
+    Width = 75
+    Height = 25
+    Caption = 'Shot'
+    Enabled = False
+    TabOrder = 9
+    OnClick = btnIncDecClick
+  end
+  object btnRun: TButton
+    Left = 693
+    Top = 411
+    Width = 75
+    Height = 25
+    Caption = 'Run'
+    Enabled = False
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 10
+    OnClick = btnRunClick
+  end
+  object btnScript: TButton
+    Left = 367
+    Top = 411
+    Width = 75
+    Height = 25
+    Caption = 'Script'
+    TabOrder = 11
+    OnClick = btnScriptClick
+  end
+  object gbCRC: TGroupBox
+    Left = 4
+    Top = 195
+    Width = 357
+    Height = 219
+    Caption = ' CRC calculation '
+    TabOrder = 1
+    object lCRCType: TLabel
+      Left = 144
+      Top = 22
+      Width = 24
+      Height = 13
+      Caption = 'Type'
+      FocusControl = cbCRCType
+    end
+    object lInsertTo: TLabel
+      Left = 231
+      Top = 47
+      Width = 66
+      Height = 13
+      Alignment = taRightJustify
+      Caption = 'Insert CRC to'
+      Enabled = False
+      FocusControl = cbInsertTo
+    end
+    object cbCRCType: TComboBox
+      Left = 184
+      Top = 18
+      Width = 166
+      Height = 21
+      Style = csDropDownList
+      TabOrder = 0
+      OnChange = cbCRCTypeChange
+    end
+    object cbCRC_ID: TCheckBox
+      Left = 12
+      Top = 39
+      Width = 34
+      Height = 17
+      Caption = 'ID'
+      Enabled = False
+      TabOrder = 1
+    end
+    object cbCRC_DLC: TCheckBox
+      Left = 52
+      Top = 39
+      Width = 42
+      Height = 17
+      Caption = 'DLC'
+      Enabled = False
+      TabOrder = 2
+    end
+    object cbCRC_Data0: TCheckBox
+      Left = 12
+      Top = 58
+      Width = 65
+      Height = 17
+      Caption = 'Data 0'
+      Enabled = False
+      TabOrder = 3
+    end
+    object cbCRC_Data1: TCheckBox
+      Tag = 1
+      Left = 12
+      Top = 77
+      Width = 65
+      Height = 17
+      Caption = 'Data 1'
+      Enabled = False
+      TabOrder = 4
+    end
+    object cbCRC_Data2: TCheckBox
+      Tag = 2
+      Left = 12
+      Top = 96
+      Width = 65
+      Height = 17
+      Caption = 'Data 2'
+      Enabled = False
+      TabOrder = 5
+    end
+    object cbCRC_Data3: TCheckBox
+      Tag = 3
+      Left = 12
+      Top = 115
+      Width = 65
+      Height = 17
+      Caption = 'Data 3'
+      Enabled = False
+      TabOrder = 6
+    end
+    object cbCRC_Data4: TCheckBox
+      Tag = 4
+      Left = 12
+      Top = 134
+      Width = 65
+      Height = 17
+      Caption = 'Data 4'
+      Enabled = False
+      TabOrder = 7
+    end
+    object cbCRC_Data5: TCheckBox
+      Tag = 5
+      Left = 12
+      Top = 153
+      Width = 65
+      Height = 17
+      Caption = 'Data 5'
+      Enabled = False
+      TabOrder = 8
+    end
+    object cbCRC_Data6: TCheckBox
+      Tag = 6
+      Left = 12
+      Top = 172
+      Width = 65
+      Height = 17
+      Caption = 'Data 6'
+      Enabled = False
+      TabOrder = 9
+    end
+    object cbCRC_Data7: TCheckBox
+      Tag = 7
+      Left = 12
+      Top = 191
+      Width = 65
+      Height = 17
+      Caption = 'Data 7'
+      Enabled = False
+      TabOrder = 10
+    end
+    object cbInsertTo: TComboBox
+      Tag = 1
+      Left = 305
+      Top = 43
+      Width = 45
+      Height = 21
+      Style = csDropDownList
+      Enabled = False
+      TabOrder = 11
+      OnChange = cbInsertToChange
+    end
+    object gbSignalGroup: TGroupBox
+      Left = 144
+      Top = 71
+      Width = 206
+      Height = 50
+      Caption = '  '
+      TabOrder = 13
+      object lIDValue: TLabel
+        Left = 12
+        Top = 20
+        Width = 26
+        Height = 13
+        Caption = 'Value'
+        Enabled = False
+        FocusControl = edIDValue
+      end
+      object lIDPosition: TLabel
+        Left = 117
+        Top = 20
+        Width = 37
+        Height = 13
+        Alignment = taRightJustify
+        Caption = 'Position'
+        Enabled = False
+      end
+      object edIDValue: TExNumberEdit
+        Left = 74
+        Top = 18
+        Width = 24
+        Height = 22
+        Base = 16
+        Capitalize = True
+        Enabled = False
+        FillZero = True
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -12
+        Font.Name = 'Consolas'
+        Font.Style = []
+        MaxLength = 2
+        ParentFont = False
+        TabOrder = 0
+        Text = '00'
+      end
+      object cbIDPosition: TComboBox
+        Left = 160
+        Top = 17
+        Width = 37
+        Height = 21
+        Enabled = False
+        MaxLength = 1
+        TabOrder = 1
+        OnChange = cbIDPositionChange
+        OnExit = cbExit
+      end
+    end
+    object cbSignalGroup: TCheckBox
+      Left = 154
+      Top = 70
+      Width = 104
+      Height = 17
+      Caption = 'Signal Group ID'
+      Enabled = False
+      TabOrder = 12
+      OnClick = cbSignalGroupClick
+    end
+    object btnCustomCrcScript: TButton
+      Left = 144
+      Top = 184
+      Width = 125
+      Height = 25
+      Caption = 'Custom CRC Script'
+      Enabled = False
+      TabOrder = 17
+      OnClick = btnCustomCrcScriptClick
+    end
+    object gbCounter: TGroupBox
+      Left = 144
+      Top = 123
+      Width = 206
+      Height = 50
+      Caption = ' '
+      TabOrder = 15
+      object lCounterMask: TLabel
+        Left = 12
+        Top = 20
+        Width = 24
+        Height = 13
+        Caption = 'Mask'
+        Enabled = False
+        FocusControl = edCounterMask
+      end
+      object lCounterPosition: TLabel
+        Left = 117
+        Top = 20
+        Width = 37
+        Height = 13
+        Alignment = taRightJustify
+        Caption = 'Position'
+        Enabled = False
+      end
+      object edCounterMask: TExNumberEdit
+        Left = 74
+        Top = 18
+        Width = 24
+        Height = 22
+        Base = 16
+        Capitalize = True
+        Enabled = False
+        FillZero = True
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -12
+        Font.Name = 'Consolas'
+        Font.Style = []
+        MaxLength = 2
+        ParentFont = False
+        TabOrder = 0
+        Text = 'FF'
+      end
+      object cbCounterPosition: TComboBox
+        Left = 160
+        Top = 17
+        Width = 37
+        Height = 21
+        Enabled = False
+        MaxLength = 1
+        TabOrder = 1
+        OnExit = cbExit
+      end
+    end
+    object cbCounter: TCheckBox
+      Left = 154
+      Top = 122
+      Width = 70
+      Height = 17
+      Caption = 'Counter'
+      TabOrder = 14
+      OnClick = cbCounterClick
+    end
+    object btnCalcCRC: TButton
+      Left = 275
+      Top = 184
+      Width = 75
+      Height = 25
+      Caption = 'Calculate'
+      Enabled = False
+      TabOrder = 16
+      OnClick = btnCalcCRCClick
+    end
+  end
+  object gbConfiguration: TGroupBox
+    Left = 4
+    Top = 4
+    Width = 357
+    Height = 185
+    Caption = ' Configuration '
+    TabOrder = 0
+    object lChannel: TLabel
+      Left = 8
+      Top = 16
+      Width = 39
+      Height = 13
+      Caption = 'Channel'
+      FocusControl = cbChannel
+    end
+    object lFrom: TLabel
+      Left = 8
+      Top = 62
+      Width = 38
+      Height = 13
+      Caption = 'ID From'
+      FocusControl = edFrom
+    end
+    object lTo: TLabel
+      Left = 90
+      Top = 62
+      Width = 12
+      Height = 13
+      Caption = 'To'
+      FocusControl = edTo
+    end
+    object lMode: TLabel
+      Left = 90
+      Top = 16
+      Width = 26
+      Height = 13
+      Caption = 'Mode'
+      FocusControl = cbMode
+    end
+    object lPeriod: TLabel
+      Left = 8
+      Top = 135
+      Width = 30
+      Height = 13
+      Caption = 'Period'
+      FocusControl = edPeriod
+    end
+    object lPerStep: TLabel
+      Left = 90
+      Top = 135
+      Width = 62
+      Height = 13
+      Caption = 'Msg per step'
+      FocusControl = edPerStep
+    end
+    object cbChannel: TComboBox
+      Left = 8
+      Top = 33
+      Width = 73
+      Height = 22
+      Style = csDropDownList
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 0
+      OnChange = cbChannelChange
+    end
+    object edFrom: TExNumberEdit
+      Left = 8
+      Top = 79
+      Width = 77
+      Height = 22
+      Alignment = taRightJustify
+      Base = 16
+      Capitalize = True
+      FillZero = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      MaxLength = 3
+      MaxValue = '7FF'
+      ParentFont = False
+      TabOrder = 2
+      Text = '000'
+    end
+    object edTo: TExNumberEdit
+      Left = 90
+      Top = 79
+      Width = 77
+      Height = 22
+      Alignment = taRightJustify
+      Base = 16
+      Capitalize = True
+      FillZero = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      MaxLength = 3
+      MaxValue = '7FF'
+      ParentFont = False
+      TabOrder = 3
+      Text = '7FF'
+    end
+    object cbMode: TComboBox
+      Left = 90
+      Top = 33
+      Width = 155
+      Height = 21
+      Style = csDropDownList
+      TabOrder = 1
+      OnChange = cbModeChange
+      Items.Strings = ('ID counter' 'ID list' 'ID list cycle' 'Data counter' 'Data counter with shift')
+    end
+    object cb29bit: TCheckBox
+      Left = 8
+      Top = 112
+      Width = 56
+      Height = 17
+      Caption = '29 bit'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+      TabOrder = 5
+      OnClick = cb29bitClick
+    end
+    object rbFD: TRadioButton
+      Left = 165
+      Top = 112
+      Width = 33
+      Height = 17
+      Caption = 'FD'
+      TabOrder = 7
+      OnClick = rbTypeCAN
+    end
+    object rbClassic: TRadioButton
+      Left = 90
+      Top = 112
+      Width = 55
+      Height = 17
+      Caption = 'Classic'
+      Checked = True
+      TabOrder = 6
+      TabStop = True
+      OnClick = rbTypeCAN
+    end
+    object cbBRS: TCheckBox
+      Left = 202
+      Top = 112
+      Width = 40
+      Height = 17
+      Caption = 'BRS'
+      Enabled = False
+      TabOrder = 8
+    end
+    object edPeriod: TExNumberEdit
+      Left = 8
+      Top = 152
+      Width = 49
+      Height = 22
+      Alignment = taRightJustify
+      Base = 10
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      MaxLength = 5
+      MaxValue = '10000'
+      MinValue = '10'
+      ParentFont = False
+      TabOrder = 9
+      Text = '100'
+      OnExit = edPeriodExit
+    end
+    object edPerStep: TExNumberEdit
+      Left = 90
+      Top = 152
+      Width = 49
+      Height = 22
+      Alignment = taRightJustify
+      Base = 10
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      MaxLength = 2
+      MinValue = '1'
+      ParentFont = False
+      TabOrder = 10
+      Text = '5'
+    end
+    object gbIDList: TGroupBox
+      Left = 253
+      Top = 16
+      Width = 97
+      Height = 161
+      Caption = ' Unique ID list '
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 4
+      object lbIDList: TListBox
+        AlignWithMargins = True
+        Left = 5
+        Top = 16
+        Width = 87
+        Height = 140
+        AutoComplete = False
+        BiDiMode = bdLeftToRight
+        Enabled = False
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -12
+        Font.Name = 'Consolas'
+        Font.Style = []
+        ItemHeight = 14
+        ParentBiDiMode = False
+        ParentFont = False
+        PopupMenu = pmIDList
+        TabOrder = 0
+        OnClick = lbIDListClick
+        OnKeyDown = lbIDListKeyDown
+      end
+    end
+  end
+  object gbMessage: TGroupBox
+    Left = 367
+    Top = 4
+    Width = 401
+    Height = 352
+    Caption = ' Message '
+    TabOrder = 2
+    object lMsgID: TLabel
+      Left = 8
+      Top = 16
+      Width = 51
+      Height = 13
+      Caption = 'Current ID'
+      FocusControl = edMsgID
+    end
+    object lDLC: TLabel
+      Left = 91
+      Top = 16
+      Width = 19
+      Height = 13
+      Caption = 'DLC'
+    end
+    object lValue: TLabel
+      Left = 208
+      Top = 16
+      Width = 26
+      Height = 13
+      Caption = 'Value'
+    end
+    object edMsgID: TExNumberEdit
+      Left = 8
+      Top = 33
+      Width = 77
+      Height = 22
+      Alignment = taRightJustify
+      Base = 16
+      Capitalize = True
+      FillZero = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      MaxLength = 3
+      MaxValue = '7FF'
+      ParentFont = False
+      TabOrder = 0
+      Text = '000'
+    end
+    object cbDLC: TComboBox
+      Left = 91
+      Top = 33
+      Width = 39
+      Height = 22
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      MaxLength = 2
+      ParentFont = False
+      TabOrder = 1
+      Text = '64'
+      OnChange = cbDLCChange
+      OnExit = cbExit
+      OnKeyDown = cbDLCKeyDown
+      OnKeyPress = cbDLCKeyPress
+    end
+    object edValue: TExNumberEdit
+      Left = 208
+      Top = 33
+      Width = 24
+      Height = 22
+      Base = 16
+      Capitalize = True
+      FillZero = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      MaxLength = 2
+      ParentFont = False
+      TabOrder = 2
+      Text = '00'
+    end
+    object btnFill: TButton
+      Left = 238
+      Top = 32
+      Width = 75
+      Height = 23
+      Caption = 'Fill data'
+      TabOrder = 3
+      OnClick = btnFillClick
+    end
+  end
+  object rbStopAnyMessage: TRadioButton
+    Left = 567
+    Top = 362
+    Width = 138
+    Height = 17
+    Caption = 'any message'
+    Checked = True
+    Enabled = False
+    TabOrder = 4
+    TabStop = True
+    OnClick = rbStopMessageClick
+  end
+  object edStopID: TExNumberEdit
+    Left = 691
+    Top = 383
+    Width = 77
+    Height = 22
+    Alignment = taRightJustify
+    Base = 16
+    Capitalize = True
+    Enabled = False
+    FillZero = True
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Consolas'
+    Font.Style = []
+    MaxLength = 3
+    MaxValue = '7FF'
+    ParentFont = False
+    TabOrder = 6
+    Text = '7FF'
+  end
+  object rbStopMessage: TRadioButton
+    Left = 567
+    Top = 384
+    Width = 118
+    Height = 17
+    Caption = 'message'
+    Enabled = False
+    TabOrder = 5
+    OnClick = rbStopMessageClick
+  end
+  object tmrBruteForce: TTimer
+    Enabled = False
+    OnTimer = tmrBruteForceTimer
+    Left = 516
+    Top = 216
+  end
+  object pmIDList: TPopupMenu
+    Left = 284
+    Top = 71
+    object miFromReceiveMonitor: TMenuItem
+      Caption = 'From receive monitor'
+      OnClick = miFromReceiveMonitorClick
+    end
+    object miSeparator3: TMenuItem
+      Caption = '-'
+    end
+    object miIDAdd: TMenuItem
+      Caption = 'Add ID'
+      OnClick = miIDAddClick
+    end
+    object miIDRemove: TMenuItem
+      Caption = 'Delete ID'
+      OnClick = miIDRemoveClick
+    end
+    object miSeparator2: TMenuItem
+      Caption = '-'
+    end
+    object miLoadIDList: TMenuItem
+      Caption = 'Load list'
+      OnClick = miLoadIDListClick
+    end
+    object miSaveList: TMenuItem
+      Caption = 'Save list'
+      OnClick = miSaveListClick
+    end
+    object miSeparator: TMenuItem
+      Caption = '-'
+    end
+    object miClearList: TMenuItem
+      Caption = 'Clear'
+      OnClick = miClearListClick
+    end
+  end
+end

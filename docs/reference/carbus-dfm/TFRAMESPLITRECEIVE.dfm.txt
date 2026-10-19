@@ -1,0 +1,18 @@
+object frameSplitReceive: TframeSplitReceive
+  Left = 0
+  Top = 0
+  Width = 320
+  Height = 240
+  TabOrder = 0
+  OnResize = FrameResize
+  object sbChannels: TScrollBox
+    Left = 0
+    Top = 0
+    Width = 320
+    Height = 240
+    VertScrollBar.Visible = False
+    Align = alClient
+    BorderStyle = bsNone
+    TabOrder = 0
+  end
+end

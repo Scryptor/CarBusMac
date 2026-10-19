@@ -1,0 +1,26 @@
+object frameTracerSignalBase: TframeTracerSignalBase
+  Left = 0
+  Top = 0
+  Width = 540
+  Height = 26
+  ParentShowHint = False
+  ShowHint = True
+  TabOrder = 0
+  OnMouseEnter = FrameMouseEnter
+  OnMouseLeave = FrameMouseLeave
+  object lSignal: TLabel
+    Left = 8
+    Top = 5
+    Width = 293
+    Height = 15
+    AutoSize = False
+    Caption = 'Signal'
+    EllipsisPosition = epEndEllipsis
+  end
+  object lUnit: TLabel
+    Left = 453
+    Top = 5
+    Width = 3
+    Height = 15
+  end
+end

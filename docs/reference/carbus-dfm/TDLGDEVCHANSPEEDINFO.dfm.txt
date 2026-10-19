@@ -1,0 +1,220 @@
+object dlgDevChanSpeedInfo: TdlgDevChanSpeedInfo
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = bsSingle
+  Caption = 'Channel speed settings'
+  ClientHeight = 214
+  ClientWidth = 464
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  Position = poOwnerFormCenter
+  OnShow = FormShow
+  TextHeight = 15
+  object lFreq: TLabel
+    Left = 8
+    Top = 8
+    Width = 137
+    Height = 15
+    Caption = 'Clock frequency: %d MHz'
+  end
+  object gbNominal: TGroupBox
+    Left = 8
+    Top = 28
+    Width = 220
+    Height = 145
+    Caption = ' Nominal speed '
+    TabOrder = 0
+    object lNBitRate: TLabel
+      Left = 8
+      Top = 20
+      Width = 37
+      Height = 15
+      Caption = 'Bit rate'
+    end
+    object lNPrescaler: TLabel
+      Left = 8
+      Top = 40
+      Width = 47
+      Height = 15
+      Caption = 'Prescaler'
+    end
+    object lNSeg1: TLabel
+      Left = 8
+      Top = 60
+      Width = 28
+      Height = 15
+      Caption = 'Seg 1'
+    end
+    object lNSeg2: TLabel
+      Left = 8
+      Top = 80
+      Width = 28
+      Height = 15
+      Caption = 'Seg 2'
+    end
+    object lNSJW: TLabel
+      Left = 8
+      Top = 100
+      Width = 92
+      Height = 15
+      Caption = 'Sync.Jump Width'
+    end
+    object lNSamplePoint: TLabel
+      Left = 8
+      Top = 120
+      Width = 72
+      Height = 15
+      Caption = 'Sample-Point'
+    end
+    object lNVBitrate: TLabel
+      Left = 130
+      Top = 20
+      Width = 5
+      Height = 15
+      Caption = '-'
+    end
+    object lNVPrescaler: TLabel
+      Left = 130
+      Top = 40
+      Width = 5
+      Height = 15
+      Caption = '-'
+    end
+    object lNVSeg1: TLabel
+      Left = 130
+      Top = 60
+      Width = 5
+      Height = 15
+      Caption = '-'
+    end
+    object lNVSeg2: TLabel
+      Left = 130
+      Top = 80
+      Width = 5
+      Height = 15
+      Caption = '-'
+    end
+    object lNVSJW: TLabel
+      Left = 130
+      Top = 100
+      Width = 5
+      Height = 15
+      Caption = '-'
+    end
+    object lNVSamplePoint: TLabel
+      Left = 130
+      Top = 120
+      Width = 5
+      Height = 15
+      Caption = '-'
+    end
+  end
+  object gbData: TGroupBox
+    Left = 236
+    Top = 28
+    Width = 220
+    Height = 145
+    Caption = ' Data speed '
+    TabOrder = 1
+    object lDBitRate: TLabel
+      Left = 8
+      Top = 20
+      Width = 37
+      Height = 15
+      Caption = 'Bit rate'
+    end
+    object lDPrescaler: TLabel
+      Left = 8
+      Top = 40
+      Width = 47
+      Height = 15
+      Caption = 'Prescaler'
+    end
+    object lDSeg1: TLabel
+      Left = 8
+      Top = 60
+      Width = 28
+      Height = 15
+      Caption = 'Seg 1'
+    end
+    object lDSeg2: TLabel
+      Left = 8
+      Top = 80
+      Width = 28
+      Height = 15
+      Caption = 'Seg 2'
+    end
+    object lDSJW: TLabel
+      Left = 8
+      Top = 100
+      Width = 92
+      Height = 15
+      Caption = 'Sync.Jump Width'
+    end
+    object lDSamplePoint: TLabel
+      Left = 8
+      Top = 120
+      Width = 72
+      Height = 15
+      Caption = 'Sample-Point'
+    end
+    object lDVBitrate: TLabel
+      Left = 130
+      Top = 20
+      Width = 5
+      Height = 15
+      Caption = '-'
+    end
+    object lDVPrescaler: TLabel
+      Left = 130
+      Top = 40
+      Width = 5
+      Height = 15
+      Caption = '-'
+    end
+    object lDVSeg1: TLabel
+      Left = 130
+      Top = 60
+      Width = 5
+      Height = 15
+      Caption = '-'
+    end
+    object lDVSeg2: TLabel
+      Left = 130
+      Top = 80
+      Width = 5
+      Height = 15
+      Caption = '-'
+    end
+    object lDVSJW: TLabel
+      Left = 130
+      Top = 100
+      Width = 5
+      Height = 15
+      Caption = '-'
+    end
+    object lDVSamplePoint: TLabel
+      Left = 130
+      Top = 120
+      Width = 5
+      Height = 15
+      Caption = '-'
+    end
+  end
+  object btnOk: TButton
+    Left = 381
+    Top = 181
+    Width = 75
+    Height = 25
+    Cancel = True
+    Caption = 'Ok'
+    Default = True
+    ModalResult = 2
+    TabOrder = 2
+  end
+end

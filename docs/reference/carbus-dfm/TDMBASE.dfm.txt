@@ -1,0 +1,38 @@
+object dmBase: TdmBase
+  OnCreate = DataModuleCreate
+  OnDestroy = DataModuleDestroy
+  Height = 351
+  Width = 570
+  object svgCollection: TSVGIconImageCollection
+    SVGIconItems = <96 items>
+    Left = 445
+    Top = 150
+  end
+  object ilMain: TVirtualImageList
+    Images = <96 items>
+    ImageCollection = icMain
+    Left = 15
+    Top = 80
+  end
+  object icMain: TImageCollection
+    Images = <96 items>
+    Left = 15
+    Top = 15
+  end
+  object icMainGray: TImageCollection
+    Images = <96 items>
+    Left = 85
+    Top = 15
+  end
+  object ilMainGray: TVirtualImageList
+    Images = <96 items>
+    ImageCollection = icMainGray
+    Left = 85
+    Top = 80
+  end
+  object icLogo: TImageCollection
+    Images = <30 items>
+    Left = 350
+    Top = 15
+  end
+end

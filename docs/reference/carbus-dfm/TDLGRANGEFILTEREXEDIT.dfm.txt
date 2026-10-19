@@ -1,0 +1,107 @@
+object dlgRangeFilterExEdit: TdlgRangeFilterExEdit
+  Left = 0
+  Top = 0
+  BorderStyle = bsDialog
+  Caption = 'Range exclude filter'
+  ClientHeight = 135
+  ClientWidth = 189
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  Position = poOwnerFormCenter
+  OnShow = FormShow
+  TextHeight = 13
+  object lMask: TLabel
+    Left = 106
+    Top = 12
+    Width = 24
+    Height = 13
+    Caption = 'Mask'
+    FocusControl = edMask
+  end
+  object lCode: TLabel
+    Left = 12
+    Top = 12
+    Width = 10
+    Height = 13
+    Caption = 'Id'
+  end
+  object stMask: TStaticText
+    Left = 12
+    Top = 59
+    Width = 169
+    Height = 17
+    Caption = "Mask: 0 - Don't care / 1 - Relevant"
+    TabOrder = 0
+  end
+  object edId: TExNumberEdit
+    Left = 12
+    Top = 31
+    Width = 75
+    Height = 22
+    Alignment = taRightJustify
+    Base = 16
+    Capitalize = True
+    FillZero = True
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Consolas'
+    Font.Style = []
+    MaxLength = 8
+    ParentFont = False
+    TabOrder = 1
+    Text = '00000000'
+  end
+  object edMask: TExNumberEdit
+    Left = 106
+    Top = 31
+    Width = 75
+    Height = 22
+    Hint = "0 - Don't care / 1 - Relevant"
+    Alignment = taRightJustify
+    Base = 16
+    Capitalize = True
+    FillZero = True
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Consolas'
+    Font.Style = []
+    MaxLength = 8
+    ParentFont = False
+    TabOrder = 2
+    Text = '000007FF'
+  end
+  object cbEnabled: TCheckBox
+    Left = 8
+    Top = 76
+    Width = 169
+    Height = 17
+    Caption = 'Enable exclude'
+    TabOrder = 3
+  end
+  object btnOk: TButton
+    Left = 8
+    Top = 99
+    Width = 75
+    Height = 25
+    Caption = 'Set'
+    Default = True
+    ModalResult = 1
+    TabOrder = 4
+  end
+  object btnCancel: TButton
+    Left = 106
+    Top = 99
+    Width = 75
+    Height = 25
+    Cancel = True
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 5
+  end
+end

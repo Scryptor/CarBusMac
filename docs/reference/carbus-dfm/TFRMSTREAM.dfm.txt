@@ -1,0 +1,251 @@
+object frmStream: TfrmStream
+  Left = 0
+  Top = 0
+  Caption = 'Received data stream'
+  ClientHeight = 483
+  ClientWidth = 877
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  KeyPreview = True
+  ShowHint = True
+  OnAfterMonitorDpiChanged = FormAfterMonitorDpiChanged
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnKeyDown = FormKeyDown
+  OnShow = FormShow
+  TextHeight = 14
+  object freReceive: TframeReceive
+    Left = 0
+    Top = 26
+    Width = 877
+    Height = 438
+    Align = alClient
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 0
+    ExplicitTop = 26
+    ExplicitWidth = 877
+    ExplicitHeight = 438
+    object dgReceive: TDrawGrid
+      AlignWithMargins = False
+      Left = 0
+      Top = 0
+      Width = 877
+      Height = 438
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 877
+      ExplicitHeight = 438
+    end
+    object pmPopup: TPopupMenu
+      object miCopy: TMenuItem
+        OnClick = freReceivemiCopyClick
+      end
+    end
+  end
+  object tbMain: TToolBar
+    Left = 0
+    Top = 0
+    Width = 877
+    Height = 26
+    ButtonHeight = 24
+    ButtonWidth = 50
+    DisabledImages = dmBase.ilMainGray
+    EdgeBorders = [ebBottom]
+    Images = dmBase.ilMain
+    TabOrder = 1
+    object tbClear: TToolButton
+      Left = 0
+      Top = 0
+      Hint = 'Clear received data (Ctrl+N)'
+      ImageIndex = 4
+      ImageName = '04 - New'
+      OnClick = tbClearClick
+    end
+    object tbOpenStream: TToolButton
+      Left = 50
+      Top = 0
+      Hint = 'Load stream from file'
+      DropdownMenu = pmOpenStreamRecent
+      ImageIndex = 17
+      ImageName = '17 - StreamLoad'
+      Style = tbsDropDown
+      OnClick = tbOpenStreamClick
+    end
+    object tbSaveStream: TToolButton
+      Left = 115
+      Top = 0
+      Hint = 'Save stream to file'
+      Enabled = False
+      ImageIndex = 18
+      ImageName = '18 - StreamSave'
+      OnClick = tbSaveStreamClick
+    end
+    object tbSeparator2: TToolButton
+      Left = 165
+      Top = 0
+      Width = 5
+      Style = tbsSeparator
+    end
+    object tbDBC: TToolButton
+      Left = 170
+      Top = 0
+      Hint = 'Open DBC manager'
+      DropdownMenu = pmDBC
+      ImageIndex = 88
+      ImageName = '88- DBC'
+      Style = tbsDropDown
+      OnClick = tbDropDownButtonClick
+    end
+    object tbDBCChart: TToolButton
+      Left = 235
+      Top = 0
+      Enabled = False
+      ImageIndex = 75
+      ImageName = '75 - Chart'
+      Visible = False
+    end
+    object tbComment: TToolButton
+      Left = 285
+      Top = 0
+      Hint = 'Set comment for selected message (F4)'
+      DropdownMenu = pmComment
+      ImageIndex = 9
+      ImageName = '09 - Comment'
+      Style = tbsDropDown
+      OnClick = tbCommentClick
+    end
+    object tbMsgBitMap: TToolButton
+      Left = 350
+      Top = 0
+      Enabled = False
+      ImageIndex = 5
+      ImageName = '05 - MsgDetails'
+      OnClick = tbMsgBitMapClick
+    end
+    object tbMsgDetail: TToolButton
+      Left = 400
+      Top = 0
+      Enabled = False
+      ImageIndex = 6
+      ImageName = '06 - MsgFrames'
+      Visible = False
+      OnClick = tbMsgDetailClick
+    end
+    object tbCopy: TToolButton
+      Left = 450
+      Top = 0
+      Hint = 'Copy to TX-List'
+      Enabled = False
+      ImageIndex = 8
+      ImageName = '08 - ToTransmit'
+      OnClick = tbCopyClick
+    end
+    object tbSeparator5: TToolButton
+      Left = 500
+      Top = 0
+      Width = 5
+      Style = tbsSeparator
+    end
+    object tbRecord: TToolButton
+      Left = 505
+      Top = 0
+      Hint = 'Record / Pause (F5)'
+      ImageIndex = 13
+      ImageName = '13 - Record'
+      OnClick = tbRecordClick
+    end
+    object tbToTracer: TToolButton
+      Left = 555
+      Top = 0
+      Hint = 'Move trace to Tracer (Ctrl+F12)'
+      Enabled = False
+      ImageIndex = 85
+      ImageName = '85 - ToTracer'
+      OnClick = tbToTracerClick
+    end
+    object tbSetLabel: TToolButton
+      Left = 605
+      Top = 0
+      Hint = 'Add breakpoint / Set marker (F8 / Automatic marker - F9)'
+      Enabled = False
+      ImageIndex = 15
+      ImageName = '15 - Tag'
+      OnClick = tbSetLabelClick
+    end
+    object tbAllLabels: TToolButton
+      Left = 655
+      Top = 0
+      Hint = 'Show all markers'
+      ImageIndex = 16
+      ImageName = '16 - TagList'
+      OnClick = tbAllLabelsClick
+    end
+  end
+  object sbStatus: TStatusBar
+    Left = 0
+    Top = 464
+    Width = 877
+    Height = 19
+    Panels = <4 items>
+    OnDrawPanel = sbStatusDrawPanel
+  end
+  object pmDBC: TPopupMenu
+    OnClose = pmDBCClose
+    OnPopup = pmDBCPopup
+    Left = 296
+    Top = 64
+    object miDBCManager: TMenuItem
+      Caption = 'Manager'
+      OnClick = miDBCManagerClick
+    end
+    object miDBCSignalViewer: TMenuItem
+      Caption = 'Signal viewer'
+      Enabled = False
+      object miSignalViewerSeparator: TMenuItem
+        Caption = '-'
+      end
+    end
+  end
+  object pmOpenStreamRecent: TPopupMenu
+    Left = 96
+    Top = 112
+  end
+  object pmComment: TPopupMenu
+    Left = 200
+    Top = 64
+    object miCommentOpen: TMenuItem
+      Caption = 'Open comments'
+      OnClick = miCommentOpenClick
+    end
+    object miCommentRecent: TMenuItem
+      Caption = 'Open recent'
+    end
+    object miCommentSeparator1: TMenuItem
+      Caption = '-'
+    end
+    object miCommentSave: TMenuItem
+      Caption = 'Save comments'
+      OnClick = miCommentSaveClick
+    end
+    object miCommentClear: TMenuItem
+      Caption = 'Clear'
+      OnClick = miCommentClearClick
+    end
+  end
+  object tmr500Clock: TTimer
+    Interval = 500
+    OnTimer = tmr500ClockTimer
+    Left = 588
+    Top = 64
+  end
+end

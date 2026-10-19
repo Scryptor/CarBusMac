@@ -1,0 +1,456 @@
+object dlgTracerRow: TdlgTracerRow
+  Left = 0
+  Top = 0
+  BorderStyle = bsDialog
+  Caption = 'Add tracer row'
+  ClientHeight = 575
+  ClientWidth = 565
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  Position = poOwnerFormCenter
+  ShowHint = True
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  TextHeight = 13
+  object gbDBC: TGroupBox
+    Left = 195
+    Top = 8
+    Width = 364
+    Height = 113
+    Caption = ' DBC '
+    TabOrder = 0
+    object lNode: TLabel
+      Left = 12
+      Top = 16
+      Width = 25
+      Height = 13
+      Caption = 'Node'
+      FocusControl = cbNodes
+    end
+    object lMessage: TLabel
+      Left = 12
+      Top = 60
+      Width = 42
+      Height = 13
+      Caption = 'Message'
+    end
+    object cbNodes: TComboBox
+      Left = 12
+      Top = 32
+      Width = 339
+      Height = 22
+      Style = csDropDownList
+      Enabled = False
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 0
+      OnChange = cbNodesChange
+    end
+    object cbMessages: TComboBox
+      Left = 12
+      Top = 76
+      Width = 339
+      Height = 22
+      Style = csDropDownList
+      Enabled = False
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 1
+      OnChange = cbMessagesChange
+    end
+  end
+  object btnSave: TButton
+    Left = 394
+    Top = 544
+    Width = 75
+    Height = 25
+    Caption = 'Save'
+    Default = True
+    ModalResult = 1
+    TabOrder = 5
+  end
+  object btnCancel: TButton
+    Left = 482
+    Top = 544
+    Width = 75
+    Height = 25
+    Cancel = True
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 1
+  end
+  object gbData: TGroupBox
+    Left = 8
+    Top = 216
+    Width = 551
+    Height = 134
+    Caption = ' Raw data '
+    TabOrder = 2
+    object frameData: TframeAsciiData64
+      AlignWithMargins = True
+      Left = 8
+      Top = 18
+      Width = 538
+      Height = 111
+      Margins.Left = 6
+      Align = alClient
+      TabOrder = 0
+      ExplicitLeft = 8
+      ExplicitTop = 18
+      ExplicitWidth = 538
+      ExplicitHeight = 111
+    end
+  end
+  object gbSignals: TGroupBox
+    Left = 8
+    Top = 352
+    Width = 551
+    Height = 186
+    Caption = ' Signals '
+    TabOrder = 3
+    object sbSignals: TScrollBox
+      AlignWithMargins = True
+      Left = 5
+      Top = 18
+      Width = 541
+      Height = 163
+      VertScrollBar.Tracking = True
+      Align = alClient
+      AutoScroll = False
+      AutoSize = True
+      BevelInner = bvNone
+      BevelOuter = bvNone
+      BorderStyle = bsNone
+      Color = clWindow
+      ParentColor = False
+      TabOrder = 0
+      OnMouseWheel = sbSignalsMouseWheel
+    end
+  end
+  object gbMessage: TGroupBox
+    Left = 8
+    Top = 8
+    Width = 181
+    Height = 113
+    Caption = ' Message '
+    TabOrder = 4
+    object lBusType: TLabel
+      Left = 12
+      Top = 16
+      Width = 42
+      Height = 13
+      Caption = 'Bus type'
+      FocusControl = cbBusType
+    end
+    object lMsgID: TLabel
+      Left = 12
+      Top = 60
+      Width = 11
+      Height = 13
+      Caption = 'ID'
+      FocusControl = edMsgID
+    end
+    object lDLC: TLabel
+      Left = 93
+      Top = 60
+      Width = 19
+      Height = 13
+      Caption = 'DLC'
+    end
+    object edMsgID: TExNumberEdit
+      Left = 12
+      Top = 76
+      Width = 65
+      Height = 22
+      Alignment = taRightJustify
+      Base = 16
+      Capitalize = True
+      Enabled = False
+      FillZero = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      MaxLength = 3
+      MaxValue = '7FF'
+      ParentFont = False
+      TabOrder = 3
+      Text = '000'
+    end
+    object cbBusType: TComboBox
+      Left = 12
+      Top = 32
+      Width = 156
+      Height = 22
+      Style = csDropDownList
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 0
+      OnChange = cbBusTypeChange
+    end
+    object cb29bit: TCheckBox
+      Left = 29
+      Top = 58
+      Width = 58
+      Height = 17
+      Caption = '29 bit'
+      Enabled = False
+      TabOrder = 1
+      OnClick = cb29bitClick
+    end
+    object cbDLC: TComboBox
+      Left = 93
+      Top = 76
+      Width = 75
+      Height = 22
+      Style = csDropDownList
+      Enabled = False
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 2
+      OnChange = cbDLCChange
+    end
+  end
+  object gbFlags: TGroupBox
+    Left = 8
+    Top = 124
+    Width = 551
+    Height = 41
+    Caption = ' Flags '
+    TabOrder = 6
+    object pnCAN: TPanel
+      Left = 303
+      Top = 16
+      Width = 62
+      Height = 41
+      BevelOuter = bvNone
+      TabOrder = 1
+      Visible = False
+      object cbRTR: TCheckBox
+        Left = 8
+        Top = 0
+        Width = 75
+        Height = 17
+        Caption = 'RTR'
+        TabOrder = 0
+        OnClick = cbRTRClick
+      end
+    end
+    object pnLIN: TPanel
+      Left = 363
+      Top = 16
+      Width = 185
+      Height = 41
+      BevelOuter = bvNone
+      TabOrder = 2
+      Visible = False
+      object cbMaster: TCheckBox
+        Left = 8
+        Top = 0
+        Width = 75
+        Height = 17
+        Caption = 'Master'
+        TabOrder = 0
+        OnClick = cbMasterClick
+      end
+      object cbEnhanced: TCheckBox
+        Left = 90
+        Top = 0
+        Width = 90
+        Height = 17
+        Caption = 'Enhanced CRC'
+        TabOrder = 1
+      end
+    end
+    object pnCAN_FD: TPanel
+      Left = 2
+      Top = 15
+      Width = 547
+      Height = 41
+      Align = alTop
+      BevelOuter = bvNone
+      TabOrder = 0
+      Visible = False
+      object cbBRS: TCheckBox
+        Left = 90
+        Top = 0
+        Width = 75
+        Height = 17
+        Caption = 'BRS'
+        TabOrder = 0
+      end
+      object cbESI: TCheckBox
+        Left = 172
+        Top = 0
+        Width = 75
+        Height = 17
+        Caption = 'ESI'
+        TabOrder = 1
+      end
+      object rbFD: TRadioButton
+        Left = 8
+        Top = 0
+        Width = 75
+        Height = 17
+        Caption = 'CAN-FD'
+        Checked = True
+        TabOrder = 2
+        TabStop = True
+        OnClick = rbModeClick
+      end
+      object rbClassic: TRadioButton
+        Left = 254
+        Top = 0
+        Width = 75
+        Height = 17
+        Caption = 'Classic CAN'
+        TabOrder = 3
+        OnClick = rbModeClick
+      end
+      object cbClassicRTR: TCheckBox
+        Left = 336
+        Top = 0
+        Width = 75
+        Height = 17
+        Caption = 'RTR'
+        Enabled = False
+        TabOrder = 4
+      end
+    end
+  end
+  object gbOptions: TGroupBox
+    Left = 8
+    Top = 168
+    Width = 551
+    Height = 45
+    Caption = ' Options '
+    TabOrder = 7
+    object lDelay: TLabel
+      Left = 12
+      Top = 18
+      Width = 75
+      Height = 13
+      AutoSize = False
+      Caption = 'Delay (ms)'
+    end
+    object lValue: TLabel
+      Left = 414
+      Top = 18
+      Width = 26
+      Height = 13
+      Alignment = taRightJustify
+      Caption = 'Value'
+    end
+    object lBefore: TLabel
+      Left = 98
+      Top = 18
+      Width = 35
+      Height = 13
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Before'
+      FocusControl = edDelayBefore
+    end
+    object lAfter: TLabel
+      Left = 202
+      Top = 18
+      Width = 35
+      Height = 13
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'After'
+      FocusControl = edDelayAfter
+    end
+    object edDelayBefore: TExNumberEdit
+      Left = 139
+      Top = 14
+      Width = 50
+      Height = 22
+      Alignment = taRightJustify
+      Base = 10
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      MaxLength = 4
+      MaxValue = '1000'
+      ParentFont = False
+      TabOrder = 0
+      Text = '0'
+    end
+    object edValue: TExNumberEdit
+      Left = 446
+      Top = 15
+      Width = 24
+      Height = 22
+      Base = 16
+      Capitalize = True
+      FillZero = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      MaxLength = 2
+      ParentFont = False
+      TabOrder = 1
+      Text = '00'
+    end
+    object btnFillData: TButton
+      Left = 476
+      Top = 14
+      Width = 65
+      Height = 24
+      Caption = 'Fill data'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 2
+      OnClick = btnFillDataClick
+    end
+    object edDelayAfter: TExNumberEdit
+      Left = 243
+      Top = 14
+      Width = 50
+      Height = 22
+      Alignment = taRightJustify
+      Base = 10
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      MaxLength = 4
+      MaxValue = '1000'
+      ParentFont = False
+      TabOrder = 3
+      Text = '0'
+    end
+  end
+end

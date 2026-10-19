@@ -1,0 +1,145 @@
+object dlgRangeFilterEdit: TdlgRangeFilterEdit
+  Left = 0
+  Top = 0
+  BorderStyle = bsDialog
+  Caption = 'Range filter'
+  ClientHeight = 227
+  ClientWidth = 305
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  Position = poOwnerFormCenter
+  OnShow = FormShow
+  TextHeight = 13
+  object gbRange: TGroupBox
+    Left = 8
+    Top = 8
+    Width = 289
+    Height = 77
+    Caption = ' Range '
+    TabOrder = 0
+    object lFrom: TLabel
+      Left = 16
+      Top = 24
+      Width = 34
+      Height = 13
+      AutoSize = False
+      Caption = 'From'
+      FocusControl = edFrom
+    end
+    object lTo: TLabel
+      Left = 156
+      Top = 24
+      Width = 34
+      Height = 13
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'To'
+      FocusControl = edTo
+    end
+    object edFrom: TExNumberEdit
+      Left = 60
+      Top = 21
+      Width = 75
+      Height = 22
+      Alignment = taRightJustify
+      Base = 16
+      Capitalize = True
+      FillZero = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      MaxLength = 8
+      MaxValue = '1FFFFFFF'
+      ParentFont = False
+      TabOrder = 0
+      Text = '00000000'
+    end
+    object edTo: TExNumberEdit
+      Left = 200
+      Top = 21
+      Width = 75
+      Height = 22
+      Alignment = taRightJustify
+      Base = 16
+      Capitalize = True
+      FillZero = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      MaxLength = 8
+      ParentFont = False
+      TabOrder = 1
+      Text = '1FFFFFFF'
+    end
+    object cbEnabled: TCheckBox
+      Left = 16
+      Top = 49
+      Width = 259
+      Height = 17
+      Caption = 'Enable filter'
+      TabOrder = 2
+    end
+  end
+  object gbExclude: TGroupBox
+    Left = 8
+    Top = 88
+    Width = 289
+    Height = 97
+    Caption = ' Exclude '
+    TabOrder = 1
+    object lExclude: TLabel
+      Left = 16
+      Top = 24
+      Width = 259
+      Height = 13
+      AutoSize = False
+      Caption = 'List of excluded identifiers'
+    end
+    object edExclude: TEdit
+      Left = 16
+      Top = 43
+      Width = 259
+      Height = 21
+      TabOrder = 0
+      OnKeyDown = evKeyDownList
+      OnKeyPress = edKeyPressList
+    end
+    object stInfo: TStaticText
+      Left = 16
+      Top = 70
+      Width = 259
+      Height = 17
+      AutoSize = False
+      Caption = 'Use a comma as a delimiter for identifiers'
+      TabOrder = 1
+    end
+  end
+  object btnSet: TButton
+    Left = 68
+    Top = 194
+    Width = 75
+    Height = 25
+    Caption = 'Set'
+    Default = True
+    ModalResult = 1
+    TabOrder = 2
+  end
+  object btnCancel: TButton
+    Left = 162
+    Top = 194
+    Width = 75
+    Height = 25
+    Cancel = True
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 3
+  end
+end

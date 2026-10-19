@@ -1,0 +1,877 @@
+object frmTracer: TfrmTracer
+  Left = 0
+  Top = 0
+  ClientHeight = 440
+  ClientWidth = 888
+  Color = clBtnFace
+  Constraints.MinHeight = 400
+  Constraints.MinWidth = 900
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  KeyPreview = True
+  Menu = mmMain
+  ShowHint = True
+  OnAfterMonitorDpiChanged = FormAfterMonitorDpiChanged
+  OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  TextHeight = 13
+  object spSplitter: TSplitter
+    Left = 725
+    Top = 51
+    Height = 370
+    Align = alRight
+    AutoSnap = False
+    Beveled = True
+    MinSize = 160
+    OnMoved = spSplitterMoved
+    ExplicitLeft = 758
+    ExplicitTop = 52
+    ExplicitHeight = 437
+  end
+  object tbToolBar: TToolBar
+    Left = 0
+    Top = 0
+    Width = 888
+    Height = 26
+    ButtonHeight = 24
+    ButtonWidth = 50
+    DisabledImages = dmBase.ilMainGray
+    EdgeBorders = [ebBottom]
+    Images = dmBase.ilMain
+    TabOrder = 1
+    Wrapable = False
+    object tbNew: TToolButton
+      Left = 0
+      Top = 0
+      Action = acTraceNew
+      Visible = False
+    end
+    object tbTraceOpen: TToolButton
+      Left = 50
+      Top = 0
+      Caption = 'Reopen'
+      DropdownMenu = pmOpenRecent
+      ImageIndex = 17
+      ImageName = '17 - StreamLoad'
+      Style = tbsDropDown
+      OnClick = acTraceOpenExecute
+    end
+    object tbComment: TToolButton
+      Left = 115
+      Top = 0
+      Action = acCommentEdit
+    end
+    object tbDBC: TToolButton
+      Left = 165
+      Top = 0
+      Hint = 'Open DBC manager'
+      ImageIndex = 88
+      ImageName = '88- DBC'
+      OnClick = acDBCExecute
+    end
+    object tbSeparator7: TToolButton
+      Left = 215
+      Top = 0
+      Width = 4
+      Style = tbsSeparator
+    end
+    object tbFilter: TToolButton
+      Left = 219
+      Top = 0
+      Action = acFilter
+    end
+    object tbDelay: TToolButton
+      Left = 269
+      Top = 0
+      Hint = 'Delay time between messages'
+      DropdownMenu = pmDelay
+      ImageIndex = 34
+      ImageName = '34 - ClockAuto'
+      Style = tbsDropDown
+      OnClick = tbDropDownButtonClick
+    end
+    object tbSeparator6: TToolButton
+      Left = 334
+      Top = 0
+      Width = 4
+      Style = tbsSeparator
+    end
+    object tbRecord: TToolButton
+      Left = 338
+      Top = 0
+      Enabled = False
+      ImageIndex = 13
+      ImageName = '13 - Record'
+      Visible = False
+    end
+    object tbRun: TToolButton
+      Left = 388
+      Top = 0
+      Action = acRun
+    end
+    object tbStep: TToolButton
+      Left = 438
+      Top = 0
+      Action = acStep
+    end
+    object tbLoop: TToolButton
+      Left = 488
+      Top = 0
+      Action = acLoop
+    end
+    object tbTraceSelected: TToolButton
+      Left = 538
+      Top = 0
+      Action = acPlaySelected
+    end
+    object tbTransmit: TToolButton
+      Left = 588
+      Top = 0
+      Hint = 'Transmit data to CAN'
+      DropdownMenu = pmTransmit
+      ImageIndex = 25
+      ImageName = '25 - Monitor'
+      Style = tbsDropDown
+      OnClick = tbDropDownButtonClick
+    end
+    object tbSeparator3: TToolButton
+      Left = 653
+      Top = 0
+      Width = 4
+      Indeterminate = True
+      Style = tbsSeparator
+    end
+    object tbCopy: TToolButton
+      Left = 657
+      Top = 0
+      Hint = 'Copy to TX-List'
+      Enabled = False
+      ImageIndex = 8
+      ImageName = '08 - ToTransmit'
+      OnClick = tbCopyClick
+    end
+    object tbSeparator4: TToolButton
+      Left = 707
+      Top = 0
+      Width = 4
+      Style = tbsSeparator
+    end
+    object tbBreakpoint: TToolButton
+      Left = 711
+      Top = 0
+      Action = acBreakpoint
+    end
+    object tbBreakpointList: TToolButton
+      Left = 761
+      Top = 0
+      Action = acBreakpointList
+    end
+  end
+  object pnAddActions: TPanel
+    Left = 0
+    Top = 26
+    Width = 888
+    Height = 25
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 3
+    DesignSize = (888 25)
+    object cbStopOnReceiveData: TCheckBox
+      Left = 4
+      Top = 4
+      Width = 221
+      Height = 17
+      TabStop = False
+      Caption = 'Stop on receive data'
+      TabOrder = 0
+      OnClick = cbStopOnReceiveDataClick
+    end
+    object pnChannel: TPanel
+      Left = 431
+      Top = 1
+      Width = 224
+      Height = 22
+      BevelOuter = bvNone
+      TabOrder = 1
+      DesignSize = (224 22)
+      object lOnlyChannel: TLabel
+        Left = 59
+        Top = 5
+        Width = 85
+        Height = 13
+        Alignment = taRightJustify
+        Anchors = [akTop, akRight]
+        Caption = 'Only for Channel:'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+      end
+      object cbOnlyChannel: TComboBox
+        Left = 149
+        Top = 1
+        Width = 75
+        Height = 21
+        Style = csDropDownList
+        Anchors = [akTop, akRight]
+        Enabled = False
+        ItemIndex = 0
+        TabOrder = 0
+        TabStop = False
+        Text = 'Channel 1'
+        OnChange = cbOnlyChannelChange
+        Items.Strings = ('Channel 1')
+      end
+    end
+    object cbStopOnBreak: TCheckBox
+      Left = 240
+      Top = 4
+      Width = 185
+      Height = 17
+      Caption = 'Stop on break point'
+      Checked = True
+      State = cbChecked
+      TabOrder = 2
+      OnClick = cbStopOnBreakClick
+    end
+    object stVisible: TStaticText
+      Left = 806
+      Top = 6
+      Width = 65
+      Height = 17
+      Alignment = taRightJustify
+      Anchors = [akTop, akRight]
+      BiDiMode = bdLeftToRight
+      Caption = 'Rows: 0 of 0'
+      ParentBiDiMode = False
+      TabOrder = 3
+    end
+  end
+  object dgTrace: TDrawGrid
+    Left = 0
+    Top = 51
+    Width = 725
+    Height = 370
+    Align = alClient
+    ColCount = 2
+    DoubleBuffered = False
+    RowCount = 2
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Consolas'
+    Font.Style = []
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRowSelect]
+    ParentDoubleBuffered = False
+    ParentFont = False
+    PopupMenu = pmTrace
+    TabOrder = 0
+    OnClick = dgTraceClick
+    OnDblClick = dgTraceDblClick
+    OnKeyDown = dgTraceKeyDown
+    OnKeyPress = dgTraceKeyPress
+    OnMouseDown = dgTraceMouseDown
+    OnMouseWheelDown = dgTraceMouseWheel
+    OnMouseWheelUp = dgTraceMouseWheel
+    OnSelectCell = dgTraceSelectCell
+  end
+  object sbStatus: TStatusBar
+    Left = 0
+    Top = 421
+    Width = 888
+    Height = 19
+    Panels = <4 items>
+    object pbProgress: TProgressBar
+      Left = 2
+      Top = 2
+      Width = 96
+      Height = 15
+      TabOrder = 0
+    end
+  end
+  object pnFilter: TPanel
+    Left = 728
+    Top = 51
+    Width = 160
+    Height = 370
+    Align = alRight
+    BevelOuter = bvNone
+    TabOrder = 4
+    object pnFilterBtn: TPanel
+      Left = 0
+      Top = 337
+      Width = 160
+      Height = 33
+      Align = alBottom
+      BevelOuter = bvNone
+      TabOrder = 0
+      object btnFilterAll: TButton
+        Left = 4
+        Top = 4
+        Width = 74
+        Height = 25
+        Action = acFilterSetAll
+        Caption = 'All'
+        TabOrder = 0
+      end
+      object btnFilterNone: TButton
+        Left = 82
+        Top = 4
+        Width = 74
+        Height = 25
+        Action = acFilterClearAll
+        Caption = 'None'
+        TabOrder = 1
+      end
+    end
+    object dgFilter: TDrawGrid
+      Left = 0
+      Top = 0
+      Width = 160
+      Height = 337
+      Align = alClient
+      ColCount = 1
+      FixedCols = 0
+      RowCount = 2
+      Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRowSelect]
+      PopupMenu = pmFilter
+      TabOrder = 1
+      OnKeyPress = dgFilterKeyPress
+      OnMouseDown = dgFilterMouseDown
+      OnMouseMove = dgFilterMouseMove
+    end
+  end
+  object pmFilter: TPopupMenu
+    OnPopup = pmFilterPopup
+    Left = 836
+    Top = 88
+    object miClearAll: TMenuItem
+      Action = acFilterClearAll
+    end
+    object miSetAll: TMenuItem
+      Action = acFilterSetAll
+    end
+    object miInverseSelection: TMenuItem
+      Action = acFilterInverce
+    end
+    object miFilterSeparator3: TMenuItem
+      Caption = '-'
+    end
+    object miFindMessages: TMenuItem
+      Action = acFindMessages
+    end
+    object miFilterSeparator: TMenuItem
+      Caption = '-'
+    end
+    object miSelectMessages: TMenuItem
+      Tag = 1
+      Action = acFilterSelectMessages
+    end
+    object miUnselectMessages: TMenuItem
+      Tag = -1
+      Action = acFilterDeselectMessages
+    end
+    object miFilterSeparator2: TMenuItem
+      Caption = '-'
+    end
+    object miFilterDisableMessages: TMenuItem
+      Action = acFilterDisableMessages
+    end
+    object miFilterEnableMessages: TMenuItem
+      Action = acFilterEnableMessages
+    end
+  end
+  object pmTransmit: TPopupMenu
+    OnPopup = pmTransmitPopup
+    Left = 376
+    Top = 100
+    object miToMonitor: TMenuItem
+      Caption = 'To Monitor'
+      Checked = True
+      Default = True
+      OnClick = miTransmitGoal
+    end
+  end
+  object tmrQueueRead: TTimer
+    Enabled = False
+    OnTimer = tmrQueueReadTimer
+    Left = 308
+    Top = 100
+  end
+  object pmDelay: TPopupMenu
+    Images = dmBase.ilMain
+    OnPopup = pmDelayPopup
+    Left = 224
+    Top = 100
+    object miClockAuto: TMenuItem
+      Caption = 'Default message delay'
+      Checked = True
+      ImageIndex = 34
+      ImageName = '34 - ClockAuto'
+      OnClick = miClockGoal
+    end
+    object miUseSecondsInDelay: TMenuItem
+      Caption = 'Max 1sec in message delay'
+      Checked = True
+      OnClick = miUseSecondsInDelayClick
+    end
+    object miDelaySeparator3: TMenuItem
+      Caption = '-'
+    end
+    object miTimeDefault: TMenuItem
+      Action = acTimeDefault
+    end
+    object miTimeLinear: TMenuItem
+      Action = acTimeLinear
+    end
+    object miTimeLocal: TMenuItem
+      Action = acTimeLocal
+    end
+    object miDelaySeparator1: TMenuItem
+      Tag = -2
+      Caption = '-'
+    end
+    object miClock10: TMenuItem
+      Tag = 10
+      Caption = '10 ms message delay'
+      ImageIndex = 35
+      ImageName = '35 - Clock10'
+      OnClick = miClockGoal
+    end
+    object miClock20: TMenuItem
+      Tag = 20
+      Caption = '20 ms message delay'
+      ImageIndex = 36
+      ImageName = '36 - Clock20'
+      OnClick = miClockGoal
+    end
+    object miClock30: TMenuItem
+      Tag = 30
+      Caption = '30 ms message delay'
+      ImageIndex = 37
+      ImageName = '37 - Clock30'
+      OnClick = miClockGoal
+    end
+    object miClock40: TMenuItem
+      Tag = 40
+      Caption = '40 ms message delay'
+      ImageIndex = 38
+      ImageName = '38 - Clock40'
+      OnClick = miClockGoal
+    end
+    object miClock50: TMenuItem
+      Tag = 50
+      Caption = '50 ms message delay'
+      ImageIndex = 39
+      ImageName = '39 - Clock50'
+      OnClick = miClockGoal
+    end
+    object miDelaySeparator2: TMenuItem
+      Tag = -2
+      Caption = '-'
+    end
+    object miClockCustom: TMenuItem
+      Tag = -1
+      Caption = 'Custom message delay'
+      ImageIndex = 40
+      ImageName = '40 - ClockCustom'
+      OnClick = miClockGoal
+    end
+  end
+  object pmTrace: TPopupMenu
+    Images = dmBase.ilMain
+    OnPopup = pmTracePopup
+    Left = 288
+    Top = 192
+    object miTraceAdd: TMenuItem
+      Action = acTraceRowAdd
+    end
+    object miTraceInsert: TMenuItem
+      Action = acTraceRowInsert
+    end
+    object miTraceSeparator3: TMenuItem
+      Caption = '-'
+    end
+    object miTraceEdit: TMenuItem
+      Action = acTraceRowEdit
+    end
+    object miTraceDelete: TMenuItem
+      Action = acTraceRowDelete
+    end
+    object miTraceSeparator4: TMenuItem
+      Caption = '-'
+    end
+    object miTraceDeleteSelected: TMenuItem
+      Action = acTraceRowsDelete
+    end
+    object miTraceCopySelected: TMenuItem
+      Action = acTraceRowsCopy
+    end
+    object miTraceSeparator2: TMenuItem
+      Caption = '-'
+    end
+    object miDisableRow: TMenuItem
+      Action = acDisableRow
+    end
+    object miEnableRow: TMenuItem
+      Action = acEnableRow
+    end
+    object miDisableSelected: TMenuItem
+      Action = acDisableSelected
+    end
+    object miEnableSelected: TMenuItem
+      Action = acEnableSelected
+    end
+    object miDisableByID: TMenuItem
+      Action = acDisableByID
+    end
+    object miEnableByID: TMenuItem
+      Action = acEnableByID
+    end
+    object miTraceSeparator5: TMenuItem
+      Caption = '-'
+    end
+    object miCancelSelection: TMenuItem
+      Action = acCancelSelection
+    end
+    object miTraceSeparator1: TMenuItem
+      Caption = '-'
+    end
+    object miTraceStart: TMenuItem
+      Caption = 'Set trace start'
+      ImageIndex = 62
+      ImageName = '62 - Up'
+      Visible = False
+    end
+    object miTraceFinish: TMenuItem
+      Caption = 'Set trace finish'
+      ImageIndex = 61
+      ImageName = '61 - Down'
+      Visible = False
+    end
+  end
+  object alTrace: TActionList
+    Images = dmBase.ilMain
+    Left = 492
+    Top = 238
+    object acFilterClearAll: TAction
+      Category = 'Filter'
+      Caption = 'Clear all'
+      OnExecute = acFilterClearAllExecute
+    end
+    object acFilterSetAll: TAction
+      Category = 'Filter'
+      Caption = 'Set all'
+      OnExecute = acFilterSetAllExecute
+    end
+    object acFilterInverce: TAction
+      Category = 'Filter'
+      Caption = 'Invert selection'
+      OnExecute = acFilterInverceExecute
+    end
+    object acFilterSelectMessages: TAction
+      Tag = 1
+      Category = 'Filter/Messages'
+      Caption = 'Select messages'
+      OnExecute = acFilterMessagesDSExecute
+    end
+    object acFilterDeselectMessages: TAction
+      Category = 'Filter/Messages'
+      Caption = 'Deselect messages'
+      OnExecute = acFilterMessagesDSExecute
+    end
+    object acFilter: TAction
+      Category = 'Toolbar'
+      Caption = 'Message filter'
+      Checked = True
+      ImageIndex = 2
+      ImageName = '02 - Filter'
+      ShortCut = 16498
+      OnExecute = acFilterExecute
+    end
+    object acTraceOpen: TAction
+      Category = 'Log file'
+      Caption = 'Open'
+      ImageIndex = 17
+      ImageName = '17 - StreamLoad'
+      ShortCut = 16463
+      OnExecute = acTraceOpenExecute
+    end
+    object acTraceNew: TAction
+      Category = 'Log file'
+      Caption = 'New'
+      ImageIndex = 4
+      ImageName = '04 - New'
+      ShortCut = 16462
+      OnExecute = acTraceNewExecute
+    end
+    object acTraceSave: TAction
+      Category = 'Log file'
+      Caption = 'Save'
+      Enabled = False
+      ImageIndex = 18
+      ImageName = '18 - StreamSave'
+      ShortCut = 16467
+      OnExecute = acTraceSaveExecute
+    end
+    object acTraceSaveAs: TAction
+      Category = 'Log file'
+      Caption = 'Save as...'
+      Enabled = False
+      ShortCut = 24659
+      OnExecute = acTraceSaveAsExecute
+    end
+    object acCommentOpen: TAction
+      Category = 'Comment'
+      Caption = 'Open'
+      ImageIndex = 10
+      ImageName = '10 - CommentLoad'
+      OnExecute = acCommentOpenExecute
+    end
+    object acCommentEdit: TAction
+      Category = 'Comment'
+      Caption = 'Edit'
+      Enabled = False
+      ImageIndex = 9
+      ImageName = '09 - Comment'
+      ShortCut = 115
+      OnExecute = acCommentEditExecute
+    end
+    object acCommentClear: TAction
+      Category = 'Comment'
+      Caption = 'Clear'
+      OnExecute = acCommentClearExecute
+    end
+    object acTraceRowAdd: TAction
+      Category = 'Edit'
+      Caption = 'Add'
+      ShortCut = 45
+      OnExecute = acTraceRowExecute
+    end
+    object acTraceRowInsert: TAction
+      Category = 'Edit'
+      Caption = 'Insert'
+      ShortCut = 16429
+      OnExecute = acTraceRowExecute
+    end
+    object acTraceRowEdit: TAction
+      Category = 'Edit'
+      Caption = 'Edit'
+      ShortCut = 16397
+      OnExecute = acTraceRowExecute
+    end
+    object acTraceRowDelete: TAction
+      Category = 'Edit'
+      Caption = 'Delete'
+      ShortCut = 16430
+      OnExecute = acTraceRowDeleteExecute
+    end
+    object acTraceRowsDelete: TAction
+      Category = 'Edit'
+      Caption = 'Delete selected rows'
+      OnExecute = acTraceRowsDeleteExecute
+    end
+    object acTraceRowsCopy: TAction
+      Category = 'Edit'
+      Caption = 'Copy selected rows'
+      ShortCut = 16451
+      OnExecute = acTraceRowsCopyExecute
+    end
+    object acDisableRow: TAction
+      Category = 'Selected'
+      Caption = 'Disable row'
+      OnExecute = acDisableEnableRowExecute
+    end
+    object acDisableSelected: TAction
+      Category = 'Selected'
+      Caption = 'Disable selected'
+      OnExecute = acDisableEnableSelectedExecute
+    end
+    object acDisableByID: TAction
+      Tag = 1
+      Category = 'Selected'
+      Caption = 'Disable by message ID'
+      OnExecute = acDisableEnableByIDExecute
+    end
+    object acEnableRow: TAction
+      Tag = 1
+      Category = 'Selected'
+      Caption = 'Enable row'
+      OnExecute = acDisableEnableRowExecute
+    end
+    object acEnableSelected: TAction
+      Tag = 1
+      Category = 'Selected'
+      Caption = 'Enable selected'
+      OnExecute = acDisableEnableSelectedExecute
+    end
+    object acEnableByID: TAction
+      Category = 'Selected'
+      Caption = 'Enable by message ID'
+      OnExecute = acDisableEnableByIDExecute
+    end
+    object acBreakpoint: TAction
+      Category = 'Breakpoint'
+      ImageIndex = 15
+      ImageName = '15 - Tag'
+      ShortCut = 116
+      OnExecute = acBreakpointExecute
+    end
+    object acBreakpointList: TAction
+      Category = 'Breakpoint'
+      ImageIndex = 16
+      ImageName = '16 - TagList'
+      ShortCut = 16500
+      OnExecute = acBreakpointListExecute
+    end
+    object acBreakpointDelete: TAction
+      Category = 'Breakpoint'
+      ShortCut = 8308
+      OnExecute = acBreakpointDeleteExecute
+    end
+    object acStep: TAction
+      Category = 'Trace'
+      Enabled = False
+      Hint = 'Step'
+      ImageIndex = 23
+      ImageName = '23 - Step'
+      ShortCut = 119
+      OnExecute = acStepExecute
+    end
+    object acRun: TAction
+      Category = 'Trace'
+      Enabled = False
+      Hint = 'Run/Pause trace'
+      ImageIndex = 22
+      ImageName = '22 - Run'
+      ShortCut = 120
+      OnExecute = acRunExecute
+    end
+    object acLoop: TAction
+      Category = 'Trace'
+      Enabled = False
+      Hint = 'Repeat'
+      ImageIndex = 24
+      ImageName = '24 - Repeat'
+      OnExecute = acLoopExecute
+    end
+    object acCancelSelection: TAction
+      Category = 'Selected'
+      Caption = 'Cancel selection'
+      OnExecute = acCancelSelectionExecute
+    end
+    object acPlaySelected: TAction
+      Category = 'Selected'
+      Hint = 'Allow play selected'
+      ImageIndex = 73
+      ImageName = '73 - SelectedTrace'
+      OnExecute = acPlaySelectedExecute
+    end
+    object acFilterDisableMessages: TAction
+      Tag = 1
+      Category = 'Filter/Messages'
+      Caption = 'Disable messages'
+      OnExecute = acFilterMessagesDEExecute
+    end
+    object acFilterEnableMessages: TAction
+      Category = 'Filter/Messages'
+      Caption = 'Enable messages'
+      OnExecute = acFilterMessagesDEExecute
+    end
+    object acDBC: TAction
+      Caption = 'DBC'
+      OnExecute = acDBCExecute
+    end
+    object acFindMessages: TAction
+      Category = 'Filter/Messages'
+      Caption = 'Find messages'
+      OnExecute = acFindMessagesExecute
+    end
+    object acTimeDefault: TAction
+      Category = 'Time'
+      Caption = 'Default Timestamp'
+      Checked = True
+      Enabled = False
+      OnExecute = acTimeExecute
+    end
+    object acTimeLinear: TAction
+      Tag = 1
+      Category = 'Time'
+      Caption = 'Linear time'
+      Enabled = False
+      OnExecute = acTimeExecute
+    end
+    object acTimeLocal: TAction
+      Tag = 2
+      Category = 'Time'
+      Caption = 'Local time'
+      Enabled = False
+      OnExecute = acTimeExecute
+    end
+  end
+  object mmMain: TMainMenu
+    Images = dmBase.ilMain
+    Left = 232
+    Top = 276
+    object miTraceFile: TMenuItem
+      Caption = 'Log file'
+      object miTraceNew: TMenuItem
+        Action = acTraceNew
+      end
+      object miTraceOpen: TMenuItem
+        Action = acTraceOpen
+      end
+      object miOpenRecent: TMenuItem
+        Caption = 'Open recent'
+      end
+      object miTraceSeparator: TMenuItem
+        Caption = '-'
+      end
+      object miTraceSave: TMenuItem
+        Action = acTraceSave
+      end
+      object miTraceSaveAs: TMenuItem
+        Action = acTraceSaveAs
+        ImageIndex = 45
+        ImageName = '45 - SaveAs'
+      end
+    end
+    object miCommen: TMenuItem
+      Caption = 'Comment'
+      object miCommentOpen: TMenuItem
+        Action = acCommentOpen
+      end
+      object miCommentEdit: TMenuItem
+        Action = acCommentEdit
+      end
+      object miCommentSeparator: TMenuItem
+        Caption = '-'
+      end
+      object miCommentClear: TMenuItem
+        Action = acCommentClear
+      end
+    end
+    object miDBC: TMenuItem
+      Action = acDBC
+    end
+  end
+  object tmrProcessing: TTimer
+    Interval = 100
+    OnTimer = tmrProcessingTimer
+    Left = 456
+    Top = 100
+  end
+  object pmOpenRecent: TPopupMenu
+    OwnerDraw = True
+    Left = 184
+    Top = 184
+  end
+end

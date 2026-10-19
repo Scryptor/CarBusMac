@@ -1,0 +1,69 @@
+object dlgMarkerList: TdlgMarkerList
+  Left = 0
+  Top = 0
+  BorderStyle = bsDialog
+  Caption = 'Break points / Labels list'
+  ClientHeight = 366
+  ClientWidth = 550
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  Position = poOwnerFormCenter
+  OnAfterMonitorDpiChanged = FormAfterMonitorDpiChanged
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  TextHeight = 13
+  object dgMarkerList: TDrawGrid
+    Left = 8
+    Top = 8
+    Width = 535
+    Height = 313
+    ColCount = 1
+    FixedCols = 0
+    RowCount = 2
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goRowSelect]
+    ScrollBars = ssVertical
+    TabOrder = 0
+    OnKeyDown = dgMarkerListKeyDown
+    OnMouseDown = dgMarkerListMouseDown
+  end
+  object btOk: TButton
+    Left = 380
+    Top = 332
+    Width = 75
+    Height = 25
+    Caption = 'Save'
+    Default = True
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ModalResult = 1
+    ParentFont = False
+    TabOrder = 1
+  end
+  object btCancel: TButton
+    Left = 467
+    Top = 332
+    Width = 75
+    Height = 25
+    Cancel = True
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 2
+  end
+  object btnGo: TButton
+    Left = 292
+    Top = 333
+    Width = 75
+    Height = 25
+    Caption = 'Go to Label'
+    ModalResult = 6
+    TabOrder = 3
+  end
+end

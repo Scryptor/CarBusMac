@@ -1,0 +1,22 @@
+object frmHidden: TfrmHidden
+  Left = 0
+  Top = 0
+  ClientHeight = 298
+  ClientWidth = 631
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  TextHeight = 15
+  object tiIcon: TTrayIcon
+    BalloonTimeout = 5000
+    OnBalloonClick = tiIconBalloonClick
+    OnClick = tiIconClick
+    Left = 112
+    Top = 24
+  end
+end

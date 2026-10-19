@@ -1,0 +1,13 @@
+object frameTracerSignalSelect: TframeTracerSignalSelect
+  object cbValues: TComboBox
+    Left = 312
+    Top = 2
+    Width = 130
+    Height = 23
+    TabOrder = 0
+    OnChange = cbValuesChange
+    OnExit = cbValuesExit
+    OnKeyPress = edValueKeyPress
+    OnSelect = cbValuesSelect
+  end
+end

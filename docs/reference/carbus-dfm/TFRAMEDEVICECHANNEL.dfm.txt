@@ -1,0 +1,339 @@
+object FrameDeviceChannel: TFrameDeviceChannel
+  Left = 0
+  Top = 0
+  Width = 433
+  Height = 472
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  ParentFont = False
+  TabOrder = 0
+  object lChanAlias: TLabel
+    Left = 12
+    Top = 16
+    Width = 63
+    Height = 13
+    Caption = 'Channel alias'
+    FocusControl = edChanAlias
+  end
+  object edChanAlias: TEdit
+    Left = 152
+    Top = 13
+    Width = 175
+    Height = 21
+    MaxLength = 16
+    TabOrder = 0
+  end
+  object pnNominalBaudrate: TPanel
+    Left = 0
+    Top = 43
+    Width = 370
+    Height = 31
+    BevelOuter = bvNone
+    TabOrder = 1
+    Visible = False
+    object lNominalBaudrate: TLabel
+      Left = 12
+      Top = 7
+      Width = 84
+      Height = 13
+      Caption = 'Nominal baudrate'
+      FocusControl = cbNominalBaudrate
+    end
+    object cbNominalBaudrate: TComboBox
+      Left = 152
+      Top = 1
+      Width = 175
+      Height = 26
+      Style = csOwnerDrawFixed
+      ItemHeight = 20
+      TabOrder = 0
+      OnChange = cbNominalBaudrateChange
+      OnDrawItem = cbBaudrateDrawItem
+    end
+    object btnNBRConfigure: TButton
+      Left = 333
+      Top = 0
+      Width = 34
+      Height = 21
+      Hint = 'Configure baudrates'
+      Caption = '...'
+      TabOrder = 1
+      OnClick = btnNBRConfigureClick
+    end
+  end
+  object pnListenMode: TPanel
+    Left = 0
+    Top = 178
+    Width = 370
+    Height = 20
+    BevelOuter = bvNone
+    TabOrder = 4
+    Visible = False
+    object cbListenMode: TCheckBox
+      Left = 152
+      Top = 0
+      Width = 209
+      Height = 17
+      Caption = 'Listen only mode'
+      TabOrder = 0
+    end
+  end
+  object pnLIN_CRC_Type: TPanel
+    Left = 0
+    Top = 208
+    Width = 370
+    Height = 20
+    BevelOuter = bvNone
+    TabOrder = 5
+    Visible = False
+    object lLIN_CRC_Type: TLabel
+      Left = 12
+      Top = 2
+      Width = 67
+      Height = 13
+      Caption = 'LIN CRC Type'
+    end
+    object rbLINClassicCRC: TRadioButton
+      Left = 152
+      Top = 0
+      Width = 87
+      Height = 17
+      Caption = 'Classic CRC'
+      Checked = True
+      TabOrder = 0
+      TabStop = True
+    end
+    object rbLINEnhancedCRC: TRadioButton
+      Left = 245
+      Top = 0
+      Width = 87
+      Height = 17
+      Caption = 'Enhanced CRC'
+      TabOrder = 1
+    end
+  end
+  object pnAutoOpen: TPanel
+    Left = 0
+    Top = 238
+    Width = 370
+    Height = 20
+    BevelOuter = bvNone
+    TabOrder = 6
+    Visible = False
+    object cbAutoOpen: TCheckBox
+      Left = 152
+      Top = 0
+      Width = 229
+      Height = 17
+      Caption = 'Auto open after connecting to device'
+      Checked = True
+      State = cbChecked
+      TabOrder = 0
+    end
+  end
+  object pnTerminator: TPanel
+    Left = 0
+    Top = 268
+    Width = 370
+    Height = 20
+    BevelOuter = bvNone
+    TabOrder = 7
+    Visible = False
+    object cbTerminator: TCheckBox
+      Left = 152
+      Top = 0
+      Width = 229
+      Height = 17
+      Caption = 'Connect terminator 120Ohm'
+      TabOrder = 0
+    end
+  end
+  object pnPullUp: TPanel
+    Left = 0
+    Top = 294
+    Width = 370
+    Height = 20
+    BevelOuter = bvNone
+    TabOrder = 8
+    Visible = False
+    object cbPullUpDataLine: TCheckBox
+      Left = 152
+      Top = 0
+      Width = 229
+      Height = 17
+      Caption = 'Pull up data line'
+      TabOrder = 0
+    end
+  end
+  object pnChannelMode: TPanel
+    Left = 0
+    Top = 321
+    Width = 370
+    Height = 26
+    BevelOuter = bvNone
+    TabOrder = 9
+    Visible = False
+    object lChannelMode: TLabel
+      Left = 12
+      Top = 4
+      Width = 68
+      Height = 13
+      Caption = 'Channel mode'
+      FocusControl = cbChannelMode
+    end
+    object cbChannelMode: TComboBox
+      Left = 152
+      Top = 0
+      Width = 175
+      Height = 21
+      Style = csDropDownList
+      TabOrder = 0
+    end
+  end
+  object pnDataBaudrate: TPanel
+    Left = 0
+    Top = 135
+    Width = 370
+    Height = 31
+    BevelOuter = bvNone
+    TabOrder = 3
+    Visible = False
+    object lDataBaudrate: TLabel
+      Left = 12
+      Top = 7
+      Width = 70
+      Height = 13
+      Caption = 'Data baudrate'
+      FocusControl = cbDataBaudrate
+    end
+    object cbDataBaudrate: TComboBox
+      Left = 152
+      Top = 1
+      Width = 175
+      Height = 26
+      Style = csOwnerDrawFixed
+      ItemHeight = 20
+      TabOrder = 0
+      OnChange = cbDataBaudrateChange
+      OnDrawItem = cbBaudrateDrawItem
+    end
+    object btnDBRConfigure: TButton
+      Left = 333
+      Top = 0
+      Width = 34
+      Height = 21
+      Hint = 'Configure baudrates'
+      Caption = '...'
+      TabOrder = 1
+      OnClick = btnDBRConfigureClick
+    end
+  end
+  object pnFDCANMode: TPanel
+    Left = 0
+    Top = 81
+    Width = 370
+    Height = 40
+    BevelOuter = bvNone
+    TabOrder = 2
+    Visible = False
+    object lCANMode: TLabel
+      Left = 12
+      Top = 3
+      Width = 67
+      Height = 13
+      Caption = 'CAN-FD Mode'
+    end
+    object cbClassicCAN: TCheckBox
+      Left = 152
+      Top = 0
+      Width = 185
+      Height = 17
+      Caption = 'Classic CAN'
+      TabOrder = 0
+      OnClick = cbClassicCANClick
+    end
+    object cbBitRateSwitch: TCheckBox
+      Left = 152
+      Top = 20
+      Width = 185
+      Height = 17
+      Caption = 'Bit rate switch'
+      TabOrder = 1
+      OnClick = cbBitRateSwitchClick
+    end
+  end
+  object pnIDLEDelay: TPanel
+    Left = 0
+    Top = 354
+    Width = 370
+    Height = 26
+    BevelOuter = bvNone
+    TabOrder = 10
+    Visible = False
+    object lIDLEDelay: TLabel
+      Left = 12
+      Top = 4
+      Width = 105
+      Height = 13
+      Caption = 'IDLE processing delay'
+      FocusControl = cbIDLEDelay
+    end
+    object cbIDLEDelay: TComboBox
+      Left = 152
+      Top = 0
+      Width = 175
+      Height = 21
+      Style = csDropDownList
+      TabOrder = 0
+      Items.Strings = ('No delay' '100 us' '200 us' '250 us' '500 us' '750 us' '1000 us' '1500 us' '2000 us')
+    end
+  end
+  object pnTxConfirm: TPanel
+    Left = 0
+    Top = 388
+    Width = 370
+    Height = 20
+    BevelOuter = bvNone
+    TabOrder = 11
+    Visible = False
+    object cbTxConfirm: TCheckBox
+      Left = 152
+      Top = 0
+      Width = 229
+      Height = 17
+      Caption = 'Transmit confirmation'
+      Checked = True
+      State = cbChecked
+      TabOrder = 0
+    end
+  end
+  object pnFDFrameFormat: TPanel
+    Left = 0
+    Top = 414
+    Width = 370
+    Height = 26
+    BevelOuter = bvNone
+    TabOrder = 12
+    Visible = False
+    object lFDFrameFormat: TLabel
+      Left = 12
+      Top = 4
+      Width = 108
+      Height = 13
+      Caption = 'CAN-FD Frame Format'
+      FocusControl = cbFDFrameFormat
+    end
+    object cbFDFrameFormat: TComboBox
+      Left = 152
+      Top = 0
+      Width = 175
+      Height = 21
+      Style = csDropDownList
+      TabOrder = 0
+      Items.Strings = ('ISO 11898-1:2015' 'Bosch Specification V1.0')
+    end
+  end
+end

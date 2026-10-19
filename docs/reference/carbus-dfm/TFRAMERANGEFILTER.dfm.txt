@@ -1,0 +1,61 @@
+object frameRangeFilter: TframeRangeFilter
+  Left = 0
+  Top = 0
+  Width = 320
+  Height = 409
+  TabOrder = 0
+  object tvRangeFilter: TTreeView
+    Left = 0
+    Top = 24
+    Width = 320
+    Height = 385
+    Align = alClient
+    CheckBoxes = True
+    Indent = 19
+    ReadOnly = True
+    RowSelect = True
+    ShowButtons = False
+    TabOrder = 0
+    OnChange = tvRangeFilterChange
+    OnClick = tvRangeFilterClick
+    OnCollapsing = tvRangeFilterCollapsing
+    OnCreateNodeClass = tvRangeFilterCreateNodeClass
+    OnDblClick = tvRangeFilterDblClick
+    OnEnter = tvRangeFilterEnter
+  end
+  object tbToolBar: TToolBar
+    Left = 0
+    Top = 0
+    Width = 320
+    Height = 24
+    ButtonHeight = 24
+    ButtonWidth = 50
+    DisabledImages = dmBase.ilMainGray
+    Images = dmBase.ilMain
+    TabOrder = 1
+    object tbAdd: TToolButton
+      Left = 0
+      Top = 0
+      Enabled = False
+      ImageIndex = 41
+      ImageName = '41 - FilterAdd'
+      OnClick = tbAddClick
+    end
+    object tbEdit: TToolButton
+      Left = 50
+      Top = 0
+      Enabled = False
+      ImageIndex = 42
+      ImageName = '42 - FilterEdit'
+      OnClick = tbEditClick
+    end
+    object tbDelete: TToolButton
+      Left = 100
+      Top = 0
+      Enabled = False
+      ImageIndex = 43
+      ImageName = '43 - FilterClear'
+      OnClick = tbDeleteClick
+    end
+  end
+end

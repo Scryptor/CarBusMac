@@ -1,0 +1,387 @@
+object dlgBitRate: TdlgBitRate
+  Left = 0
+  Top = 0
+  BorderStyle = bsDialog
+  Caption = 'Manage bit rates'
+  ClientHeight = 381
+  ClientWidth = 521
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  Position = poOwnerFormCenter
+  OnAfterMonitorDpiChanged = FormAfterMonitorDpiChanged
+  OnCreate = FormCreate
+  OnShow = FormShow
+  DesignSize = (521 381)
+  TextHeight = 13
+  object lClock: TLabel
+    Left = 8
+    Top = 8
+    Width = 124
+    Height = 13
+    Caption = 'Clock frequency: %d MHz'
+  end
+  object lTiming: TLabel
+    Left = 204
+    Top = 8
+    Width = 52
+    Height = 13
+    Caption = '%s timings'
+    Visible = False
+  end
+  object bvlBevel: TBevel
+    Left = 4
+    Top = 27
+    Width = 513
+    Height = 2
+  end
+  object lBitRates: TLabel
+    Left = 8
+    Top = 35
+    Width = 40
+    Height = 13
+    Caption = 'Bit rates'
+    FocusControl = lbBitRates
+  end
+  object lCaption: TLabel
+    Left = 248
+    Top = 57
+    Width = 37
+    Height = 13
+    Caption = 'Caption'
+    FocusControl = edCaption
+  end
+  object lBitRate: TLabel
+    Left = 248
+    Top = 91
+    Width = 35
+    Height = 13
+    Caption = 'Bit rate'
+    FocusControl = edPrescaler
+  end
+  object lSamplePoint: TLabel
+    Left = 248
+    Top = 118
+    Width = 62
+    Height = 13
+    Caption = 'Sample-Point'
+    FocusControl = edSamplePoint
+  end
+  object lPrescaler: TLabel
+    Left = 248
+    Top = 154
+    Width = 44
+    Height = 13
+    Caption = 'Prescaler'
+    FocusControl = edPrescaler
+  end
+  object lSeg1: TLabel
+    Left = 248
+    Top = 181
+    Width = 24
+    Height = 13
+    Caption = 'Seg1'
+    FocusControl = edSeg1
+  end
+  object lSeg2: TLabel
+    Left = 248
+    Top = 208
+    Width = 24
+    Height = 13
+    Caption = 'Seg2'
+    FocusControl = edSeg2
+  end
+  object lSJW: TLabel
+    Left = 248
+    Top = 235
+    Width = 83
+    Height = 13
+    Caption = 'Sync.Jump Width'
+    FocusControl = edSJW
+  end
+  object lBitRateSpeed: TLabel
+    Left = 443
+    Top = 91
+    Width = 23
+    Height = 13
+    Caption = 'Kbps'
+  end
+  object lSamplePointPercent: TLabel
+    Left = 443
+    Top = 118
+    Width = 50
+    Height = 13
+    Caption = '% (50-90)'
+  end
+  object lPrescalerLimit: TLabel
+    Left = 443
+    Top = 154
+    Width = 31
+    Height = 13
+    Caption = '1..%d'
+  end
+  object lSeg1Limit: TLabel
+    Left = 443
+    Top = 181
+    Width = 31
+    Height = 13
+    Caption = '1..%d'
+  end
+  object lSeg2Limit: TLabel
+    Left = 443
+    Top = 208
+    Width = 31
+    Height = 13
+    Caption = '1..%d'
+  end
+  object lSJWLimit: TLabel
+    Left = 443
+    Top = 235
+    Width = 31
+    Height = 13
+    Caption = '1..%d'
+  end
+  object bvlSplit1: TBevel
+    Left = 248
+    Top = 81
+    Width = 265
+    Height = 2
+  end
+  object bvlSplit2: TBevel
+    Left = 248
+    Top = 143
+    Width = 265
+    Height = 2
+  end
+  object lActualBR: TLabel
+    Left = 248
+    Top = 262
+    Width = 68
+    Height = 13
+    Caption = 'Actual bit rate'
+  end
+  object lActualBRSpeed: TLabel
+    Left = 443
+    Top = 262
+    Width = 23
+    Height = 13
+    Caption = 'Kbps'
+  end
+  object lActualSP: TLabel
+    Left = 248
+    Top = 289
+    Width = 95
+    Height = 13
+    Caption = 'Actual Sample-Point'
+  end
+  object lActualSPPercent: TLabel
+    Left = 443
+    Top = 289
+    Width = 11
+    Height = 13
+    Caption = '%'
+  end
+  object bvlSplit3: TBevel
+    Left = 248
+    Top = 340
+    Width = 265
+    Height = 2
+  end
+  object lAccuracy: TLabel
+    Left = 248
+    Top = 316
+    Width = 44
+    Height = 13
+    Caption = 'Accuracy'
+  end
+  object lbBitRates: TListBox
+    Left = 8
+    Top = 54
+    Width = 181
+    Height = 288
+    Style = lbOwnerDrawFixed
+    Anchors = [akLeft, akTop, akBottom]
+    DoubleBuffered = False
+    DragMode = dmAutomatic
+    ItemHeight = 20
+    ParentDoubleBuffered = False
+    TabOrder = 0
+    OnClick = lbBitRatesClick
+    OnDragDrop = lbBitRatesDragDrop
+    OnDragOver = lbBitRatesDragOver
+    OnDrawItem = lbBitRatesDrawItem
+    OnMouseDown = lbBitRatesMouseDown
+  end
+  object bbUp: TBitBtn
+    Tag = -1
+    Left = 195
+    Top = 54
+    Width = 26
+    Height = 26
+    ImageIndex = 65
+    Images = dmBase.ilMain
+    TabOrder = 1
+    OnClick = bbUpDownClick
+  end
+  object bbDown: TBitBtn
+    Tag = 1
+    Left = 195
+    Top = 86
+    Width = 26
+    Height = 26
+    ImageIndex = 66
+    Images = dmBase.ilMain
+    TabOrder = 2
+    OnClick = bbUpDownClick
+  end
+  object edCaption: TEdit
+    Left = 360
+    Top = 54
+    Width = 153
+    Height = 21
+    MaxLength = 64
+    TabOrder = 5
+    OnChange = edCaptionChange
+  end
+  object edPrescaler: TExNumberEdit
+    Left = 360
+    Top = 151
+    Width = 77
+    Height = 21
+    Base = 10
+    MaxValue = '0'
+    TabOrder = 8
+    Text = '0'
+    OnChange = edQuantaChange
+  end
+  object edSeg1: TExNumberEdit
+    Left = 360
+    Top = 178
+    Width = 77
+    Height = 21
+    Base = 10
+    MaxValue = '0'
+    TabOrder = 9
+    Text = '0'
+    OnChange = edQuantaChange
+  end
+  object edSeg2: TExNumberEdit
+    Left = 360
+    Top = 205
+    Width = 77
+    Height = 21
+    Base = 10
+    MaxValue = '0'
+    TabOrder = 10
+    Text = '0'
+    OnChange = edQuantaChange
+  end
+  object edSJW: TExNumberEdit
+    Left = 360
+    Top = 232
+    Width = 77
+    Height = 21
+    Base = 10
+    Enabled = False
+    MaxValue = '0'
+    TabOrder = 11
+    Text = '0'
+  end
+  object edSamplePoint: TEdit
+    Tag = 1
+    Left = 360
+    Top = 115
+    Width = 77
+    Height = 21
+    MaxLength = 4
+    TabOrder = 7
+    Text = '75.0'
+    OnChange = edSamplePointChange
+    OnKeyDown = edFloatKeyDown
+    OnKeyPress = edFloatKeyPress
+  end
+  object btnCancel: TButton
+    Left = 438
+    Top = 348
+    Width = 75
+    Height = 26
+    Anchors = [akLeft, akBottom]
+    Cancel = True
+    Caption = 'Cancel'
+    TabOrder = 13
+    OnClick = btnCancelClick
+  end
+  object btnOk: TButton
+    Left = 357
+    Top = 348
+    Width = 75
+    Height = 26
+    Anchors = [akLeft, akBottom]
+    Caption = 'Ok'
+    Default = True
+    TabOrder = 12
+    OnClick = btnOkClick
+  end
+  object edBitrate: TEdit
+    Tag = 3
+    Left = 360
+    Top = 88
+    Width = 77
+    Height = 21
+    MaxLength = 6
+    TabOrder = 6
+    OnChange = edBitrateChange
+    OnKeyDown = edFloatKeyDown
+  end
+  object edActualBR: TEdit
+    Left = 360
+    Top = 259
+    Width = 77
+    Height = 21
+    Enabled = False
+    TabOrder = 14
+  end
+  object edActualSP: TEdit
+    Left = 360
+    Top = 286
+    Width = 77
+    Height = 21
+    Enabled = False
+    TabOrder = 15
+  end
+  object edAccuracy: TEdit
+    Left = 360
+    Top = 313
+    Width = 77
+    Height = 21
+    Enabled = False
+    TabOrder = 16
+  end
+  object bbAdd: TButton
+    Left = 20
+    Top = 348
+    Width = 75
+    Height = 26
+    Caption = 'Add'
+    ImageIndex = 58
+    ImageName = '58 - Add'
+    Images = dmBase.ilMain
+    TabOrder = 3
+    OnClick = bbAddClick
+  end
+  object bbRemove: TButton
+    Left = 101
+    Top = 348
+    Width = 75
+    Height = 26
+    Caption = 'Remove'
+    ImageIndex = 59
+    ImageName = '59 - Remove'
+    Images = dmBase.ilMain
+    TabOrder = 4
+    OnClick = bbRemoveClick
+  end
+end

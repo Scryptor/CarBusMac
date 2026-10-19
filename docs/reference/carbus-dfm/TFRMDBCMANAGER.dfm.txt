@@ -1,0 +1,193 @@
+object frmDBCManager: TfrmDBCManager
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu, biMinimize]
+  Caption = 'DBC Manager'
+  ClientHeight = 162
+  ClientWidth = 488
+  Color = clBtnFace
+  Constraints.MinHeight = 200
+  Constraints.MinWidth = 500
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OnAfterMonitorDpiChanged = FormAfterMonitorDpiChanged
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  TextHeight = 13
+  object tbToolBar: TToolBar
+    AlignWithMargins = True
+    Left = 0
+    Top = 2
+    Width = 488
+    Height = 25
+    Margins.Left = 0
+    Margins.Top = 2
+    Margins.Right = 0
+    Margins.Bottom = 0
+    ButtonHeight = 24
+    ButtonWidth = 50
+    DisabledImages = dmBase.ilMainGray
+    DoubleBuffered = True
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    HotTrackColor = clBtnFace
+    Images = dmBase.ilMain
+    ParentDoubleBuffered = False
+    ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 0
+    Wrapable = False
+    object tbNew: TToolButton
+      Left = 0
+      Top = 0
+      Action = acNew
+    end
+    object tbOpen: TToolButton
+      Left = 50
+      Top = 0
+      Action = acOpen
+      DropdownMenu = pmOpenRecent
+      Style = tbsDropDown
+    end
+    object tbSave: TToolButton
+      Left = 115
+      Top = 0
+      Action = acSave
+    end
+    object tbClose: TToolButton
+      Left = 165
+      Top = 0
+      Action = acClose
+    end
+    object tbSeparator4: TToolButton
+      Left = 215
+      Top = 0
+      Width = 4
+      Style = tbsSeparator
+      Visible = False
+    end
+    object tbReload: TToolButton
+      Left = 219
+      Top = 0
+      Action = acRefresh
+    end
+    object tbSeparator2: TToolButton
+      Left = 269
+      Top = 0
+      Width = 4
+      Style = tbsSeparator
+    end
+    object tbUp: TToolButton
+      Left = 273
+      Top = 0
+      Action = acUp
+    end
+    object tbDown: TToolButton
+      Left = 323
+      Top = 0
+      Action = acDown
+    end
+  end
+  object dgDBC: TDrawGrid
+    Left = 0
+    Top = 27
+    Width = 488
+    Height = 135
+    Align = alClient
+    ColCount = 1
+    DoubleBuffered = False
+    FixedCols = 0
+    RowCount = 2
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goDrawFocusSelected, goRowSelect]
+    ParentDoubleBuffered = False
+    TabOrder = 1
+    OnClick = dgDBCClick
+    OnKeyDown = dgDBCKeyDown
+    OnMouseDown = dgDBCMouseDown
+  end
+  object alMain: TActionList
+    Images = dmBase.ilMain
+    Left = 182
+    Top = 54
+    object acNew: TAction
+      Enabled = False
+      Hint = 'Create new DBC file'
+      ImageIndex = 4
+      ImageName = '04 - New'
+    end
+    object acOpen: TAction
+      Hint = 'Open DBC file'
+      ImageIndex = 19
+      ImageName = '19 - Load'
+      OnExecute = acOpenExecute
+    end
+    object acSave: TAction
+      Enabled = False
+      Hint = 'Save changes'
+      ImageIndex = 20
+      ImageName = '20 - Save'
+    end
+    object acClose: TAction
+      Enabled = False
+      Hint = 'Close DBC file'
+      ImageIndex = 59
+      ImageName = '59 - Remove'
+      OnExecute = acCloseExecute
+    end
+    object acUp: TAction
+      Tag = -1
+      Enabled = False
+      Hint = 'Change priority to Up'
+      ImageIndex = 65
+      ImageName = '65 - ToUp'
+      OnExecute = acUpDown
+    end
+    object acDown: TAction
+      Tag = 1
+      Enabled = False
+      Hint = 'Change priority to Down'
+      ImageIndex = 66
+      ImageName = '66 - ToDown'
+      OnExecute = acUpDown
+    end
+    object acRefresh: TAction
+      Enabled = False
+      Hint = 'Reload DBC files from disk'
+      ImageIndex = 81
+      ImageName = '81 - Refresh'
+      Visible = False
+      OnExecute = acRefreshExecute
+    end
+  end
+  object pmAssign: TPopupMenu
+    OnPopup = pmAssignPopup
+    Left = 310
+    Top = 54
+    object miSeparator: TMenuItem
+      Caption = '-'
+    end
+    object miUnassignAll: TMenuItem
+      Caption = 'Unassign from all channels'
+      OnClick = miUnassignAllClick
+    end
+    object miUnassignAllFromAll: TMenuItem
+      Tag = -1
+      Caption = 'Unassign from all channels for all DBC'
+      OnClick = miUnassignAllClick
+    end
+  end
+  object pmOpenRecent: TPopupMenu
+    OwnerDraw = True
+    Left = 128
+    Top = 80
+  end
+end

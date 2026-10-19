@@ -1,0 +1,13 @@
+object frameTracerSignalValue: TframeTracerSignalValue
+  object edValue: TEdit
+    Left = 312
+    Top = 2
+    Width = 130
+    Height = 23
+    TabOrder = 0
+    OnChange = edValueChange
+    OnExit = edValueExit
+    OnKeyDown = edValueKeyDown
+    OnKeyPress = edValueKeyPress
+  end
+end

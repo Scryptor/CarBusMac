@@ -1,0 +1,110 @@
+object dlgLicense: TdlgLicense
+  Left = 0
+  Top = 0
+  BorderStyle = bsDialog
+  Caption = 'License'
+  ClientHeight = 266
+  ClientWidth = 508
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  Position = poOwnerFormCenter
+  OnCreate = FormCreate
+  TextHeight = 14
+  object lKey: TLabel
+    Left = 8
+    Top = 39
+    Width = 20
+    Height = 14
+    Caption = 'Key'
+  end
+  object lLicense: TLabel
+    Left = 8
+    Top = 67
+    Width = 40
+    Height = 14
+    Caption = 'License'
+  end
+  object lID: TLabel
+    Left = 8
+    Top = 11
+    Width = 56
+    Height = 14
+    Caption = 'System ID'
+  end
+  object edKey: TEdit
+    Left = 90
+    Top = 36
+    Width = 410
+    Height = 22
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    MaxLength = 100
+    ParentFont = False
+    TabOrder = 0
+  end
+  object reLicense: TRichEdit
+    Left = 90
+    Top = 64
+    Width = 410
+    Height = 165
+    Font.Charset = RUSSIAN_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Lucida Console'
+    Font.Style = []
+    MaxLength = 1024
+    ParentFont = False
+    PlainText = True
+    PopupMenu = pmPopup
+    TabOrder = 1
+    OnKeyDown = reLicenseKeyDown
+  end
+  object btnRegister: TButton
+    Left = 294
+    Top = 235
+    Width = 100
+    Height = 25
+    Caption = 'Register'
+    Default = True
+    TabOrder = 2
+    OnClick = btnRegisterClick
+  end
+  object btnClose: TButton
+    Left = 400
+    Top = 235
+    Width = 100
+    Height = 25
+    Cancel = True
+    Caption = 'Close'
+    ModalResult = 8
+    TabOrder = 3
+  end
+  object edSystemID: TEdit
+    Left = 90
+    Top = 8
+    Width = 100
+    Height = 22
+    ReadOnly = True
+    TabOrder = 4
+  end
+  object btnLoad: TButton
+    Left = 8
+    Top = 235
+    Width = 125
+    Height = 25
+    Caption = 'Load from file'
+    TabOrder = 5
+    OnClick = btnLoadClick
+  end
+  object pmPopup: TPopupMenu
+    Left = 144
+    Top = 112
+  end
+end

@@ -1,0 +1,541 @@
+object frmMainAdv: TfrmMainAdv
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu, biMinimize]
+  Caption = 'Car BUS Analyzer'
+  ClientHeight = 200
+  ClientWidth = 484
+  Color = clBtnFace
+  Constraints.MinWidth = 500
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  Menu = mmMain
+  ShowHint = True
+  OnActivate = FormActivate
+  OnAfterMonitorDpiChanged = FormAfterMonitorDpiChanged
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnDeactivate = FormDeactivate
+  OnShow = FormShow
+  TextHeight = 13
+  object cbSpeedBar: TCoolBar
+    Left = 0
+    Top = 0
+    Width = 484
+    Height = 106
+    AutoSize = True
+    Bands = <4 items>
+    OnResize = cbSpeedBarResize
+    object tbConfig: TToolBar
+      Tag = 1
+      Left = 89
+      Top = 0
+      Width = 391
+      Height = 24
+      ButtonHeight = 24
+      ButtonWidth = 50
+      DisabledImages = dmBase.ilMainGray
+      Images = dmBase.ilMain
+      TabOrder = 0
+      object tbConfigSeparator1: TToolButton
+        Left = 0
+        Top = 0
+        Width = 5
+        ImageIndex = 21
+        ImageName = '21 - Pause'
+        Style = tbsSeparator
+      end
+      object tbConfigNew: TToolButton
+        Left = 5
+        Top = 0
+        Action = acConfigNew
+      end
+      object tbConfigSave: TToolButton
+        Left = 55
+        Top = 0
+        Action = acConfigSave
+      end
+      object tbConfigOpen: TToolButton
+        Left = 105
+        Top = 0
+        Action = acConfigOpen
+      end
+      object tbConfigSeparator2: TToolButton
+        Left = 155
+        Top = 0
+        Width = 5
+        ImageIndex = 51
+        ImageName = '51 - Options'
+        Style = tbsSeparator
+      end
+      object tbConfigProperty: TToolButton
+        Left = 160
+        Top = 0
+        Action = acConfigProp
+      end
+      object tbConfigSeparator3: TToolButton
+        Left = 210
+        Top = 0
+        Width = 3
+        ImageIndex = 51
+        ImageName = '51 - Options'
+        Style = tbsSeparator
+        Visible = False
+      end
+    end
+    object tbManage: TToolBar
+      Left = 58
+      Top = 26
+      Width = 422
+      Height = 24
+      ButtonHeight = 24
+      ButtonWidth = 50
+      DisabledImages = dmBase.ilMainGray
+      Images = dmBase.ilMain
+      TabOrder = 1
+      object tbManageSeparator1: TToolButton
+        Left = 0
+        Top = 0
+        Width = 5
+        ImageIndex = 2
+        ImageName = '02 - Filter'
+        Style = tbsSeparator
+      end
+      object tbManageDeviceList: TToolButton
+        Left = 5
+        Top = 0
+        Action = acManageDeviceList
+      end
+      object tbManageReceive: TToolButton
+        Left = 55
+        Top = 0
+        Hint = 'Receive'
+        Caption = 'Receive'
+        DropdownMenu = pmManageReceive
+        ImageIndex = 53
+        ImageName = '53 - Receive'
+      end
+      object tbManageSeparator2: TToolButton
+        Left = 105
+        Top = 0
+        Width = 5
+        ImageIndex = 5
+        ImageName = '05 - MsgDetails'
+        Style = tbsSeparator
+      end
+      object tbManageFilters: TToolButton
+        Left = 110
+        Top = 0
+        Action = acManageFilters
+      end
+      object tbManageMessageProcessor: TToolButton
+        Left = 160
+        Top = 0
+        Action = acManageMessageProcessor
+      end
+      object tbManageLoggers: TToolButton
+        Left = 210
+        Top = 0
+        Action = acManageLoggers
+      end
+      object tbManageSeparator3: TToolButton
+        Left = 260
+        Top = 0
+        Width = 5
+        ImageName = 'More'
+        Style = tbsSeparator
+      end
+      object tbManageDBC: TToolButton
+        Left = 265
+        Top = 0
+        Action = acManageDBC
+      end
+      object tbManageSeparator4: TToolButton
+        Left = 315
+        Top = 0
+        Width = 5
+        ImageName = 'More'
+        Style = tbsSeparator
+        Visible = False
+      end
+    end
+    object tbToolsLIN: TToolBar
+      Left = 33
+      Top = 78
+      Width = 447
+      Height = 24
+      ButtonHeight = 24
+      ButtonWidth = 50
+      DisabledImages = dmBase.ilMainGray
+      Images = dmBase.ilMain
+      TabOrder = 2
+      object tbLINSeparator1: TToolButton
+        Left = 0
+        Top = 0
+        Width = 5
+        ImageName = 'More'
+        Style = tbsSeparator
+      end
+      object tbLINTransmit: TToolButton
+        Left = 5
+        Top = 0
+        Action = acLINTransmit
+      end
+      object tbLINBruteForce: TToolButton
+        Left = 55
+        Top = 0
+        Action = acLINBruteForce
+      end
+      object tbLINSeparator2: TToolButton
+        Left = 105
+        Top = 0
+        Width = 5
+        ImageIndex = 58
+        ImageName = '58 - Add'
+        Style = tbsSeparator
+      end
+      object tbLINSlaveResponse: TToolButton
+        Left = 110
+        Top = 0
+        Action = acLINSlaveResponse
+      end
+      object tbLINSeparator3: TToolButton
+        Left = 160
+        Top = 0
+        Width = 5
+        ImageIndex = 58
+        ImageName = '58 - Add'
+        Style = tbsSeparator
+        Visible = False
+      end
+    end
+    object tbToolsCAN: TToolBar
+      Left = 40
+      Top = 52
+      Width = 440
+      Height = 24
+      ButtonHeight = 24
+      ButtonWidth = 50
+      DisabledImages = dmBase.ilMainGray
+      Images = dmBase.ilMain
+      TabOrder = 3
+      object tbCANSeparator1: TToolButton
+        Left = 0
+        Top = 0
+        Width = 5
+        ImageName = 'More'
+        Style = tbsSeparator
+      end
+      object tbCANTransmit: TToolButton
+        Left = 5
+        Top = 0
+        Action = acCANTransmit
+      end
+      object tbCANBruteForce: TToolButton
+        Left = 55
+        Top = 0
+        Action = acCANBruteForce
+      end
+      object tbCANSeparator2: TToolButton
+        Left = 105
+        Top = 0
+        Width = 5
+        ImageIndex = 4
+        ImageName = '04 - New'
+        Style = tbsSeparator
+      end
+      object tbCANPlayback: TToolButton
+        Left = 110
+        Top = 0
+        Action = acCANPlayback
+      end
+      object tbCANTracer: TToolButton
+        Left = 160
+        Top = 0
+        Action = acCANTracer
+      end
+      object tbCANSeparato3: TToolButton
+        Left = 210
+        Top = 0
+        Width = 5
+        ImageIndex = 5
+        ImageName = '05 - MsgDetails'
+        Style = tbsSeparator
+        Visible = False
+      end
+    end
+  end
+  object mmMain: TMainMenu
+    Images = dmBase.ilMain
+    Left = 152
+    Top = 108
+    object miFile: TMenuItem
+      Caption = 'File'
+      object miConfigNew: TMenuItem
+        Action = acConfigNew
+      end
+      object miConfigOpen: TMenuItem
+        Action = acConfigOpen
+      end
+      object miConfigRecent: TMenuItem
+        Caption = 'Recent configuration'
+        object miNoRecent: TMenuItem
+          Caption = 'No recent configurations'
+          Enabled = False
+        end
+      end
+      object miFileSeparator1: TMenuItem
+        Caption = '-'
+      end
+      object miConfigSave: TMenuItem
+        Action = acConfigSave
+      end
+      object miConfigSaveAs: TMenuItem
+        Action = acConfigSaveAs
+      end
+      object miFileSeparator2: TMenuItem
+        Caption = '-'
+      end
+      object miOptions: TMenuItem
+        Caption = 'Options'
+      end
+      object miFileSeparator3: TMenuItem
+        Caption = '-'
+      end
+      object miExit: TMenuItem
+        Caption = 'Exit'
+        OnClick = miExitClick
+      end
+    end
+    object miManage: TMenuItem
+      Caption = 'Manage'
+      object miManageDeviceList: TMenuItem
+        Action = acManageDeviceList
+      end
+      object miManageSeparator1: TMenuItem
+        Caption = '-'
+      end
+      object miManageFilters: TMenuItem
+        Action = acManageFilters
+      end
+      object miManageMessageProcessor: TMenuItem
+        Action = acManageMessageProcessor
+      end
+      object miManageLoggers: TMenuItem
+        Action = acManageLoggers
+      end
+      object miManageSeparator2: TMenuItem
+        Caption = '-'
+      end
+      object miManageDBC: TMenuItem
+        Action = acManageDBC
+      end
+    end
+    object miTools: TMenuItem
+      Caption = 'Tools'
+      object miCAN: TMenuItem
+        Caption = 'CAN'
+        object miCANTransmit: TMenuItem
+          Action = acCANTransmit
+        end
+        object miCANBruteForce: TMenuItem
+          Action = acCANBruteForce
+        end
+        object miCANSeparator: TMenuItem
+          Caption = '-'
+        end
+        object miCANPlayback: TMenuItem
+          Action = acCANPlayback
+        end
+        object miCANTracer: TMenuItem
+          Action = acCANTracer
+        end
+      end
+      object miLIN: TMenuItem
+        Caption = 'LIN'
+        object miLINTransmit: TMenuItem
+          Action = acLINTransmit
+        end
+        object miLINBruteForce: TMenuItem
+          Action = acLINBruteForce
+        end
+        object miLINSeparator: TMenuItem
+          Caption = '-'
+        end
+        object miLINSlaveResponse: TMenuItem
+          Action = acLINSlaveResponse
+        end
+      end
+    end
+    object miView: TMenuItem
+      Caption = 'View'
+      object miToolbars: TMenuItem
+        Caption = 'Toolbars'
+        object miTBConfiguration: TMenuItem
+          Caption = 'Configuration'
+          Checked = True
+        end
+        object miTBManage: TMenuItem
+          Caption = 'Manage'
+          Checked = True
+        end
+        object miTB_CAN: TMenuItem
+          Caption = 'CAN'
+          Checked = True
+        end
+        object miTB_LIN: TMenuItem
+          Caption = 'LIN'
+          Checked = True
+        end
+      end
+    end
+    object miAboutGroup: TMenuItem
+      Caption = '?'
+      object miCheckVersion: TMenuItem
+        Caption = 'Check for Updates...'
+      end
+      object miAbout: TMenuItem
+        Caption = 'About...'
+      end
+    end
+  end
+  object alMain: TActionList
+    Images = dmBase.ilMain
+    Left = 72
+    Top = 108
+    object acConfigNew: TAction
+      Category = 'Configuration'
+      Caption = 'New configuration'
+      Hint = 'New configuration'
+      ImageIndex = 4
+      ImageName = '04 - New'
+    end
+    object acConfigOpen: TAction
+      Category = 'Configuration'
+      Caption = 'Open configuration'
+      Hint = 'Open configuration'
+      ImageIndex = 19
+      ImageName = '19 - Load'
+    end
+    object acConfigSave: TAction
+      Category = 'Configuration'
+      Caption = 'Save configuration'
+      Hint = 'Save configuration'
+      ImageIndex = 20
+      ImageName = '20 - Save'
+    end
+    object acConfigSaveAs: TAction
+      Category = 'Configuration'
+      Caption = 'Save As..'
+      Hint = 'Save As..'
+      ImageIndex = 45
+      ImageName = '45 - SaveAs'
+    end
+    object acConfigProp: TAction
+      Category = 'Configuration'
+      Caption = 'Configuration properties'
+      Hint = 'Configuration properties'
+      ImageIndex = 50
+      ImageName = 'More'
+    end
+    object acManageDeviceList: TAction
+      Category = 'Manage'
+      Caption = 'Device list'
+      Hint = 'Deivce list'
+      ImageIndex = 49
+      ImageName = 'More'
+      ShortCut = 16452
+      OnExecute = acManageDeviceListExecute
+    end
+    object acManageFilters: TAction
+      Category = 'Manage'
+      Caption = 'Filters'
+      Hint = 'Filters'
+      ImageIndex = 2
+      ImageName = '02 - Filter'
+    end
+    object acManageMessageProcessor: TAction
+      Category = 'Manage'
+      Caption = 'Message processor'
+      Hint = 'Message processor'
+      ImageIndex = 46
+      ImageName = '46 - Gateway'
+    end
+    object acManageLoggers: TAction
+      Category = 'Manage'
+      Caption = 'Loggers'
+      Hint = 'Loggers'
+      ImageIndex = 47
+      ImageName = '47 - Logs'
+    end
+    object acManageDBC: TAction
+      Category = 'Manage'
+      Caption = 'DBC'
+      Hint = 'DBC'
+      ImageIndex = 48
+      ImageName = '48 - DBEdit'
+    end
+    object acCANTransmit: TAction
+      Category = 'CAN'
+      Caption = 'Transmit'
+      Hint = 'CAN Transmit'
+      ImageIndex = 54
+      ImageName = 'More'
+    end
+    object acCANPlayback: TAction
+      Category = 'CAN'
+      Caption = 'Playback'
+      Hint = 'CAN Playback log'
+      ImageIndex = 55
+      ImageName = '55 - Playback'
+    end
+    object acCANTracer: TAction
+      Category = 'CAN'
+      Caption = 'Tracer'
+      Hint = 'CAN Tracer'
+      ImageIndex = 3
+      ImageName = '03 - Tracer'
+    end
+    object acCANBruteForce: TAction
+      Category = 'CAN'
+      Caption = 'Brute force'
+      Hint = 'CAN Brute force'
+      ImageIndex = 56
+      ImageName = '56 - BruteForce'
+    end
+    object acLINBruteForce: TAction
+      Category = 'LIN'
+      Caption = 'Brute force'
+      Hint = 'Lin Brute force'
+      ImageIndex = 56
+      ImageName = '56 - BruteForce'
+    end
+    object acLINTransmit: TAction
+      Category = 'LIN'
+      Caption = 'Transmit'
+      Hint = 'Lin Transmit'
+      ImageIndex = 54
+      ImageName = 'More'
+    end
+    object acLINSlaveResponse: TAction
+      Category = 'LIN'
+      Caption = 'Slave response'
+      Hint = 'Lin Slave response'
+      ImageIndex = 57
+      ImageName = 'More'
+    end
+  end
+  object pmManageReceive: TPopupMenu
+    OnPopup = pmManageReceivePopup
+    Left = 240
+    Top = 108
+    object miNoChannels: TMenuItem
+      Caption = 'No channels'
+      Enabled = False
+    end
+  end
+end

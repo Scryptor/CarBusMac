@@ -1,0 +1,269 @@
+object frmESEditor: TfrmESEditor
+  Left = 0
+  Top = 0
+  Caption = 'ECMAScript'
+  ClientHeight = 441
+  ClientWidth = 710
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  ShowHint = True
+  OnAfterMonitorDpiChanged = FormAfterMonitorDpiChanged
+  OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  TextHeight = 13
+  object spSplitter: TSplitter
+    Left = 0
+    Top = 325
+    Width = 710
+    Height = 4
+    Cursor = crVSplit
+    Align = alBottom
+    Color = clBtnShadow
+    ParentColor = False
+    ExplicitTop = 326
+  end
+  object tbToolBar: TToolBar
+    AlignWithMargins = True
+    Left = 0
+    Top = 2
+    Width = 710
+    Height = 25
+    Margins.Left = 0
+    Margins.Top = 2
+    Margins.Right = 0
+    Margins.Bottom = 0
+    ButtonHeight = 24
+    ButtonWidth = 50
+    DisabledImages = dmBase.ilMainGray
+    HotTrackColor = clBtnFace
+    Images = dmBase.ilMain
+    TabOrder = 0
+    object tbNew: TToolButton
+      Left = 0
+      Top = 0
+      Action = acNew
+    end
+    object tbOpen: TToolButton
+      Left = 50
+      Top = 0
+      Action = acOpen
+      DropdownMenu = pmOpenRecent
+      Style = tbsDropDown
+    end
+    object tbSave: TToolButton
+      Left = 115
+      Top = 0
+      Action = acSave
+      DropdownMenu = pmSave
+      Style = tbsDropDown
+    end
+    object tbSeparator3: TToolButton
+      Left = 180
+      Top = 0
+      Width = 4
+      Style = tbsSeparator
+    end
+    object tbAccept: TToolButton
+      Left = 184
+      Top = 0
+      Action = acAccept
+    end
+    object tbRemove: TToolButton
+      Left = 234
+      Top = 0
+      Action = acRemove
+    end
+  end
+  object sbStatus: TStatusBar
+    Left = 0
+    Top = 306
+    Width = 710
+    Height = 19
+    Panels = <4 items>
+  end
+  object seEditor: TSynEdit
+    Left = 0
+    Top = 27
+    Width = 710
+    Height = 279
+    Align = alClient
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Consolas'
+    Font.Style = []
+    Font.Quality = fqClearTypeNatural
+    TabOrder = 2
+    UseCodeFolding = False
+    Gutter.DigitCount = 3
+    Gutter.Font.Charset = DEFAULT_CHARSET
+    Gutter.Font.Color = clWindowText
+    Gutter.Font.Height = -11
+    Gutter.Font.Name = 'Consolas'
+    Gutter.Font.Style = []
+    Gutter.Font.Quality = fqClearTypeNatural
+    Gutter.ShowLineNumbers = True
+    Gutter.Bands = <5 items>
+    Highlighter = esHighlighter
+    SearchEngine = seSearch
+    SelectedColor.Alpha = <ext>
+  end
+  object pnCommand: TPanel
+    Left = 0
+    Top = 418
+    Width = 710
+    Height = 23
+    Align = alBottom
+    BevelOuter = bvNone
+    TabOrder = 4
+    object edCommand: TEdit
+      Left = 0
+      Top = 0
+      Width = 687
+      Height = 23
+      Align = alClient
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      Font.Quality = fqClearTypeNatural
+      ParentFont = False
+      TabOrder = 0
+      OnKeyDown = edCommandKeyDown
+      OnKeyPress = edCommandKeyPress
+      ExplicitHeight = 22
+    end
+    object bbCommand: TBitBtn
+      Left = 687
+      Top = 0
+      Width = 23
+      Height = 23
+      Action = acCommand
+      Align = alRight
+      Images = dmBase.ilMain
+      TabOrder = 1
+    end
+  end
+  object reConsole: TRichEdit
+    Left = 0
+    Top = 329
+    Width = 710
+    Height = 89
+    Align = alBottom
+    Font.Charset = RUSSIAN_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Consolas'
+    Font.Style = []
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssVertical
+    TabOrder = 3
+    OnMouseDown = reConsoleMouseDown
+  end
+  object alEditor: TActionList
+    Images = dmBase.ilMain
+    Left = 236
+    Top = 124
+    object acOpen: TAction
+      Category = 'File'
+      Caption = 'Open'
+      Hint = 'Open file'
+      ImageIndex = 19
+      ImageName = '19 - Load'
+      ShortCut = 16463
+      OnExecute = acOpenExecute
+    end
+    object acSave: TAction
+      Category = 'File'
+      Caption = 'Save...'
+      Hint = 'Save file'
+      ImageIndex = 20
+      ImageName = '20 - Save'
+      ShortCut = 16467
+      OnExecute = acSaveExecute
+    end
+    object acAccept: TAction
+      Category = 'File'
+      Hint = 'Test and accept script'
+      ImageIndex = 32
+      ImageName = '32 - Tick'
+      OnExecute = acAcceptExecute
+    end
+    object acCommand: TAction
+      ImageIndex = 22
+      ImageName = '22 - Run'
+      OnExecute = acCommandExecute
+    end
+    object acInsertMode: TAction
+      Enabled = False
+      ShortCut = 45
+      OnExecute = acInsertModeExecute
+    end
+    object acSaveAs: TAction
+      Category = 'File'
+      Caption = 'Save as...'
+      ImageIndex = 45
+      ImageName = '45 - SaveAs'
+      ShortCut = 24659
+      OnExecute = acSaveAsExecute
+    end
+    object acNew: TAction
+      Category = 'File'
+      Hint = 'New script'
+      ImageIndex = 4
+      ImageName = '04 - New'
+      ShortCut = 16462
+      OnExecute = acNewExecute
+    end
+    object acRemove: TAction
+      Category = 'File'
+      Hint = 'Remove script'
+      ImageIndex = 59
+      ImageName = '59 - Remove'
+      OnExecute = acRemoveExecute
+    end
+  end
+  object esHighlighter: TSynJScriptSyn
+    CommentAttri.Foreground = clGray
+    KeyAttri.Foreground = clNavy
+    NumberAttri.Foreground = clBlue
+    StringAttri.Foreground = clGreen
+    StringAttri.Style = [fsBold]
+    Left = 320
+    Top = 128
+  end
+  object seSearch: TSynEditSearch
+    Left = 152
+    Top = 76
+  end
+  object tmrEditorState: TTimer
+    Interval = 50
+    OnTimer = tmrEditorStateTimer
+    Left = 324
+    Top = 56
+  end
+  object pmSave: TPopupMenu
+    Images = dmBase.ilMain
+    Left = 232
+    Top = 68
+    object miSave: TMenuItem
+      Action = acSave
+    end
+    object miSaveAs: TMenuItem
+      Action = acSaveAs
+    end
+  end
+  object pmOpenRecent: TPopupMenu
+    Left = 192
+    Top = 156
+  end
+end

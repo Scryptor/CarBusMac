@@ -1,0 +1,70 @@
+object dlgMarker: TdlgMarker
+  Left = 0
+  Top = 0
+  BorderStyle = bsDialog
+  Caption = 'Set breakpoint / label'
+  ClientHeight = 137
+  ClientWidth = 390
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  Position = poOwnerFormCenter
+  OnCreate = FormCreate
+  TextHeight = 13
+  object lbLabel: TLabel
+    Left = 8
+    Top = 8
+    Width = 29
+    Height = 13
+    Caption = 'Label:'
+    FocusControl = edLabel
+  end
+  object lbComment: TLabel
+    Left = 8
+    Top = 56
+    Width = 49
+    Height = 13
+    Caption = 'Comment:'
+    FocusControl = edComment
+  end
+  object edLabel: TEdit
+    Left = 8
+    Top = 27
+    Width = 153
+    Height = 21
+    MaxLength = 23
+    TabOrder = 0
+    OnChange = edLabelChange
+  end
+  object edComment: TEdit
+    Left = 8
+    Top = 75
+    Width = 374
+    Height = 21
+    TabOrder = 1
+  end
+  object btOk: TButton
+    Left = 221
+    Top = 104
+    Width = 75
+    Height = 25
+    Caption = 'Set'
+    Default = True
+    Enabled = False
+    ModalResult = 1
+    TabOrder = 2
+  end
+  object btCancel: TButton
+    Left = 307
+    Top = 104
+    Width = 75
+    Height = 25
+    Cancel = True
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 3
+  end
+end

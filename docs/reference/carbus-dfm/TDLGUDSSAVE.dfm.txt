@@ -1,0 +1,290 @@
+object dlgUDSSave: TdlgUDSSave
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = bsSingle
+  Caption = 'UDS Read Memory by Address'
+  ClientHeight = 288
+  ClientWidth = 343
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnShow = FormShow
+  TextHeight = 15
+  object lChannel: TLabel
+    Left = 12
+    Top = 44
+    Width = 44
+    Height = 15
+    Caption = 'Channel'
+  end
+  object lRequestID: TLabel
+    Left = 12
+    Top = 76
+    Width = 56
+    Height = 15
+    Caption = 'Request ID'
+  end
+  object lResponseID: TLabel
+    Left = 184
+    Top = 75
+    Width = 64
+    Height = 15
+    Caption = 'Response ID'
+  end
+  object lFile: TLabel
+    Left = 12
+    Top = 16
+    Width = 18
+    Height = 15
+    Caption = 'File'
+  end
+  object lFileName: TLabel
+    Left = 84
+    Top = 16
+    Width = 205
+    Height = 15
+    AutoSize = False
+    Caption = 'Undefined'
+  end
+  object lALFI: TLabel
+    Left = 12
+    Top = 108
+    Width = 191
+    Height = 15
+    Caption = 'Address and length format identifier'
+  end
+  object lActualALFI: TLabel
+    Left = 12
+    Top = 140
+    Width = 60
+    Height = 15
+    Caption = 'Actual ALFI'
+  end
+  object lAddressStart: TLabel
+    Left = 12
+    Top = 180
+    Width = 24
+    Height = 15
+    Caption = 'Start'
+  end
+  object lAddressFinish: TLabel
+    Left = 184
+    Top = 178
+    Width = 31
+    Height = 15
+    Caption = 'Finish'
+  end
+  object lBlockSize: TLabel
+    Left = 12
+    Top = 206
+    Width = 29
+    Height = 15
+    Caption = 'Block'
+  end
+  object lTime: TLabel
+    Left = 12
+    Top = 259
+    Width = 29
+    Height = 15
+    Caption = 'Time:'
+  end
+  object lSpeed: TLabel
+    Left = 144
+    Top = 259
+    Width = 35
+    Height = 15
+    Caption = 'Speed:'
+  end
+  object lCounter: TLabel
+    Left = 290
+    Top = 216
+    Width = 43
+    Height = 15
+    Alignment = taRightJustify
+    Caption = 'Counter'
+  end
+  object cbChannel: TComboBox
+    Left = 84
+    Top = 41
+    Width = 249
+    Height = 23
+    Style = csDropDownList
+    Enabled = False
+    TabOrder = 0
+    OnChange = cbChannelChange
+  end
+  object edRequestID: TExNumberEdit
+    Left = 84
+    Top = 73
+    Width = 69
+    Height = 22
+    Alignment = taRightJustify
+    Base = 16
+    Capitalize = True
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Consolas'
+    Font.Style = []
+    MaxLength = 8
+    MaxValue = '1FFFFFFF'
+    ParentFont = False
+    TabOrder = 1
+    Text = '7C6'
+  end
+  object edResponseID: TExNumberEdit
+    Left = 264
+    Top = 72
+    Width = 69
+    Height = 22
+    Alignment = taRightJustify
+    Base = 16
+    Capitalize = True
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Consolas'
+    Font.Style = []
+    MaxLength = 8
+    MaxValue = '1FFFFFFF'
+    ParentFont = False
+    TabOrder = 2
+    Text = '7CE'
+  end
+  object btnSelect: TButton
+    Left = 299
+    Top = 11
+    Width = 34
+    Height = 25
+    Hint = 'Configure baudrates'
+    Caption = '...'
+    TabOrder = 3
+    OnClick = btnSelectClick
+  end
+  object edALFI: TExNumberEdit
+    Left = 223
+    Top = 106
+    Width = 25
+    Height = 22
+    Base = 16
+    Capitalize = True
+    FillZero = True
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Consolas'
+    Font.Style = []
+    MaxLength = 2
+    ParentFont = False
+    TabOrder = 4
+    Text = '05'
+  end
+  object tbAddressLength: TTrackBar
+    Left = 98
+    Top = 134
+    Width = 150
+    Height = 31
+    Max = 4
+    Min = 1
+    PageSize = 1
+    Position = 3
+    TabOrder = 5
+    OnChange = tbAddressLengthChange
+  end
+  object edStart: TExNumberEdit
+    Left = 60
+    Top = 176
+    Width = 93
+    Height = 22
+    Base = 16
+    Capitalize = True
+    FillZero = True
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Consolas'
+    Font.Style = []
+    MaxLength = 6
+    ParentFont = False
+    TabOrder = 6
+    Text = '000000'
+  end
+  object edFinish: TExNumberEdit
+    Left = 240
+    Top = 175
+    Width = 93
+    Height = 23
+    Base = 16
+    Capitalize = True
+    FillZero = True
+    MaxLength = 6
+    TabOrder = 7
+    Text = '2FFFFF'
+  end
+  object edLength: TExNumberEdit
+    Left = 60
+    Top = 204
+    Width = 93
+    Height = 22
+    Base = 16
+    Capitalize = True
+    FillZero = True
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Consolas'
+    Font.Style = []
+    MaxLength = 4
+    ParentFont = False
+    TabOrder = 8
+    Text = '0010'
+  end
+  object pbProgress: TProgressBar
+    Left = 12
+    Top = 232
+    Width = 321
+    Height = 17
+    TabOrder = 9
+  end
+  object btnStart: TButton
+    Left = 258
+    Top = 255
+    Width = 75
+    Height = 25
+    Caption = 'Start'
+    Enabled = False
+    TabOrder = 10
+    OnClick = btnStartClick
+  end
+  object cbBRS: TCheckBox
+    Left = 279
+    Top = 108
+    Width = 54
+    Height = 17
+    Caption = 'BRS'
+    Enabled = False
+    TabOrder = 11
+  end
+  object cbTX: TCheckBox
+    Left = 279
+    Top = 131
+    Width = 54
+    Height = 17
+    Caption = 'Log TX'
+    TabOrder = 12
+  end
+  object tmrUpdate: TTimer
+    Enabled = False
+    Interval = 250
+    OnTimer = tmrUpdateTimer
+    Left = 188
+    Top = 4
+  end
+end

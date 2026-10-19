@@ -1,0 +1,219 @@
+object frameLogChannelFilter: TframeLogChannelFilter
+  Left = 0
+  Top = 0
+  Width = 478
+  Height = 241
+  Align = alClient
+  TabOrder = 0
+  DesignSize = (478 241)
+  object lFilterMode: TLabel
+    Left = 0
+    Top = 3
+    Width = 60
+    Height = 15
+    Caption = 'Filter mode'
+  end
+  object lMsgIDLength: TLabel
+    Left = 240
+    Top = 32
+    Width = 71
+    Height = 15
+    Anchors = [akTop, akRight]
+    Caption = 'MsgID length'
+  end
+  object lFIlterType: TLabel
+    Left = 240
+    Top = 61
+    Width = 52
+    Height = 15
+    Anchors = [akTop, akRight]
+    Caption = 'FIlter type'
+  end
+  object cbFilterMode: TComboBox
+    Left = 115
+    Top = 0
+    Width = 361
+    Height = 23
+    Style = csDropDownList
+    Anchors = [akLeft, akTop, akRight]
+    ItemIndex = 0
+    TabOrder = 0
+    Text = 'Reject all messages except messages from filter'
+    Items.Strings = ('Reject all messages except messages from filter' 'Accept all messages except messages from filter')
+  end
+  object cbMsgIDLength: TComboBox
+    Left = 352
+    Top = 29
+    Width = 80
+    Height = 23
+    Style = csDropDownList
+    Anchors = [akTop, akRight]
+    ItemIndex = 0
+    TabOrder = 2
+    Text = '11 bit'
+    OnChange = cbMsgIDLengthChange
+    Items.Strings = ('11 bit' '29 bit')
+  end
+  object cbFilterType: TComboBox
+    Left = 352
+    Top = 58
+    Width = 80
+    Height = 23
+    Style = csDropDownList
+    Anchors = [akTop, akRight]
+    ItemIndex = 0
+    TabOrder = 3
+    Text = 'ID/Mask'
+    OnChange = cbFilterTypeChange
+    Items.Strings = ('ID/Mask' 'Range')
+  end
+  object pnIDMask: TPanel
+    Left = 235
+    Top = 87
+    Width = 240
+    Height = 54
+    Anchors = [akTop, akRight]
+    BevelOuter = bvNone
+    TabOrder = 4
+    Visible = False
+    object lID: TLabel
+      Left = 5
+      Top = 3
+      Width = 11
+      Height = 15
+      Caption = 'ID'
+    end
+    object lMask: TLabel
+      Left = 5
+      Top = 32
+      Width = 28
+      Height = 15
+      Caption = 'Mask'
+    end
+    object neID: TExNumberEdit
+      Left = 116
+      Top = 0
+      Width = 80
+      Height = 23
+      Alignment = taRightJustify
+      Base = 16
+      Capitalize = True
+      FillZero = True
+      MaxLength = 8
+      MaxValue = '1FFFFFFF'
+      TabOrder = 0
+      Text = '00000000'
+      OnChange = FilterDataChanged
+    end
+    object neMask: TExNumberEdit
+      Left = 116
+      Top = 29
+      Width = 80
+      Height = 23
+      Alignment = taRightJustify
+      Base = 16
+      Capitalize = True
+      FillZero = True
+      MaxLength = 8
+      MaxValue = '1FFFFFFF'
+      TabOrder = 1
+      Text = '1FFFFFFF'
+      OnChange = FilterDataChanged
+    end
+  end
+  object pnRange: TPanel
+    Left = 235
+    Top = 87
+    Width = 240
+    Height = 54
+    Anchors = [akTop, akRight]
+    BevelOuter = bvNone
+    TabOrder = 5
+    Visible = False
+    object lIDStart: TLabel
+      Left = 5
+      Top = 3
+      Width = 38
+      Height = 15
+      Caption = 'Start ID'
+    end
+    object lIDFinish: TLabel
+      Left = 5
+      Top = 32
+      Width = 45
+      Height = 15
+      Caption = 'Finish ID'
+    end
+    object neStart: TExNumberEdit
+      Left = 116
+      Top = 0
+      Width = 80
+      Height = 23
+      Alignment = taRightJustify
+      Base = 16
+      Capitalize = True
+      FillZero = True
+      MaxLength = 8
+      MaxValue = '1FFFFFFF'
+      TabOrder = 0
+      Text = '00000000'
+      OnChange = FilterDataChanged
+    end
+    object neFinish: TExNumberEdit
+      Left = 116
+      Top = 29
+      Width = 80
+      Height = 23
+      Alignment = taRightJustify
+      Base = 16
+      Capitalize = True
+      FillZero = True
+      MaxLength = 8
+      MaxValue = '1FFFFFFF'
+      TabOrder = 1
+      Text = '1FFFFFFF'
+      OnChange = FilterDataChanged
+    end
+  end
+  object lbFilter: TListBox
+    Left = 0
+    Top = 29
+    Width = 229
+    Height = 212
+    Anchors = [akLeft, akTop, akBottom]
+    ItemHeight = 15
+    TabOrder = 1
+    OnClick = lbFilterClick
+  end
+  object btnAdd: TButton
+    Left = 235
+    Top = 216
+    Width = 75
+    Height = 25
+    Anchors = [akLeft, akBottom]
+    Caption = 'Add'
+    TabOrder = 6
+    OnClick = btnAddClick
+  end
+  object btnRemove: TButton
+    Left = 316
+    Top = 216
+    Width = 75
+    Height = 25
+    Anchors = [akLeft, akBottom]
+    Caption = 'Remove'
+    Enabled = False
+    TabOrder = 7
+    OnClick = btnRemoveClick
+  end
+  object btnDuplicate: TButton
+    Left = 397
+    Top = 216
+    Width = 75
+    Height = 25
+    Anchors = [akLeft, akBottom]
+    Caption = 'Duplicate'
+    Enabled = False
+    TabOrder = 8
+  end
+end

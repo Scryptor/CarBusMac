@@ -1,0 +1,169 @@
+object frmDBCSignalViewer: TfrmDBCSignalViewer
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu, biMinimize]
+  Caption = 'Signal viewer'
+  ClientHeight = 261
+  ClientWidth = 734
+  Color = clBtnFace
+  Constraints.MinHeight = 300
+  Constraints.MinWidth = 750
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OnAfterMonitorDpiChanged = FormAfterMonitorDpiChanged
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 13
+  object pnControl: TPanel
+    Left = 0
+    Top = 0
+    Width = 216
+    Height = 261
+    Margins.Bottom = 8
+    Align = alLeft
+    BevelOuter = bvNone
+    TabOrder = 0
+    object lNode: TLabel
+      Left = 8
+      Top = 8
+      Width = 25
+      Height = 13
+      Caption = 'Node'
+      FocusControl = cbNodes
+    end
+    object lMessage: TLabel
+      Left = 8
+      Top = 52
+      Width = 42
+      Height = 13
+      Caption = 'Message'
+    end
+    object lSignal: TLabel
+      Left = 8
+      Top = 96
+      Width = 28
+      Height = 13
+      Caption = 'Signal'
+      FocusControl = cbSignal
+    end
+    object cbNodes: TComboBox
+      Left = 8
+      Top = 24
+      Width = 200
+      Height = 22
+      Style = csDropDownList
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 0
+      OnChange = cbNodesChange
+    end
+    object cbMessages: TComboBox
+      Left = 8
+      Top = 68
+      Width = 200
+      Height = 22
+      Style = csDropDownList
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      ParentFont = False
+      Sorted = True
+      TabOrder = 1
+      OnChange = cbMessagesChange
+      OnDropDown = cbMessagesDropDown
+    end
+    object btSignalAdd: TButton
+      Left = 8
+      Top = 149
+      Width = 200
+      Height = 25
+      Caption = 'Add to viewer'
+      Enabled = False
+      TabOrder = 2
+      OnClick = btSignalAddClick
+    end
+    object btSignalCreate: TButton
+      Left = 8
+      Top = 180
+      Width = 200
+      Height = 25
+      Caption = 'Create new signal'
+      Enabled = False
+      TabOrder = 3
+    end
+    object btSignalRemove: TButton
+      Left = 8
+      Top = 211
+      Width = 200
+      Height = 25
+      Caption = 'Remove selected signal'
+      Enabled = False
+      TabOrder = 4
+      OnClick = btSignalRemoveClick
+    end
+    object cbSignal: TComboBox
+      Left = 8
+      Top = 113
+      Width = 200
+      Height = 22
+      Style = csDropDownList
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      ParentFont = False
+      Sorted = True
+      TabOrder = 5
+      OnChange = cbSignalChange
+    end
+    object cbActual: TCheckBox
+      Left = 70
+      Top = 51
+      Width = 138
+      Height = 17
+      Caption = 'Actual received'
+      TabOrder = 6
+      OnClick = cbActualClick
+    end
+  end
+  object dgSignals: TDrawGrid
+    AlignWithMargins = True
+    Left = 216
+    Top = 8
+    Width = 510
+    Height = 245
+    Margins.Left = 0
+    Margins.Top = 8
+    Margins.Right = 8
+    Margins.Bottom = 8
+    Align = alClient
+    ColCount = 2
+    DoubleBuffered = True
+    DrawingStyle = gdsGradient
+    RowCount = 2
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goDrawFocusSelected, goFixedRowClick]
+    ParentDoubleBuffered = False
+    TabOrder = 1
+    OnRowMoved = dgSignalsRowMoved
+    OnSelectCell = dgSignalsSelectCell
+  end
+  object tmrRepaint: TTimer
+    Interval = 100
+    OnTimer = tmrRepaintTimer
+    Left = 268
+    Top = 44
+  end
+end

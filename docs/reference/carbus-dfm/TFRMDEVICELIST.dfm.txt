@@ -1,0 +1,145 @@
+object frmDeviceList: TfrmDeviceList
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu, biMinimize]
+  Caption = 'Device list'
+  ClientHeight = 223
+  ClientWidth = 884
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  ShowHint = True
+  OnAfterMonitorDpiChanged = FormAfterMonitorDpiChanged
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnShow = FormShow
+  TextHeight = 13
+  object tbMain: TToolBar
+    Left = 0
+    Top = 0
+    Width = 884
+    Height = 26
+    ButtonHeight = 24
+    ButtonWidth = 50
+    DisabledImages = dmBase.ilMainGray
+    EdgeBorders = [ebBottom]
+    Images = dmBase.ilMain
+    TabOrder = 0
+    object tbSeparator1: TToolButton
+      Left = 0
+      Top = 0
+      Width = 5
+      ImageIndex = 2
+      ImageName = '02 - Filter'
+      Style = tbsSeparator
+    end
+    object tbConnect: TToolButton
+      Left = 5
+      Top = 0
+      Action = acConnect
+    end
+    object tbConfigure: TToolButton
+      Left = 55
+      Top = 0
+      Action = acConfigure
+    end
+    object tbSeparator2: TToolButton
+      Left = 105
+      Top = 0
+      Width = 5
+      ImageIndex = 2
+      ImageName = '02 - Filter'
+      Style = tbsSeparator
+    end
+    object tbDeviceAdd: TToolButton
+      Left = 110
+      Top = 0
+      Action = acDeviceAdd
+    end
+    object tbDeviceRemove: TToolButton
+      Left = 160
+      Top = 0
+      Action = acDeviceRemove
+    end
+    object tbSeparator3: TToolButton
+      Left = 210
+      Top = 0
+      Width = 5
+      ImageIndex = 4
+      ImageName = '04 - New'
+      Style = tbsSeparator
+    end
+    object tbReceive: TToolButton
+      Left = 215
+      Top = 0
+      Action = acReceive
+    end
+    object tbSeparator4: TToolButton
+      Left = 265
+      Top = 0
+      Width = 5
+      ImageIndex = 5
+      ImageName = '05 - MsgDetails'
+      Style = tbsSeparator
+    end
+  end
+  object dgDeviceList: TDrawGrid
+    Left = 0
+    Top = 26
+    Width = 884
+    Height = 197
+    Align = alClient
+    ColCount = 1
+    FixedCols = 0
+    RowCount = 2
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goColSizing]
+    TabOrder = 1
+    OnClick = dgDeviceListClick
+  end
+  object alMain: TActionList
+    Images = dmBase.ilMain
+    Left = 292
+    Top = 60
+    object acConnect: TAction
+      Caption = 'Connect'
+      Enabled = False
+      Hint = 'Connect'
+      ImageIndex = 33
+      ImageName = '33 - Disconnect'
+      OnExecute = acConnectExecute
+    end
+    object acConfigure: TAction
+      Caption = 'Configure'
+      Enabled = False
+      Hint = 'Configure'
+      ImageName = 'More'
+      OnExecute = acConfigureExecute
+    end
+    object acDeviceAdd: TAction
+      Caption = 'Add device'
+      Hint = 'Add device'
+      ImageIndex = 58
+      ImageName = '58 - Add'
+      OnExecute = acDeviceAddExecute
+    end
+    object acDeviceRemove: TAction
+      Caption = 'Remove device'
+      Enabled = False
+      Hint = 'Remoce device'
+      ImageIndex = 59
+      ImageName = '59 - Remove'
+      OnExecute = acDeviceRemoveExecute
+    end
+    object acReceive: TAction
+      Caption = 'Receive'
+      Enabled = False
+      Hint = 'Receive'
+      ImageIndex = 53
+      ImageName = '53 - Receive'
+      OnExecute = acReceiveExecute
+    end
+  end
+end

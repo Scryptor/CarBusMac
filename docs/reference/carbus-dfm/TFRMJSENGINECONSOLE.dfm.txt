@@ -1,0 +1,35 @@
+object frmJsEngineConsole: TfrmJsEngineConsole
+  Left = 0
+  Top = 0
+  Caption = 'ECMAScript console'
+  ClientHeight = 182
+  ClientWidth = 580
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OnClose = FormClose
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  TextHeight = 13
+  object reConsole: TRichEdit
+    Left = 0
+    Top = 0
+    Width = 580
+    Height = 182
+    Align = alClient
+    Font.Charset = RUSSIAN_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Consolas'
+    Font.Style = []
+    Font.Quality = fqClearTypeNatural
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssVertical
+    TabOrder = 0
+    OnMouseDown = reConsoleMouseDown
+  end
+end

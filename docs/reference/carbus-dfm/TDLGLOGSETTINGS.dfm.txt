@@ -1,0 +1,352 @@
+object dlgLogSettings: TdlgLogSettings
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  Caption = 'Stream log settings'
+  ClientHeight = 422
+  ClientWidth = 736
+  Color = clBtnFace
+  Constraints.MinHeight = 423
+  Constraints.MinWidth = 740
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  Position = poOwnerFormCenter
+  ShowHint = True
+  OnAfterMonitorDpiChanged = FormAfterMonitorDpiChanged
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  DesignSize = (736 422)
+  TextHeight = 15
+  object lLogsList: TLabel
+    Left = 8
+    Top = 8
+    Width = 38
+    Height = 15
+    Caption = 'Log list'
+  end
+  object lbFileList: TListBox
+    Left = 8
+    Top = 26
+    Width = 217
+    Height = 358
+    Anchors = [akLeft, akTop, akBottom]
+    ItemHeight = 15
+    TabOrder = 0
+    OnClick = lbFileListClick
+  end
+  object btnOk: TButton
+    Left = 572
+    Top = 390
+    Width = 75
+    Height = 26
+    Anchors = [akRight, akBottom]
+    Caption = 'Apply'
+    ModalResult = 1
+    TabOrder = 3
+  end
+  object btnCancel: TButton
+    Left = 653
+    Top = 390
+    Width = 75
+    Height = 26
+    Anchors = [akRight, akBottom]
+    Cancel = True
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 4
+  end
+  object pcLogSettings: TPageControl
+    Left = 236
+    Top = 55
+    Width = 496
+    Height = 329
+    ActivePage = tsMetaInfo
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    Enabled = False
+    TabOrder = 2
+    object tsGeneral: TTabSheet
+      Caption = 'General'
+      object lDirName: TLabel
+        Left = 4
+        Top = 4
+        Width = 113
+        Height = 15
+        Caption = 'Path to logs directory'
+      end
+      object bePathName: TButtonedEdit
+        Left = 4
+        Top = 20
+        Width = 480
+        Height = 23
+        DoubleBuffered = True
+        Images = dmBase.ilMain
+        ParentDoubleBuffered = False
+        ReadOnly = True
+        RightButton.ImageIndex = 17
+        RightButton.ImageName = '17 - StreamLoad'
+        RightButton.Visible = True
+        TabOrder = 0
+        OnRightButtonClick = bePathNameRightButtonClick
+      end
+      object cbStartOnConnect: TCheckBox
+        Left = 4
+        Top = 105
+        Width = 480
+        Height = 17
+        Caption = 'Start logging after connecting to the device'
+        TabOrder = 2
+        Visible = False
+      end
+      object cbRecordTX: TCheckBox
+        Left = 4
+        Top = 128
+        Width = 480
+        Height = 17
+        Caption = 'Record TX messages (for CAN/FD/XL)'
+        TabOrder = 3
+      end
+      object leFileNameMask: TLabeledEdit
+        Left = 4
+        Top = 68
+        Width = 480
+        Height = 23
+        EditLabel.Width = 327
+        EditLabel.Height = 15
+        EditLabel.Caption = 'File name mask  (the .trc file extension is added automatically)'
+        TabOrder = 1
+        Text = ''
+      end
+      object cbBinaryLog: TCheckBox
+        Left = 4
+        Top = 151
+        Width = 480
+        Height = 17
+        Caption = 'Save binary trace file (Faster, Experimental)'
+        TabOrder = 4
+        Visible = False
+      end
+    end
+    object tsMetaInfo: TTabSheet
+      Caption = 'Meta'
+      object lTransportType: TLabel
+        Left = 4
+        Top = 4
+        Width = 76
+        Height = 15
+        Caption = 'Transport type'
+        FocusControl = cbTransportType
+      end
+      object lTransportBrand: TLabel
+        Left = 4
+        Top = 33
+        Width = 31
+        Height = 15
+        Caption = 'Brand'
+        FocusControl = cbTransportBrand
+      end
+      object lTransportModel: TLabel
+        Left = 4
+        Top = 62
+        Width = 34
+        Height = 15
+        Caption = 'Model'
+      end
+      object lTransportBody: TLabel
+        Left = 4
+        Top = 91
+        Width = 27
+        Height = 15
+        Caption = 'Body'
+        FocusControl = cbTransportBody
+      end
+      object lTransportYear: TLabel
+        Left = 4
+        Top = 120
+        Width = 22
+        Height = 15
+        Caption = 'Year'
+        FocusControl = neTransportYear
+      end
+      object cbTransportType: TComboBox
+        Left = 100
+        Top = 1
+        Width = 195
+        Height = 23
+        TabOrder = 0
+      end
+      object cbTransportBrand: TComboBox
+        Left = 100
+        Top = 30
+        Width = 195
+        Height = 23
+        TabOrder = 1
+      end
+      object cbTransportModel: TComboBox
+        Left = 100
+        Top = 59
+        Width = 195
+        Height = 23
+        TabOrder = 2
+      end
+      object cbTransportBody: TComboBox
+        Left = 100
+        Top = 88
+        Width = 195
+        Height = 23
+        TabOrder = 3
+      end
+      object neTransportYear: TExNumberEdit
+        Left = 100
+        Top = 117
+        Width = 69
+        Height = 23
+        Base = 10
+        MaxLength = 4
+        MinValue = '1990'
+        TabOrder = 4
+        Text = '1990'
+      end
+    end
+    object tsFilter: TTabSheet
+      Caption = 'Filter'
+      DesignSize = (488 299)
+      object cbDisableHwFilter: TCheckBox
+        Left = 3
+        Top = 3
+        Width = 486
+        Height = 17
+        Caption = 'Disable hardware filter'
+        TabOrder = 0
+        Visible = False
+      end
+      object pcChannels: TPageControl
+        Left = 3
+        Top = 26
+        Width = 482
+        Height = 270
+        Anchors = [akLeft, akTop, akRight, akBottom]
+        TabOrder = 1
+      end
+    end
+  end
+  object leLogName: TLabeledEdit
+    Left = 236
+    Top = 26
+    Width = 492
+    Height = 23
+    Anchors = [akLeft, akTop, akRight]
+    EditLabel.Width = 53
+    EditLabel.Height = 15
+    EditLabel.Caption = 'Log name'
+    Enabled = False
+    MaxLength = 128
+    TabOrder = 1
+    Text = ''
+    OnChange = leLogNameChange
+  end
+  object btnOpen: TButton
+    Left = 361
+    Top = 390
+    Width = 100
+    Height = 26
+    Anchors = [akRight, akBottom]
+    Caption = 'Open'
+    DropDownMenu = pmOpenRecent
+    ImageIndex = 19
+    ImageName = '19 - Load'
+    Images = dmBase.ilMain
+    Style = bsSplitButton
+    TabOrder = 5
+    OnClick = btnOpenClick
+  end
+  object btnSave: TButton
+    Left = 466
+    Top = 390
+    Width = 100
+    Height = 26
+    Anchors = [akRight, akBottom]
+    Caption = 'Save'
+    DropDownMenu = pmSave
+    Enabled = False
+    ImageIndex = 20
+    ImageName = '20 - Save'
+    Images = dmBase.ilMain
+    Style = bsSplitButton
+    TabOrder = 6
+  end
+  object btnNew: TButton
+    Left = 280
+    Top = 390
+    Width = 75
+    Height = 26
+    Anchors = [akRight, akBottom]
+    Caption = 'New'
+    ImageIndex = 4
+    ImageName = '04 - New'
+    Images = dmBase.ilMain
+    TabOrder = 7
+  end
+  object bbAddFile: TButton
+    Left = 23
+    Top = 389
+    Width = 75
+    Height = 26
+    Anchors = [akLeft, akBottom]
+    Caption = 'Add'
+    ImageIndex = 58
+    ImageName = '58 - Add'
+    Images = dmBase.ilMain
+    TabOrder = 8
+    OnClick = bbAddFileClick
+  end
+  object bbRemoveFile: TButton
+    Left = 104
+    Top = 389
+    Width = 75
+    Height = 26
+    Anchors = [akLeft, akBottom]
+    Caption = 'Remove'
+    Enabled = False
+    ImageIndex = 59
+    ImageName = '59 - Remove'
+    Images = dmBase.ilMain
+    TabOrder = 9
+    OnClick = bbRemoveFileClick
+  end
+  object bbDuplicate: TButton
+    Left = 185
+    Top = 389
+    Width = 25
+    Height = 26
+    Hint = 'Duplicate'
+    Enabled = False
+    ImageIndex = 90
+    ImageName = '90 - Duplicate'
+    Images = dmBase.ilMain
+    TabOrder = 10
+  end
+  object pmOpenRecent: TPopupMenu
+    Left = 440
+    Top = 336
+  end
+  object pmSave: TPopupMenu
+    Images = dmBase.ilMain
+    Left = 519
+    Top = 336
+    object miSave: TMenuItem
+      Caption = 'Save'
+      ImageIndex = 20
+      ImageName = '20 - Save'
+    end
+    object miSaveAs: TMenuItem
+      Caption = 'Save as...'
+      ImageIndex = 45
+      ImageName = '45 - SaveAs'
+    end
+  end
+end

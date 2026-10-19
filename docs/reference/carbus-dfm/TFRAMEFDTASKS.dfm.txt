@@ -1,0 +1,68 @@
+object frameFDTasks: TframeFDTasks
+  object pnTransmit: TPanel
+    object pnTask: TPanel
+      object pnMsg: TPanel
+        object lData: TLabel
+          FocusControl = frameData.ed00
+        end
+        object cb29bit: TCheckBox
+          Left = 0
+          Top = 44
+          Width = 56
+          Height = 17
+          Caption = '29 bit'
+          TabOrder = 4
+          OnClick = cb29bitClick
+        end
+        object cbBRS: TCheckBox
+          Left = 0
+          Top = 84
+          Width = 56
+          Height = 17
+          Caption = 'BRS'
+          TabOrder = 7
+          OnClick = cbBRSClick
+        end
+        object cbESI: TCheckBox
+          Left = 0
+          Top = 104
+          Width = 56
+          Height = 17
+          Caption = 'ESI'
+          TabOrder = 8
+          OnClick = cbESIClick
+        end
+        object rbFD: TRadioButton
+          Left = 0
+          Top = 64
+          Width = 56
+          Height = 17
+          Caption = 'FD'
+          Checked = True
+          TabOrder = 5
+          TabStop = True
+          OnClick = rbModeClick
+        end
+        object rbClassic: TRadioButton
+          Left = 62
+          Top = 64
+          Width = 56
+          Height = 17
+          Caption = 'Classic'
+          TabOrder = 6
+          OnClick = rbModeClick
+        end
+        object cbRTR: TCheckBox
+          Left = 62
+          Top = 84
+          Width = 56
+          Height = 17
+          Caption = 'RTR'
+          Enabled = False
+          TabOrder = 9
+          OnClick = cbRTRClick
+        end
+      end
+    end
+  end
+end

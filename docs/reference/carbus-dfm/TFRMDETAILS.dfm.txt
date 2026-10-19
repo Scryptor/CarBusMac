@@ -1,0 +1,281 @@
+object frmDetails: TfrmDetails
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  ClientHeight = 396
+  ClientWidth = 694
+  Color = clBtnFace
+  Constraints.MaxWidth = 710
+  Constraints.MinHeight = 435
+  Constraints.MinWidth = 710
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  Position = poMainFormCenter
+  OnAfterMonitorDpiChanged = FormAfterMonitorDpiChanged
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnKeyDown = FormKeyDown
+  OnShow = FormShow
+  DesignSize = (694 396)
+  TextHeight = 13
+  object gbBitMap: TGroupBox
+    AlignWithMargins = True
+    Left = 8
+    Top = 8
+    Width = 678
+    Height = 322
+    Margins.Left = 8
+    Margins.Top = 8
+    Margins.Right = 8
+    Margins.Bottom = 0
+    Align = alClient
+    Caption = ' Bytes bit map '
+    TabOrder = 1
+    object sbBitMap: TScrollBox
+      Left = 2
+      Top = 33
+      Width = 674
+      Height = 287
+      VertScrollBar.Tracking = True
+      Align = alClient
+      BorderStyle = bsNone
+      TabOrder = 0
+      OnMouseWheel = sbBitMapMouseWheel
+      object pbData: TPaintBox
+        Left = 0
+        Top = 0
+        Width = 674
+        Height = 105
+        Align = alTop
+        OnPaint = pbDataPaint
+        ExplicitWidth = 678
+      end
+    end
+    object pnTitle: TPanel
+      Left = 2
+      Top = 15
+      Width = 674
+      Height = 18
+      Align = alTop
+      BevelOuter = bvNone
+      TabOrder = 1
+      object bvDec: TBevel
+        Left = 96
+        Top = 0
+        Width = 3
+        Height = 18
+        Shape = bsLeftLine
+        Style = bsRaised
+      end
+      object lbBit7: TLabel
+        Left = 106
+        Top = 0
+        Width = 31
+        Height = 13
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'x80'
+      end
+      object bvBit7: TBevel
+        Left = 144
+        Top = 0
+        Width = 3
+        Height = 18
+        Shape = bsLeftLine
+        Style = bsRaised
+      end
+      object lbBit6: TLabel
+        Left = 154
+        Top = 0
+        Width = 31
+        Height = 13
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'x40'
+      end
+      object bvBit6: TBevel
+        Left = 192
+        Top = 0
+        Width = 3
+        Height = 18
+        Shape = bsLeftLine
+        Style = bsRaised
+      end
+      object lbBit5: TLabel
+        Left = 202
+        Top = 0
+        Width = 31
+        Height = 13
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'x20'
+      end
+      object bvBit5: TBevel
+        Left = 240
+        Top = 0
+        Width = 3
+        Height = 18
+        Shape = bsLeftLine
+        Style = bsRaised
+      end
+      object lbBit4: TLabel
+        Left = 250
+        Top = 0
+        Width = 31
+        Height = 13
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'x10'
+      end
+      object bvBit4: TBevel
+        Left = 288
+        Top = 0
+        Width = 3
+        Height = 18
+        Shape = bsLeftLine
+        Style = bsRaised
+      end
+      object lbBit3: TLabel
+        Left = 298
+        Top = 0
+        Width = 31
+        Height = 13
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'x08'
+      end
+      object bvBit3: TBevel
+        Left = 336
+        Top = 0
+        Width = 3
+        Height = 18
+        Shape = bsLeftLine
+        Style = bsRaised
+      end
+      object lbBit2: TLabel
+        Left = 346
+        Top = 0
+        Width = 31
+        Height = 13
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'x04'
+      end
+      object bvBit2: TBevel
+        Left = 384
+        Top = 0
+        Width = 3
+        Height = 18
+        Shape = bsLeftLine
+        Style = bsRaised
+      end
+      object lbBit1: TLabel
+        Left = 394
+        Top = 0
+        Width = 31
+        Height = 13
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'x02'
+      end
+      object bvBit1: TBevel
+        Left = 432
+        Top = 0
+        Width = 3
+        Height = 18
+        Shape = bsLeftLine
+        Style = bsRaised
+      end
+      object lbBit0: TLabel
+        Left = 442
+        Top = 0
+        Width = 31
+        Height = 13
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'x01'
+      end
+      object bvBit0: TBevel
+        Left = 480
+        Top = 0
+        Width = 3
+        Height = 18
+        Shape = bsLeftLine
+        Style = bsRaised
+      end
+      object bvTitle: TBevel
+        Left = 0
+        Top = 15
+        Width = 690
+        Height = 2
+        Shape = bsTopLine
+        Style = bsRaised
+      end
+      object lDecByte: TLabel
+        Left = 488
+        Top = 0
+        Width = 43
+        Height = 13
+        Caption = 'Dec byte'
+      end
+      object bvDecByte: TBevel
+        Left = 654
+        Top = 0
+        Width = 3
+        Height = 18
+        Shape = bsLeftLine
+        Style = bsRaised
+        Visible = False
+      end
+    end
+  end
+  object gbComment: TGroupBox
+    AlignWithMargins = True
+    Left = 8
+    Top = 334
+    Width = 678
+    Height = 54
+    Margins.Left = 8
+    Margins.Top = 4
+    Margins.Right = 8
+    Margins.Bottom = 8
+    Align = alBottom
+    Caption = ' Comment '
+    TabOrder = 0
+    DesignSize = (678 54)
+    object edComment: TEdit
+      Left = 8
+      Top = 20
+      Width = 662
+      Height = 21
+      Anchors = [akLeft, akTop, akRight]
+      TabOrder = 0
+      OnChange = edCommentChange
+    end
+  end
+  object bbAOT: TBitBtn
+    Left = 662
+    Top = 4
+    Width = 24
+    Height = 24
+    Anchors = [akTop, akRight]
+    ImageIndex = 86
+    ImageName = '86 - AlwaysOnTop'
+    Images = dmBase.ilMain
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 2
+    TabStop = False
+    OnClick = bbAOTClick
+  end
+  object tmrUpdate: TTimer
+    Enabled = False
+    OnTimer = tmrUpdateTimer
+    Left = 70
+    Top = 75
+  end
+end
