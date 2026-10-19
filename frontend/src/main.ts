@@ -4,6 +4,8 @@ import { client } from "./app";
 import type { ServerEvent } from "./ws";
 import { initMonitor } from "./monitor";
 import { initBitmap } from "./bitmap";
+import { initStream } from "./stream";
+import { initFilters } from "./filters";
 import "./style.css";
 
 function el<T extends HTMLElement = HTMLElement>(id: string): T {
@@ -74,5 +76,7 @@ function initTabs(): void {
 initConnect();
 initBitmap();
 initMonitor();
+initStream();
+initFilters();
 initTabs();
 client.connect();

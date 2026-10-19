@@ -61,3 +61,16 @@ table.grid tr.sel { background: #243247; }
 .bm-dec { width: 3em; text-align: right; font-variant-numeric: tabular-nums; }
 .bm-comment { display: block; padding: 6px 10px; color: var(--muted); }
 .bm-comment input { background: #0e1014; color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 3px 6px; margin-left: 6px; }
+
+/* --- Поток / фильтры (FE-3) --- */
+.bar { display: flex; gap: 10px; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+.bar button, .form button { background: #2b3038; color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 3px 10px; cursor: pointer; }
+.bar button.active, .form button.active { background: var(--accent); color: #06121f; }
+.muted { color: var(--muted); }
+.log { height: 100%; overflow: auto; padding: 4px 10px; }
+.logline { white-space: pre; }
+#filters .hd { padding: 6px 10px; color: var(--muted); border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); }
+#filters .form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px; }
+#filters label { color: var(--muted); display: inline-flex; gap: 4px; align-items: center; }
+#filters input, #filters select { background: #0e1014; color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px; }
+.err { color: var(--off); padding: 0 10px; min-height: 1em; }
