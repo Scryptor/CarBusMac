@@ -36,3 +36,28 @@ main { display: grid; grid-template-columns: 1fr 320px; grid-template-rows: 1fr 
   #side { grid-row: 2; grid-column: 1; }
   #transmit { grid-row: 3; grid-column: 1; }
 }
+
+/* --- Монитор (FE-2) --- */
+table.grid { width: 100%; border-collapse: collapse; }
+table.grid th, table.grid td { text-align: left; padding: 3px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.grid thead th { position: sticky; top: 0; background: var(--panel); color: var(--muted); font-weight: 600; }
+table.grid td.data, table.grid th.data { font-variant-numeric: tabular-nums; }
+table.grid tr:hover { background: #22262e; cursor: pointer; }
+table.grid tr.sel { background: #243247; }
+.byte { display: inline-block; width: 1.9em; text-align: center; }
+.byte.chg { animation: flash .7s ease-out; border-radius: 3px; }
+@keyframes flash { from { background: var(--changed-bit); color: #06121f; } to { background: transparent; } }
+
+/* --- Карта бит (FE-2) --- */
+#bitmap .hd { padding: 6px 10px; color: var(--muted); border-bottom: 1px solid var(--line); }
+.bm-empty { padding: 10px; color: var(--muted); }
+.bm { padding: 6px 10px; }
+.bm-row { display: flex; gap: 4px; align-items: center; margin: 2px 0; }
+.bm-row.bm-head { color: var(--muted); }
+.bm-idx { width: 1.6em; color: var(--muted); text-align: right; }
+.bm-bit { width: 2.1em; text-align: center; border: 1px solid var(--line); border-radius: 3px; color: #555; }
+.bm-bit.on { color: var(--ok); border-color: #2e6b47; }
+.bm-bit.chg { background: var(--changed-bit); color: #06121f; }
+.bm-dec { width: 3em; text-align: right; font-variant-numeric: tabular-nums; }
+.bm-comment { display: block; padding: 6px 10px; color: var(--muted); }
+.bm-comment input { background: #0e1014; color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 3px 6px; margin-left: 6px; }

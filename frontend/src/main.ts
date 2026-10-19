@@ -2,6 +2,8 @@
  * Экраны монитора/потока/передачи/фильтров/трейсера подключаются в FE-2..FE-5. */
 import { client } from "./app";
 import type { ServerEvent } from "./ws";
+import { initMonitor } from "./monitor";
+import { initBitmap } from "./bitmap";
 import "./style.css";
 
 function el<T extends HTMLElement = HTMLElement>(id: string): T {
@@ -56,5 +58,21 @@ function initConnect(): void {
   });
 }
 
-client.connect();
+function initTabs(): void {
+  const buttons = document.querySelectorAll<HTMLButtonElement>("#receive .tabbar button");
+  buttons.forEach((b) => {
+    b.addEventListener("click", () => {
+      const tab = b.dataset.tab;
+      buttons.forEach((x) => x.classList.toggle("active", x === b));
+      document
+        .querySelectorAll<HTMLElement>("#receive .tab")
+        .forEach((t) => t.classList.toggle("active", t.id === tab));
+    });
+  });
+}
+
 initConnect();
+initBitmap();
+initMonitor();
+initTabs();
+client.connect();
