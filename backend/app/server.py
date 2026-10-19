@@ -238,3 +238,20 @@ def create_app(session_factory: Callable[[], CanSession]) -> FastAPI:
         app.mount("/", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="static")
 
     return app
+
+
+def default_session_factory() -> CanSession:
+    """Боевая фабрика для uvicorn: CarbusSession к мосту из env CARBUS_BRIDGE
+    (по умолчанию host.docker.internal:7000). carbus-lib импортируется лениво,
+    чтобы серверные тесты не зависели от него."""
+    import os
+
+    from app.carbus_session import CarbusSession
+
+    target = os.environ.get("CARBUS_BRIDGE", "host.docker.internal:7000")
+    host, _, port = target.partition(":")
+    return CarbusSession(host, int(port or "7000"))
+
+
+# Точка входа для uvicorn: `uvicorn app.server:app`
+app = create_app(default_session_factory)
