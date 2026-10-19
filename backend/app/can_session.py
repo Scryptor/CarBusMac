@@ -1,0 +1,69 @@
+"""Абстракция устройства CAN. Вся логика бэкенда работает через этот интерфейс,
+поэтому тестируется на FakeSession без железа. Реальная реализация поверх
+carbus-lib — в carbus_session.py (задача BE-6)."""
+from __future__ import annotations
+
+import asyncio
+from typing import AsyncIterator, Protocol, runtime_checkable
+
+from app.models import CanFrame
+
+
+@runtime_checkable
+class CanSession(Protocol):
+    async def connect(self) -> None: ...
+    async def close(self) -> None: ...
+    async def get_device_info(self) -> dict: ...
+    async def open_channel(self, channel: int, bitrate: int, listen_only: bool) -> None: ...
+    async def send(self, frame: CanFrame) -> None: ...
+    async def set_hw_filter(
+        self, channel: int, index: int, can_id: int, mask: int, extended: bool
+    ) -> None: ...
+    async def clear_filters(self, channel: int) -> None: ...
+    def frames(self) -> AsyncIterator[CanFrame]: ...
+
+
+class FakeSession:
+    """Тестовая сессия: `push` кладёт принятый кадр в `frames()`, `sent` копит
+    отправленные, `info` настраивается, `fail_connect` имитирует недоступный мост."""
+
+    def __init__(self, info: dict | None = None, fail_connect: bool = False) -> None:
+        self.info = info or {}
+        self.fail_connect = fail_connect
+        self.sent: list[CanFrame] = []
+        self.channels: list[tuple[int, int, bool]] = []
+        self.filters: list[tuple[int, int, int, int, bool]] = []
+        self.connected = False
+        self._queue: asyncio.Queue[CanFrame] = asyncio.Queue()
+
+    async def connect(self) -> None:
+        if self.fail_connect:
+            raise ConnectionError("fake bridge connect failure")
+        self.connected = True
+
+    async def close(self) -> None:
+        self.connected = False
+
+    async def get_device_info(self) -> dict:
+        return dict(self.info)
+
+    async def open_channel(self, channel: int, bitrate: int, listen_only: bool) -> None:
+        self.channels.append((channel, bitrate, listen_only))
+
+    async def send(self, frame: CanFrame) -> None:
+        self.sent.append(frame)
+
+    async def set_hw_filter(
+        self, channel: int, index: int, can_id: int, mask: int, extended: bool
+    ) -> None:
+        self.filters.append((channel, index, can_id, mask, extended))
+
+    async def clear_filters(self, channel: int) -> None:
+        self.filters = [f for f in self.filters if f[0] != channel]
+
+    def push(self, frame: CanFrame) -> None:
+        self._queue.put_nowait(frame)
+
+    async def frames(self) -> AsyncIterator[CanFrame]:
+        while True:
+            yield await self._queue.get()
