@@ -5,6 +5,7 @@ import { client } from "./core/client";
 import { applyEvent } from "./core/store";
 import { registerMonitor } from "./features/monitor/register";
 import { registerStream } from "./features/stream/register";
+import { registerTransmit } from "./features/transmit/actions";
 import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/components.css";
@@ -13,6 +14,7 @@ import "./styles/layout.css";
 client.on("*", (e) => applyEvent(e));
 registerMonitor();
 registerStream();
+registerTransmit();
 client.connect();
 
 render(<App />, document.getElementById("app")!);
