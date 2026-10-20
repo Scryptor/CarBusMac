@@ -6,6 +6,7 @@ import { initMonitor } from "./monitor";
 import { initBitmap } from "./bitmap";
 import { initStream } from "./stream";
 import { initFilters } from "./filters";
+import { initTransmit } from "./transmit";
 import "./style.css";
 
 function el<T extends HTMLElement = HTMLElement>(id: string): T {
@@ -78,5 +79,6 @@ initBitmap();
 initMonitor();
 initStream();
 initFilters();
+initTransmit();
 initTabs();
 client.connect();
