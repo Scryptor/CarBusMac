@@ -155,7 +155,8 @@ class Hub:
         self.monitor = MonitorState(aggregator=self.settings["aggregator"])
         self.capture = Capture()
         self.capture_rev = 0
-        self.tx = TransmitManager(send=self._tx_send, sleep=sleep, on_change=self._tx_changed)
+        self.tx = TransmitManager(send=self._tx_send, sleep=sleep, on_change=self._tx_changed,
+                                  on_error=lambda m: self._toast("error", f"Передача остановлена: {m}"))
         self.hw = HwFilters(layout_from_device({}))
         self.soft = SoftFilters()
         self._restore_lists()
@@ -165,7 +166,8 @@ class Hub:
         self._progress_state = "stopped"          # что последним ушло клиентам
         self._progress_pending: int | None = None  # строка, ещё не отправленная в тике
         self.player = TracePlayer(self.tracer, send=self._player_send, sleep=sleep,
-                                  on_progress=self._player_progress)
+                                  on_progress=self._player_progress,
+                                  on_error=lambda m: self._toast("error", f"Отладчик остановлен: {m}"))
         self.player.config.max_1s = self.settings["tracer_max_1s"]
 
         self._reader_task: asyncio.Task | None = None

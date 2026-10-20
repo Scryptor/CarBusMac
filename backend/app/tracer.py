@@ -45,6 +45,7 @@ class TracerDoc:
         self.name: str | None = None
         self.rows: list[TraceRow] = []
         self.markers: list[Marker] = []
+        self.meta: dict[str, str] = {}      # заголовок трейса ($LocalTime, марка…) — сохраняется обратно
         self.modified = False
         self._disabled_ids: set[IdKey] = set()
         self._visible: list[int] | None = None   # индексы видимых строк, по возрастанию
@@ -53,6 +54,7 @@ class TracerDoc:
         self.name = name
         self.rows = [TraceRow(f, comment=doc.comments.get(i, "")) for i, f in enumerate(doc.frames)]
         self.markers = list(doc.markers)
+        self.meta = dict(doc.meta)
         self._disabled_ids = set()
         self._visible = None
         self.modified = False
@@ -87,6 +89,7 @@ class TracerDoc:
             frames=[r.frame for r in self.rows],
             markers=list(self.markers),
             comments={i: r.comment for i, r in enumerate(self.rows) if r.comment},
+            meta=dict(self.meta),
         )
 
     # --- просмотр ---
@@ -242,11 +245,13 @@ class TracePlayer:
         send: Callable[[CanFrame, str], Awaitable[None]],
         sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
         on_progress: Callable[[int | None, str], None] = lambda current, state: None,
+        on_error: Callable[[str], None] = lambda message: None,
     ) -> None:
         self.doc = doc
         self._send = send
         self._sleep = sleep
         self._on_progress = on_progress
+        self._on_error = on_error
         self.config = PlayerConfig()
         self.state = "stopped"
         self.current: int | None = None
@@ -355,7 +360,15 @@ class TracePlayer:
                     delay += self._gap(prev_ts, row.frame.timestamp)
                 if delay > 0:
                     await self._sleep(delay)
-                await self._send_row(idx)
+                try:
+                    await self._send_row(idx)
+                except Exception as e:      # обрыв моста и т.п.: остановиться и сказать почему
+                    self.state = "stopped"
+                    self.cursor = 0
+                    self._task = None
+                    self._emit()
+                    self._on_error(str(e) or e.__class__.__name__)
+                    return
                 prev_ts = row.frame.timestamp
                 self.cursor += 1
                 if self.state != "playing":     # пауза изнутри send (например, приём данных)

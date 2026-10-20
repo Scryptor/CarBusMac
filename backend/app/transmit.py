@@ -131,10 +131,12 @@ class TransmitManager:
         send: Callable[[CanFrame], Awaitable[None]],
         sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
         on_change: Callable[[], None] = lambda: None,
+        on_error: Callable[[str], None] = lambda message: None,
     ) -> None:
         self._send = send
         self._sleep = sleep
         self._on_change = on_change
+        self._on_error = on_error
         self.tasks: list[TxTask] = []
         self._loops: dict[str, asyncio.Task] = {}
         self._pending: set[asyncio.Task] = set()
@@ -239,13 +241,18 @@ class TransmitManager:
                 await self._sleep(t.period_ms / 1000.0)
         except asyncio.CancelledError:
             raise
-        except Exception:
-            # задача удалена или отправка упала — цикл гаснет, UI видит running=False
+        except Exception as e:
+            # задача удалена или отправка упала — цикл гаснет, UI видит running=False;
+            # упавшую отправку ещё и объясняем
+            still_there = False
             for t in self.tasks:
                 if t.id == task_id:
                     t.running = False
+                    still_there = True
             self._loops.pop(task_id, None)
             self._on_change()
+            if still_there:
+                self._on_error(str(e) or e.__class__.__name__)
 
     # --- триггеры ---
     @staticmethod

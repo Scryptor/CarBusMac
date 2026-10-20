@@ -255,3 +255,25 @@ async def test_start_and_finish_bound_playback():
     assert not any(r.start for r in doc.rows)
     doc.set_bound("finish", None)
     assert not any(r.finish for r in doc.rows)
+
+
+async def test_send_failure_stops_playback_and_reports():
+    doc = _doc((0, 1), (0.01, 2))
+    errors, states = [], []
+
+    async def broken(frame, target):
+        raise OSError("мост недоступен")
+
+    p = TracePlayer(doc, send=broken, sleep=FakeSleep(), on_progress=lambda cur, st: states.append(st),
+                    on_error=errors.append)
+    await p.play()
+    await _drain()
+    assert p.state == "stopped" and states[-1] == "stopped"
+    assert errors == ["мост недоступен"]
+
+
+def test_tracer_keeps_trace_meta_for_saving():
+    meta = {"$LocalTime": "12:30:05.123", "TransportBrand": "Lada"}
+    d = TracerDoc()
+    d.load(TraceDoc(frames=[CanFrame(1, 1, b"\x01", timestamp=0.0)], meta=meta), "t.trc")
+    assert d.to_trace_doc().meta == meta

@@ -26,7 +26,8 @@ class Env:
             self.sessions.append(s)
             return s
 
-        self.app = create_app(factory, data_dir=tmp_path / "data", traces_dir=tmp_path / "traces")
+        self.app = create_app(factory, data_dir=tmp_path / "data", traces_dir=tmp_path / "traces",
+                              allowed_hosts=("testserver",))
         self.traces = tmp_path / "traces"
         self.data = tmp_path / "data"
 

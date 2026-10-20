@@ -182,3 +182,29 @@ def test_task_from_dict_validates():
         task_from_dict({"id": "x", "can_id": 1, "data": "0011223344556677ff"})  # 9 байт
     with pytest.raises(ValueError):
         task_from_dict({"id": "x", "can_id": 1, "period_ms": 0})
+
+
+async def test_failed_send_stops_cycle_and_says_why():
+    errors = []
+
+    async def broken(f):
+        raise OSError("мост недоступен")
+
+    tm = TransmitManager(send=broken, sleep=FakeSleep(), on_error=errors.append)
+    tm.upsert(TxTask(id="t1", channel=1, can_id=0x123, data=b"\x01", period_ms=10))
+    tm.start("t1")
+    await _drain()
+    assert tm.tasks[0].running is False
+    assert len(errors) == 1 and "мост недоступен" in errors[0]
+
+
+async def test_deleting_a_running_task_is_not_an_error():
+    errors = []
+    sent = []
+    tm = TransmitManager(send=_collect(sent), sleep=FakeSleep(), on_error=errors.append)
+    tm.upsert(TxTask(id="t1", channel=1, can_id=0x123, data=b"\x01", period_ms=10))
+    tm.start("t1")
+    await _drain()
+    tm.delete("t1")
+    await _drain()
+    assert errors == []
