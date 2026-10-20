@@ -280,3 +280,32 @@ def test_desktop_cmt_and_tsk_files_load_and_save(tmp_path):
         assert call(ws, type="tx_save", name="out", format="tsk")["data"]["name"] == "out.tsk"
     assert (lists / "out.cmt").read_bytes().startswith(b"0000012F=")
     assert (lists / "out.tsk").read_bytes().startswith(b"Task.Begin\r")
+
+
+def test_terminator_only_where_device_supports_it(tmp_path):
+    env = Env(tmp_path)
+    ch2 = {**CONNECT["channels"][1], "terminator": True, "auto_open": True}
+    with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        assert call(ws, type="connect", config={**CONNECT, "channels": [CONNECT["channels"][0], ch2]})["ok"]
+        st = recv_until(ws, lambda m: m["type"] == "status" and m["state"] == "opened")
+        assert env.sessions[-1].terminators == {1: True}
+        c2 = st["channels"]["2"]
+        assert c2["open"] and c2["terminator"] is False and c2["error"] is None
+        toast = recv_until(ws, lambda m: m["type"] == "toast")
+        assert "Канал 2" in toast["message"] and "терминатор" in toast["message"]
+        bad = call(ws, type="channel_terminator", channel=2, enabled=True)
+        assert bad["ok"] is False and "терминатор" in bad["error"]
+
+
+def test_bitrates_keep_clock_and_reject_bad_timing(tmp_path):
+    env = Env(tmp_path)
+    item = {"caption": "47,6k", "bitrate": 47619, "sample_pct": 80, "clock_hz": 120_000_000,
+            "timing": {"prescaler": 140, "seg1": 14, "seg2": 3, "sjw": 3}}
+    with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        assert call(ws, type="bitrates_set", bitrates=[item])["ok"]
+        ev = recv_until(ws, lambda m: m["type"] == "bitrates")
+        assert ev["bitrates"] == [item]
+        bad = {**item, "timing": {"prescaler": 0, "seg1": 1, "seg2": 1, "sjw": 1}}
+        assert call(ws, type="bitrates_set", bitrates=[bad])["ok"] is False

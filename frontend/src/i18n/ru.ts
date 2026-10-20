@@ -1,5 +1,15 @@
 /** Все подписи интерфейса. Источник формулировок — русская локализация десктопа
  * (CarBUSAnalyzer/app/Language/Russian.lng): секции форм и [ResourceStrings]. */
+/** Русское множественное число: 1 фильтр, 2 фильтра, 5 фильтров. */
+export function plural(n: number, one: string, few: string, many: string): string {
+  const a = Math.abs(n) % 100;
+  const b = a % 10;
+  if (a > 10 && a < 20) return many;
+  if (b === 1) return one;
+  if (b >= 2 && b <= 4) return few;
+  return many;
+}
+
 export const t = {
   app: "CarBUS",
   common: {
@@ -211,7 +221,16 @@ export const t = {
     dialog: "Настройки устройства",
     deviceTab: "Устройство",
     bridge: "Мост (хост:порт)",
+    bridgeHost: "Адрес моста",
+    bridgePort: "Порт моста",
     bridgeHint: "Нативный мост carbus tcp_bridge на маке (./run-bridge.sh)",
+    errBridgeHost: "Укажите адрес моста",
+    errBridgePort: "Порт моста: от 1 до 65535",
+    source: "Источник",
+    sourceBridge: "Мост carbus (TCP)",
+    connectedDevice: "Подключён прибор",
+    own: "Своя",
+    noTerminator: "Прибор не поддерживает терминатор",
     channelTab: (n: number) => `Канал ${n}: CAN`,
     alias: "Название канала",
     nominal: "Номинальная скорость",
@@ -221,11 +240,33 @@ export const t = {
     bitrates: "Управление скоростями",
     configure: "Настроить скорости",
     infoDialog: "Информация об устройстве",
+    infoText: "Сведения об устройстве",
+    device: "Устройство",
     firmware: "Прошивка",
     serial: "Серийный номер",
     channels: "Каналы",
     features: "Возможности",
-    filtersCount: "фильтров",
+    featuresNo: "Нет дополнительных функций",
+    featureGateway: "Шлюз",
+    featureIsotp: "ISO-TP",
+    featureTxBuffer: "Буфер передачи",
+    featureTxTask: "Задачи передачи в приборе",
+    chFeatures: {
+      csd: "Автоматическое определение скорости CAN",
+      alc: "Контроль проигрыша арбитража ALS",
+      terminator: "Терминатор 120 Ом",
+      pullup: "Подтягивание линии к +12 В",
+      idle: "Время определения IDLE для шины LIN",
+      dsd: "Определение скорости данных для CAN-FD",
+      noniso: "Формат фреймов CAN-FD по спецификации Bosch",
+    } as Record<string, string>,
+    filtersCount: (n: number) => `${n} ${plural(n, "фильтр", "фильтра", "фильтров")}`,
+    mhz: (hz: number) => `${hz / 1_000_000} МГц`,
+    copy: "Копировать",
+    copied: "Скопировано",
+    notConnected: "Прибор не подключён",
+    state: "Состояние",
+    terminatorOn: "терминатор включён",
     states: {
       closed: "Не подключен",
       opening: "Соединение…",
@@ -240,19 +281,25 @@ export const t = {
   },
   bitrate: {
     clock: (mhz: number) => `Тактовая частота: ${mhz} МГц`,
+    clockDefault: "прибор не подключён, частота по умолчанию",
     list: "Скорости",
+    empty: "Своих скоростей нет — нажмите «Добавить»",
     caption: "Название",
     rate: "Скорость",
     kbps: "Кбит/с",
     sample: "Точка выборки",
-    samplePct: "% (50-90)",
-    prescaler: "Prescaler",
+    samplePct: "% (50–90)",
+    prescaler: "Делитель",
     seg1: "Seg1",
     seg2: "Seg2",
     sjw: "Sync.Jump Width",
     actualRate: "Фактическая скорость",
     actualSample: "Фактическая точка выборки",
     accuracy: "Точность",
+    up: "Выше",
+    down: "Ниже",
+    errRate: "Скорость: укажите число Кбит/с, например 47,619",
+    errSample: "Точка выборки: от 50 до 90 %",
     noTiming: "Для этой скорости нет целого тайминга",
   },
   tracer: {

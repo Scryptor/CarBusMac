@@ -71,3 +71,13 @@ test("menu hides orphan separators around missing actions", async () => {
   await screen.findByText("Единственный");
   expect(document.querySelectorAll(".ctx-sep").length).toBe(0);
 });
+
+test("dialog focuses the first editable field, skipping read-only ones", () => {
+  render(
+    <Dialog title="Т" onClose={() => {}}>
+      <input aria-label="только чтение" readOnly value="1" />
+      <input aria-label="правка" value="2" />
+    </Dialog>,
+  );
+  expect(document.activeElement).toBe(screen.getByLabelText("правка"));
+});

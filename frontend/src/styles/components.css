@@ -50,6 +50,11 @@
   color: var(--text-3);
   background: var(--panel-2);
 }
+/* вычисленные значения: читаются как текст, а не как поле для правки */
+.inp[readonly] {
+  background: var(--panel-2);
+  border-style: dashed;
+}
 select.inp {
   padding-right: 4px;
 }
@@ -346,6 +351,113 @@ select.inp {
   color: var(--err);
   min-height: 18px;
 }
+.form-grid > .label {
+  color: var(--text-2);
+}
+/* подписи над полями — когда полю нужна вся ширина колонки */
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.form-stack > label {
+  color: var(--text-2);
+}
+.form-stack > label:not(:first-child) {
+  margin-top: 8px;
+}
+.inline-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.inline-row > .grow {
+  flex: 1;
+  min-width: 0;
+}
+.check-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+/* ---------- устройство ---------- */
+.dev-channels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.devinfo {
+  margin: 0;
+  min-height: 260px;
+  max-height: 60vh;
+  overflow: auto;
+  padding: 10px 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: 13px/1.5 var(--grid-font);
+  white-space: pre;
+  user-select: text;
+}
+.br-layout {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 18px;
+}
+.br-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+.br-list {
+  flex: 1;
+  min-height: 200px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  outline-offset: 1px;
+}
+.br-item {
+  padding: 5px 9px;
+  cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.br-item.sel {
+  background: var(--sel);
+  color: var(--sel-text);
+}
+.br-empty {
+  padding: 10px;
+  white-space: normal;
+}
+.br-buttons {
+  display: flex;
+  gap: 6px;
+}
+.br-form {
+  display: grid;
+  grid-template-columns: max-content 110px max-content;
+  gap: 7px 10px;
+  align-items: center;
+}
+.br-form > label {
+  color: var(--text-2);
+}
+.br-form > hr {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 2px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
 
 /* ---------- плавающие окна ---------- */
 .float {
@@ -462,6 +574,9 @@ select.inp {
 }
 .toast.error {
   border-left-color: var(--err);
+}
+.toast.warning {
+  border-left-color: var(--warn);
 }
 
 /* ---------- «послесвечение» изменившихся байтов ---------- */

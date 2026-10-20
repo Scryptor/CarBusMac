@@ -1,4 +1,4 @@
-import { beforeEach, expect, test } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
 import { applyEvent, resetStore, store } from "../src/core/store";
 
 const hello = {
@@ -53,4 +53,17 @@ test("stats and toast are stored", () => {
   applyEvent({ type: "toast", level: "info", message: "Поток данных сохранён!" });
   expect(store.stats.value.rx_per_s).toBe(512);
   expect(store.toasts.value[0].message).toBe("Поток данных сохранён!");
+});
+
+test("warning toast stays as long as an error", () => {
+  vi.useFakeTimers();
+  try {
+    applyEvent({ type: "toast", level: "warning", message: "Канал 2: прибор не поддерживает терминатор 120 Ом" });
+    vi.advanceTimersByTime(4000);
+    expect(store.toasts.value.map((t) => t.level)).toEqual(["warning"]);
+    vi.advanceTimersByTime(2500);
+    expect(store.toasts.value).toEqual([]);
+  } finally {
+    vi.useRealTimers();
+  }
 });

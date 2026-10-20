@@ -7,6 +7,7 @@ import { registerMonitor } from "./features/monitor/register";
 import { registerStream } from "./features/stream/register";
 import { registerTransmit } from "./features/transmit/actions";
 import { registerFilters } from "./features/filters/FiltersPanel";
+import { registerDevice } from "./features/device/register";
 import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/components.css";
@@ -17,6 +18,7 @@ registerMonitor();
 registerStream();
 registerTransmit();
 registerFilters();
+registerDevice();
 client.connect();
 
 render(<App />, document.getElementById("app")!);

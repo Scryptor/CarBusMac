@@ -66,7 +66,7 @@ const EMPTY_TRACER: TracerState = {
 
 export interface Toast {
   id: number;
-  level: "info" | "error";
+  level: "info" | "warning" | "error";
   message: string;
 }
 
@@ -92,7 +92,7 @@ export function pushToast(level: Toast["level"], message: string): void {
   store.toasts.value = [...store.toasts.value.slice(-4), t];
   setTimeout(() => {
     store.toasts.value = store.toasts.value.filter((x) => x.id !== t.id);
-  }, level === "error" ? 6000 : 3000);
+  }, level === "info" ? 3000 : 6000);
 }
 
 export function resetStore(): void {

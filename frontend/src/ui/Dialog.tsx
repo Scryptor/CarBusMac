@@ -25,7 +25,9 @@ export function Dialog({ title, onClose, onOk, okLabel, okDisabled, cancelLabel,
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     modalCount.value++;
-    const first = ref.current?.querySelector<HTMLElement>("input:not([type=checkbox]):not([disabled]), select, textarea");
+    const first = ref.current?.querySelector<HTMLElement>(
+      "input:not([type=checkbox]):not([disabled]):not([readonly]), select:not([disabled]), textarea:not([readonly])",
+    );
     first?.focus();
     if (first instanceof HTMLInputElement) first.select();
     return () => {

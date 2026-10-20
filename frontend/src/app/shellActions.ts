@@ -11,7 +11,7 @@ import { closeDialog, openDialog, ui } from "./ui";
 
 export const isConnected = () => store.status.value.state === "opened";
 
-/** Подключение; пока нет диалога устройства (Task 20) — по сохранённой конфигурации. */
+/** «Подключиться» открывает «Настройки устройства» (features/device); без него — по сохранённой конфигурации. */
 export const connectHooks: { openConnectDialog: (() => void) | null } = { openConnectDialog: null };
 
 export async function toggleConnect(): Promise<void> {

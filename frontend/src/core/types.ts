@@ -66,6 +66,10 @@ export interface DeviceInfo {
   hardware_name?: string;
   firmware_version?: string;
   serial_int?: number;
+  feature_gateway?: boolean;
+  feature_isotp?: boolean;
+  feature_tx_buffer?: boolean;
+  feature_tx_task?: boolean;
   channel_types?: Record<string, string>;
   channel_features?: Record<string, Record<string, boolean>>;
   channel_frequencies?: Record<string, number>;
@@ -100,6 +104,8 @@ export interface CustomBitrate {
   caption: string;
   bitrate: number;
   sample_pct: number;
+  /** тактовая частота, для которой рассчитан тайминг */
+  clock_hz: number;
   timing: Timing;
 }
 

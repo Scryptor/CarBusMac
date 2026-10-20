@@ -34,6 +34,7 @@ from app.tracer import PlayerConfig, TracePlayer, TracerDoc, TraceRow
 from app.transmit import TransmitManager, task_from_dict
 
 TICK_SECONDS = 0.04
+DEFAULT_CLOCK_HZ = 120_000_000   # тактовая CAN у CH32, если прибор её не сообщил
 PRESET_BITRATES = (10000, 20000, 33300, 50000, 62500, 83300, 95200, 100000, 125000, 250000,
                    400000, 500000, 800000, 1000000)
 TRACE_EXT = (".trc", ".jsonl")
@@ -335,11 +336,26 @@ class Hub:
         try:
             await self.session.open_channel(n, ch["bitrate"], ch["listen_only"], timing=ch["timing"])
             st["open"] = True
-            if ch["terminator"]:
-                await self.session.set_terminator(n, True)
-                st["terminator"] = True
         except Exception as e:
             st["error"] = str(e)
+            return
+        if not ch["terminator"]:
+            return
+        if not self._has_terminator(n):
+            self._toast("warning", f"Канал {n}: прибор не поддерживает терминатор 120 Ом")
+            return
+        try:
+            await self.session.set_terminator(n, True)
+            st["terminator"] = True
+        except Exception as e:
+            self._toast("error", f"Канал {n}: терминатор не включён: {e}")
+
+    def _has_terminator(self, n: int) -> bool:
+        feats = (self.device_info or {}).get("channel_features") or {}
+        return bool((feats.get(n) or feats.get(str(n)) or {}).get("terminator"))
+
+    def _toast(self, level: str, message: str) -> None:
+        self.broadcast({"type": "toast", "level": level, "message": message})
 
     async def _cmd_disconnect(self, msg: dict) -> dict:
         await self._close_session()
@@ -349,7 +365,10 @@ class Hub:
 
     async def _cmd_channel_terminator(self, msg: dict) -> dict:
         n = int(msg["channel"])
-        await self._require_session().set_terminator(n, bool(msg["enabled"]))
+        session = self._require_session()
+        if not self._has_terminator(n):
+            raise CommandError(f"Прибор не поддерживает терминатор на канале {n}")
+        await session.set_terminator(n, bool(msg["enabled"]))
         if n in self.channels:
             self.channels[n]["terminator"] = bool(msg["enabled"])
         self.broadcast(self._status())
@@ -492,9 +511,15 @@ class Hub:
         items = []
         for b in msg.get("bitrates") or []:
             t = b.get("timing") or {}
+            try:
+                timing = {k: int(t[k]) for k in ("prescaler", "seg1", "seg2", "sjw")}
+            except (KeyError, TypeError, ValueError):
+                raise CommandError("Неверный тайминг скорости") from None
+            if not all(v > 0 for v in timing.values()):
+                raise CommandError("Неверный тайминг скорости")
             items.append({"caption": str(b.get("caption") or ""), "bitrate": int(b.get("bitrate") or 0),
                           "sample_pct": float(b.get("sample_pct") or 75.0),
-                          "timing": {k: int(t[k]) for k in ("prescaler", "seg1", "seg2", "sjw")}})
+                          "clock_hz": int(b.get("clock_hz") or DEFAULT_CLOCK_HZ), "timing": timing})
         self.bitrates = items
         self.store.save("bitrates", items)
         self.broadcast({"type": "bitrates", "bitrates": items})
