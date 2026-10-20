@@ -54,6 +54,8 @@ const row = (pos: number): TracerRowJson => ({
   marker: null,
   enabled: true,
   bp: false,
+  start: false,
+  finish: false,
   before_ms: 0,
   after_ms: 0,
   comment: "",

@@ -2,7 +2,7 @@
  * временем, каналом, ID, данными, паузами и комментарием. Точка останова — красная
  * метка в первой колонке, текущая строка воспроизведения подсвечена, запрещённые
  * строки приглушены. Shift — диапазон, Ctrl/Cmd — отдельные строки. */
-import { Flag } from "lucide-preact";
+import { Flag, Play, Square } from "lucide-preact";
 import { useMemo } from "preact/hooks";
 import { runAction } from "../../core/actions";
 import { fmtAscii, fmtData, fmtFlags, fmtId, fmtTime } from "../../core/format";
@@ -28,17 +28,11 @@ export const tracerMenuHooks: { extra: () => MenuItem[] } = { extra: () => [] };
 
 export function tracerMenu(): MenuItem[] {
   return [
-    { action: "tracerPlay" },
-    { action: "tracerStep" },
-    { action: "tracerStop" },
-    { separator: true },
     ...tracerMenuHooks.extra(),
     { separator: true },
     { action: "tracerBp" },
     { action: "tracerCopyTx" },
-    { action: "tracerComment" },
-    { separator: true },
-    { action: "tracerCancelSel" },
+    { action: "tracerComment", label: t.tracer.commentHint },
   ];
 }
 
@@ -55,9 +49,15 @@ export function TracerGrid() {
       {
         key: "bp",
         title: "",
-        width: 26,
+        width: 34,
         align: "center",
-        render: (r) => (r.bp ? <span class="bp-dot" title={t.tracer.bpTitle} aria-label={t.tracer.bpTitle} /> : null),
+        render: (r) => (
+          <span class="gutter">
+            {r.bp ? <span class="bp-dot" title={t.tracer.bpTitle} aria-label={t.tracer.bpTitle} /> : null}
+            {r.start ? <Play class="bound start" size={11} aria-label={t.tracer.startTitle} /> : null}
+            {r.finish ? <Square class="bound finish" size={10} aria-label={t.tracer.finishTitle} /> : null}
+          </span>
+        ),
       },
       { key: "n", title: t.tracer.colNum, width: 76, align: "right", render: (r) => r.i + 1 },
       {

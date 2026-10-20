@@ -800,16 +800,44 @@ class Hub:
         return {"positions": self.tracer.find((int(k[0]), int(k[1]), bool(k[2])))}
 
     async def _cmd_tracer_row_add(self, msg: dict) -> dict:
-        """Без `after` — в конец трейса («Добавить»), иначе сразу после строки («Вставить»)."""
+        """Без `after` — в конец трейса («Добавить»), иначе сразу после строки («Вставить»).
+        Без метки времени строка получает время соседа — паузы по меткам не ломаются."""
+        d = msg.get("row") or {}
         after = msg.get("after")
-        index = None if after is None else self._tracer_index(msg, "after") + 1
-        idx = self.tracer.add(row_from_dict(msg.get("row") or {}), index)
+        prev = None if after is None else self._tracer_index(msg, "after")
+        row = row_from_dict(d)
+        if "ts" not in d:
+            rows = self.tracer.rows
+            ref = rows[prev] if prev is not None else (rows[-1] if rows else None)
+            row.frame = replace(row.frame, timestamp=ref.frame.timestamp if ref else 0.0)
+        idx = self.tracer.add(row, None if prev is None else prev + 1)
         self._tracer_changed(reset=True)
         return {"index": idx, "pos": self.tracer.position(idx)}
 
     async def _cmd_tracer_row_edit(self, msg: dict) -> dict:
-        self.tracer.edit(self._tracer_index(msg), row_from_dict(msg.get("row") or {}))
-        self._tracer_changed(reset=True)
+        """Редактор шлёт сообщение и паузы; время и флаги строки, которых нет в запросе, сохраняем."""
+        idx = self._tracer_index(msg)
+        old = self.tracer.rows[idx]
+        d = msg.get("row") or {}
+        row = row_from_dict(d)
+        if "ts" not in d:
+            row.frame = replace(row.frame, timestamp=old.frame.timestamp)
+        for flag in ("enabled", "bp", "comment"):
+            if flag not in d:
+                setattr(row, flag, getattr(old, flag))
+        row.start, row.finish = old.start, old.finish
+        self.tracer.edit(idx, row)
+        # позиции сдвигаются, только если строка ушла под фильтр ID или вышла из-под него
+        self._tracer_changed(reset=self.tracer.position(idx) is None, data=True)
+        return {}
+
+    async def _cmd_tracer_bounds(self, msg: dict) -> dict:
+        which = str(msg.get("which"))
+        if which not in ("start", "finish"):
+            raise CommandError(f"неизвестная граница трейса: {which}")
+        index = None if msg.get("pos") is None else self._tracer_index(msg)
+        self.tracer.set_bound(which, index)
+        self._tracer_changed(data=True)
         return {}
 
     async def _cmd_tracer_rows_delete(self, msg: dict) -> dict:

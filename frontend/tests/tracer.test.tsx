@@ -13,6 +13,8 @@ vi.mock("../src/core/client", () => ({
 }));
 
 import { MainMenu } from "../src/app/MainMenu";
+import { closeDialog, dialog } from "../src/app/ui";
+import { BreakpointsDialog } from "../src/features/tracer/BreakpointsDialog";
 import { MainToolbar } from "../src/app/MainToolbar";
 import { StatusBar } from "../src/app/StatusBar";
 import { ui } from "../src/app/ui";
@@ -158,6 +160,8 @@ const trow = (pos: number, i = pos) => ({
   marker: null,
   enabled: true,
   bp: false,
+  start: false,
+  finish: false,
   before_ms: 0,
   after_ms: 0,
   comment: "",
@@ -190,4 +194,66 @@ test("status shows the cursor row once its data arrives", async () => {
   tracerCache.put(1, [trow(1, 41)]);
   tracerVersion.value++;
   expect(await screen.findByText("Текущая строка: 42 / Выделено: 0")).toBeTruthy();
+});
+
+function withHotkeys(fn: () => void | Promise<void>) {
+  const off = installHotkeys(() => "tracer");
+  return Promise.resolve(fn()).finally(off);
+}
+const keyEv = (k: string, mods: KeyboardEventInit = {}) => window.dispatchEvent(new KeyboardEvent("keydown", { key: k, ...mods }));
+
+test("Ins opens the add-row editor and Ctrl+Enter edits the cursor row", () =>
+  withHotkeys(async () => {
+    keyEv("Insert");
+    await new Promise((r) => setTimeout(r, 0));
+    render(dialog.value!);
+    expect(screen.getByRole("dialog", { name: "Добавить строку" })).toBeTruthy();
+    cleanup();
+    closeDialog();
+    tracerCache.put(2, [trow(2, 9)]);
+    tracerSel.click(2);
+    tracerSelVersion.value++;
+    keyEv("Enter", { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 0));
+    render(dialog.value!);
+    expect(screen.getByRole("dialog", { name: "Отредактировать строку" })).toBeTruthy();
+    expect((screen.getByLabelText("ID") as HTMLInputElement).value).toBe("321");
+    closeDialog();
+  }));
+
+test("Ctrl+Del deletes the cursor row and disable-by-ID uses its key", () =>
+  withHotkeys(async () => {
+    tracerCache.put(3, [trow(3)]);
+    tracerSel.click(3);
+    tracerSelVersion.value++;
+    keyEv("Delete", { ctrlKey: true });
+    expect(calls).toContainEqual({ type: "tracer_rows_delete", args: { positions: [3] } });
+    runAction("tracerDisableById");
+    await new Promise((r) => setTimeout(r, 0));
+    expect(calls).toContainEqual({ type: "tracer_rows_enable", args: { key: [1, 0x321, false], enabled: false } });
+    runAction("tracerStart");
+    expect(calls).toContainEqual({ type: "tracer_bounds", args: { which: "start", pos: 3 } });
+  }));
+
+test("Ctrl+C copies the selected rows as TSV", () =>
+  withHotkeys(async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    tracerCache.put(0, [trow(0), trow(1)]);
+    tracerSel.click(0);
+    tracerSel.shiftClick(1);
+    tracerSelVersion.value++;
+    keyEv("c", { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(writeText).toHaveBeenCalledWith("№\tВремя\tCH\tID\tDLC\tДанные\tКомментарий\n1\t0,000\t1\t321\t1\t05\t\n2\t0,000\t1\t321\t1\t05\t\n");
+  }));
+
+test("breakpoints list jumps to a visible breakpoint", async () => {
+  applyEvent({ ...STATE, breakpoints: [{ i: 5, pos: 4 }, { i: 9, pos: null }] });
+  replies.tracer_rows = { rev: 3, data_rev: 0, rows: [trow(4, 5)] };
+  render(<BreakpointsDialog />);
+  expect(await screen.findByText("скрыта фильтром ID")).toBeTruthy();
+  fireEvent.click(await screen.findByText("6"));
+  fireEvent.click(screen.getByRole("button", { name: "Перейти" }));
+  expect(tracerSel.focus).toBe(4);
 });

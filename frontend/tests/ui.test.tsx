@@ -81,3 +81,18 @@ test("dialog focuses the first editable field, skipping read-only ones", () => {
   );
   expect(document.activeElement).toBe(screen.getByLabelText("правка"));
 });
+
+test("dialog without fields takes focus itself so Escape and Enter work", () => {
+  let closed = 0;
+  let ok = 0;
+  render(
+    <Dialog title="Вопрос" onClose={() => closed++} onOk={() => ok++}>
+      <p>Удалить?</p>
+    </Dialog>,
+  );
+  const dlg = screen.getByRole("dialog", { name: "Вопрос" });
+  expect(document.activeElement).toBe(dlg);
+  fireEvent.keyDown(document.activeElement!, { key: "Enter" });
+  fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+  expect([ok, closed]).toEqual([1, 1]);
+});

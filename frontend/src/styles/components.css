@@ -283,6 +283,9 @@ select.inp {
   justify-content: center;
   padding: 16px;
 }
+.dialog:focus {
+  outline: none;
+}
 .dialog {
   display: flex;
   flex-direction: column;
@@ -379,6 +382,10 @@ select.inp {
   align-items: center;
   gap: 6px;
   min-width: 0;
+}
+.inline-row.wrap {
+  flex-wrap: wrap;
+  gap: 8px 14px;
 }
 .inline-row > .grow {
   flex: 1;
@@ -1116,6 +1123,47 @@ select.inp {
   border-radius: 50%;
   background: var(--err);
   vertical-align: middle;
+}
+.gutter {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.bound.start {
+  color: var(--ok);
+  fill: var(--ok);
+}
+.bound.finish {
+  color: var(--err);
+  fill: var(--err);
+}
+.bp-list {
+  max-height: 50vh;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.bp-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 5px 10px;
+  cursor: default;
+}
+.bp-item.sel {
+  background: var(--sel);
+  color: var(--sel-text);
+}
+.bp-item.hidden-row .bp-dot {
+  opacity: 0.4;
+}
+.bp-n {
+  min-width: 64px;
+  text-align: right;
+}
+.bp-id {
+  min-width: 80px;
+  text-align: right;
 }
 .progress {
   display: inline-block;

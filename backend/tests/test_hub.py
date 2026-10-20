@@ -397,11 +397,53 @@ def test_row_flags_bump_data_revision_not_positions(tmp_path):
         _trace_with_ids(env, ws)
         st0 = recv_until(ws, lambda m: m["type"] == "tracer_state" and m["count"] == 4)
         for cmd in ({"type": "tracer_bp", "pos": 1}, {"type": "tracer_comment", "pos": 0, "text": "x"},
-                    {"type": "tracer_rows_enable", "positions": [2], "enabled": False}):
+                    {"type": "tracer_rows_enable", "positions": [2], "enabled": False},
+                    {"type": "tracer_row_edit", "pos": 3, "row": {"ch": 1, "id": 0x300, "data": "77"}}):
             assert call(ws, **cmd)["ok"]
             st = recv_until(ws, lambda m: m["type"] == "tracer_state")
             assert st["rev"] == st0["rev"] and st["data_rev"] > st0["data_rev"]
             st0 = st
         assert call(ws, type="tracer_rows_delete", positions=[0])["ok"]
         st = recv_until(ws, lambda m: m["type"] == "tracer_state")
+        assert st["rev"] > st0["rev"]
+
+
+def test_row_edit_keeps_time_and_flags_and_add_takes_neighbour_time(tmp_path):
+    env = Env(tmp_path)
+    with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        _trace_with_ids(env, ws)                     # строки 0..3, t = 0, 0.01, 0.02, 0.03
+        assert call(ws, type="tracer_bp", pos=1)["ok"]
+        assert call(ws, type="tracer_row_edit", pos=1, row={"ch": 1, "id": 0x222, "data": "AABB"})["ok"]
+        r1 = call(ws, type="tracer_rows", start=1, count=1)["data"]["rows"][0]
+        assert (r1["id"], r1["data"], r1["bp"], r1["t"]) == (0x222, "aabb", True, 0.01)
+        assert call(ws, type="tracer_row_add", after=2, row={"ch": 1, "id": 0x333, "data": ""})["ok"]
+        assert call(ws, type="tracer_row_add", row={"ch": 1, "id": 0x444, "data": ""})["ok"]
+        rows = call(ws, type="tracer_rows", start=0, count=10)["data"]["rows"]
+        assert [(x["id"], x["t"]) for x in rows][3:] == [(0x333, 0.02), (0x300, 0.03), (0x444, 0.03)]
+
+
+def test_tracer_bounds_use_positions(tmp_path):
+    env = Env(tmp_path)
+    with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        _trace_with_ids(env, ws)
+        call(ws, type="tracer_ids_set", keys=[[1, 0x200, False]], enabled=False)
+        assert call(ws, type="tracer_bounds", which="start", pos=1)["ok"]   # позиция 1 = строка 2
+        rows = call(ws, type="tracer_rows", start=0, count=10)["data"]["rows"]
+        assert [x["start"] for x in rows] == [False, True, False]
+        assert call(ws, type="tracer_bounds", which="finish", pos=None)["ok"]
+        assert call(ws, type="tracer_bounds", which="middle", pos=0)["ok"] is False
+
+
+
+def test_row_edit_into_hidden_id_shifts_positions(tmp_path):
+    env = Env(tmp_path)
+    with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        _trace_with_ids(env, ws)
+        call(ws, type="tracer_ids_set", keys=[[1, 0x200, False]], enabled=False)
+        st0 = recv_until(ws, lambda m: m["type"] == "tracer_state" and m["visible"] == 3)
+        assert call(ws, type="tracer_row_edit", pos=0, row={"ch": 1, "id": 0x200, "data": ""})["ok"]
+        st = recv_until(ws, lambda m: m["type"] == "tracer_state" and m["visible"] == 2)
         assert st["rev"] > st0["rev"]

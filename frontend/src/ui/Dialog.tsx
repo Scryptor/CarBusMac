@@ -28,7 +28,8 @@ export function Dialog({ title, onClose, onOk, okLabel, okDisabled, cancelLabel,
     const first = ref.current?.querySelector<HTMLElement>(
       "input:not([type=checkbox]):not([disabled]):not([readonly]), select:not([disabled]), textarea:not([readonly])",
     );
-    first?.focus();
+    // без полей фокус берёт сам диалог — иначе Esc/Enter до него не доходят
+    (first ?? ref.current)?.focus();
     if (first instanceof HTMLInputElement) first.select();
     return () => {
       modalCount.value--;
@@ -53,6 +54,7 @@ export function Dialog({ title, onClose, onOk, okLabel, okDisabled, cancelLabel,
       <div
         ref={ref}
         class="dialog"
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={title}

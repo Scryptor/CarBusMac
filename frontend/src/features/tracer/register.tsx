@@ -12,6 +12,8 @@ import { t } from "../../i18n/ru";
 import type { TopMenu } from "../../ui/MenuBar";
 import { ToolButton, ToolMenu, ToolSep, ToolSplit } from "../../ui/Toolbar";
 import { recentItems, tracerActions } from "./actions";
+import { editActions, editMenu } from "./editActions";
+import { tracerMenuHooks } from "./TracerGrid";
 import { delayMenuItems, destLabel, destMenuItems } from "./DelayMenu";
 import { TracerView } from "./TracerView";
 import {
@@ -108,6 +110,7 @@ function tracerMenus(): TopMenu[] {
 export function registerTracer(): void {
   registerActions([
     ...tracerActions(),
+    ...editActions(),
     {
       id: "tracerCancelSel",
       label: t.tracer.cancelSelection,
@@ -123,4 +126,5 @@ export function registerTracer(): void {
   viewToolbars.tracer = () => <TracerToolbar />;
   statusHooks.tracer = () => <TracerStatus />;
   menuHooks.tracer = tracerMenus;
+  tracerMenuHooks.extra = editMenu;
 }

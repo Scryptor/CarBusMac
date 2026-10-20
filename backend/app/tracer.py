@@ -32,6 +32,8 @@ class TraceRow:
     before_ms: int = 0
     after_ms: int = 0
     comment: str = ""
+    start: bool = False     # «Установить начало»: воспроизведение — с этой строки
+    finish: bool = False    # «Установить конец»: и до этой
 
 
 def _key(f: CanFrame) -> IdKey:
@@ -103,7 +105,7 @@ class TracerDoc:
             out.append({
                 "i": i, "pos": pos, "t": round(f.timestamp - t0, 6), "ch": f.channel, "dir": f.direction,
                 "id": f.can_id, "ext": f.extended, "rtr": f.rtr, "dlc": len(f.data),
-                "data": f.data.hex(), "enabled": r.enabled, "bp": r.bp,
+                "data": f.data.hex(), "enabled": r.enabled, "bp": r.bp, "start": r.start, "finish": r.finish,
                 "before_ms": r.before_ms, "after_ms": r.after_ms, "comment": r.comment,
                 "marker": {"label": m.label, "comment": m.comment} if m else None,
             })
@@ -179,6 +181,22 @@ class TracerDoc:
     def set_bp(self, index: int, on: bool) -> None:
         self.rows[index].bp = on
 
+    def set_bound(self, which: str, index: int | None) -> None:
+        """Начало/конец воспроизведения — одна строка на трейс; повтор на той же строке снимает."""
+        if which not in ("start", "finish"):
+            raise ValueError(f"неизвестная граница: {which}")
+        was = index is not None and getattr(self.rows[index], which)
+        for r in self.rows:
+            setattr(r, which, False)
+        if index is not None and not was:
+            setattr(self.rows[index], which, True)
+
+    def bounds(self) -> tuple[int, int]:
+        rows = self.rows
+        lo = next((i for i, r in enumerate(rows) if r.start), 0)
+        hi = next((i for i, r in enumerate(rows) if r.finish), len(rows) - 1)
+        return min(lo, hi), max(lo, hi)
+
     def set_comment(self, index: int, text: str) -> None:
         self.rows[index].comment = text
         self.modified = True
@@ -243,7 +261,10 @@ class TracePlayer:
     def _order(self) -> list[int]:
         if self._selection is not None:
             return [i for i in self._selection if 0 <= i < len(self.doc.rows)]
-        return list(range(len(self.doc.rows)))
+        if not self.doc.rows:
+            return []
+        lo, hi = self.doc.bounds()
+        return list(range(lo, hi + 1))
 
     def _cancel(self) -> None:
         if self._task is not None and self._task is not asyncio.current_task():

@@ -35,6 +35,9 @@ export interface TracerRowJson extends FrameRowJson {
   pos: number;
   enabled: boolean;
   bp: boolean;
+  /** «Установить начало» / «Установить конец» воспроизведения */
+  start: boolean;
+  finish: boolean;
   before_ms: number;
   after_ms: number;
   comment: string;

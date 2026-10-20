@@ -188,7 +188,7 @@ def test_ids_table_counts_and_rows_view():
     v = doc.rows_view(1, 5)
     assert [r["i"] for r in v] == [1, 2] and v[0]["t"] == 0.5 and v[1]["comment"] == "c"
     assert set(v[0]) == {"i", "pos", "t", "ch", "dir", "id", "ext", "rtr", "dlc", "data", "enabled", "bp",
-                         "before_ms", "after_ms", "comment", "marker"}
+                         "start", "finish", "before_ms", "after_ms", "comment", "marker"}
 
 
 def test_unchecked_ids_are_hidden_from_rows_view():
@@ -238,3 +238,20 @@ def test_set_enabled_by_id_touches_all_rows_with_that_id():
 def test_player_config_validates(bad):
     with pytest.raises(ValueError):
         PlayerConfig.from_patch(PlayerConfig(), bad)
+
+
+async def test_start_and_finish_bound_playback():
+    doc = _doc((0, 1), (0.01, 2), (0.02, 3), (0.03, 4), (0.04, 5))
+    doc.set_bound("start", 1)
+    doc.set_bound("finish", 3)
+    p, sent, _ = _player(doc)
+    await p.play()
+    await _drain()
+    assert [f.can_id for f, _ in sent] == [2, 3, 4]
+    v = doc.rows_view(0, 5)
+    assert [r["start"] for r in v] == [False, True, False, False, False]
+    assert [r["finish"] for r in v] == [False, False, False, True, False]
+    doc.set_bound("start", 1)                      # повторно на той же строке — снять
+    assert not any(r.start for r in doc.rows)
+    doc.set_bound("finish", None)
+    assert not any(r.finish for r in doc.rows)
