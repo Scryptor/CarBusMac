@@ -10,3 +10,4 @@ build/
 !/traces/.gitkeep
 .DS_Store
 *.log
+*.egg-info/

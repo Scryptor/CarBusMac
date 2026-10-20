@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CarBUS for Mac</title>
+  </head>
+  <body>
+    <header id="topbar">
+      <strong class="brand">CarBUS</strong>
+      <span class="field"><label>мост</label>
+        <input id="bridgeHost" value="host.docker.internal" size="18" />:
+        <input id="bridgePort" value="7000" size="5" />
+      </span>
+      <button id="btnConnect">Connect</button>
+      <span id="connStatus" class="off">○ не подключено</span>
+      <span id="deviceInfo" class="info"></span>
+    </header>
+
+    <main>
+      <section id="receive" class="pane">
+        <div class="tabbar">
+          <button data-tab="monitor" class="active">Receive</button>
+          <button data-tab="stream">Stream</button>
+        </div>
+        <div id="monitor" class="tab active"></div>
+        <div id="stream" class="tab"></div>
+      </section>
+
+      <aside id="side">
+        <div id="bitmap" class="pane"></div>
+        <div id="filters" class="pane"></div>
+        <div id="tracer" class="pane"></div>
+      </aside>
+
+      <section id="transmit" class="pane"></section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

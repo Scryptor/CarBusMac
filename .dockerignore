@@ -1,0 +1,10 @@
+**/.venv
+**/node_modules
+**/dist
+**/__pycache__
+**/*.pyc
+.git
+.superpowers
+traces/*
+docs
+*.log
