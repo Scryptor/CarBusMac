@@ -70,6 +70,7 @@ select.inp {
   flex-direction: column;
   align-items: stretch;
   gap: 3px;
+  white-space: normal;
 }
 .check {
   display: inline-flex;
@@ -1178,4 +1179,70 @@ select.inp {
   display: block;
   height: 100%;
   background: var(--accent);
+}
+
+/* ---------- настройки приложения ---------- */
+.settings {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 18px;
+  min-height: 330px;
+}
+.settings-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 12px;
+  border-right: 1px solid var(--line);
+}
+.settings-tab {
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.settings-tab:hover {
+  background: var(--panel-2);
+}
+.settings-tab.on {
+  background: var(--accent-weak);
+  font-weight: 600;
+}
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.font-sample {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+  font-size: var(--grid-size);
+  line-height: var(--row-h);
+  white-space: pre;
+}
+.swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+.swatch.on {
+  border-color: var(--text);
+}
+.color-inp {
+  width: 34px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: none;
 }

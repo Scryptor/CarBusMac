@@ -70,6 +70,12 @@ export function StatusBar() {
       ) : (
         captureCell
       )}
+      {st.log ? (
+        <span class="cell" title={t.settings.logFolder}>
+          <span class="dot rec" />
+          <span>{t.status.log(st.log)}</span>
+        </span>
+      ) : null}
       <span class="cell grow" />
       {st.state === "opened" ? <span class="cell mono">{t.status.rx(stats.rx_per_s)}</span> : null}
       {conn !== "open" ? (

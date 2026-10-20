@@ -8,6 +8,7 @@ dependencies = [
     "uvicorn[standard]>=0.30",
     "pydantic>=2.7",
     "carbus-lib>=0.1.9",
+    "tzdata",            # база часовых поясов: в python:slim её нет, а местное время берём из браузера
 ]
 
 [project.optional-dependencies]

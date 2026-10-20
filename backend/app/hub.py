@@ -19,11 +19,13 @@ from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Protocol
+from zoneinfo import ZoneInfo
 
 from app.can_session import CanSession
 from app.capture import Capture
 from app.deskfmt import format_cmt, format_tsk, parse_cmt, parse_tsk
 from app.filters import HwFilters, SoftFilters, layout_from_device, range_from_dict, slot_from_dict
+from app.logger import StreamLogger, trc_meta
 from app.models import CanFrame
 from app.monitor import MonitorState
 from app.schemas import row_to_dict
@@ -138,6 +140,7 @@ class Hub:
         self.settings = merge_settings(DEFAULT_SETTINGS, store.load("settings", {}) or {})
         self.comments: dict[str, str] = dict(store.load("comments", {}) or {})
         self.bitrates: list[dict] = list(store.load("bitrates", []) or [])
+        self.tz: str | None = store.load("tz", None)   # часовой пояс браузера (в Docker своё время — UTC)
         try:
             self.connection = normalize_connection(store.load("connection", None) or default_connection())
         except (CommandError, TypeError, ValueError, KeyError):
@@ -163,6 +166,7 @@ class Hub:
         self._progress_pending: int | None = None  # строка, ещё не отправленная в тике
         self.player = TracePlayer(self.tracer, send=self._player_send, sleep=sleep,
                                   on_progress=self._player_progress)
+        self.player.config.max_1s = self.settings["tracer_max_1s"]
 
         self._reader_task: asyncio.Task | None = None
         self._ticker_task: asyncio.Task | None = None
@@ -174,7 +178,7 @@ class Hub:
         self._sent_tail = 0
         self._sent_counts: dict[str, int] = {}
         self._stats_at = time.monotonic()
-        self.logger = None   # фоновое логирование (Task 23)
+        self.logger: StreamLogger | None = None   # фоновое логирование потока
 
     # ------------------------------------------------------------ состояние
     def _restore_lists(self) -> None:
@@ -191,6 +195,7 @@ class Hub:
     def _status(self) -> dict[str, Any]:
         return {"type": "status", "state": self.state, "message": self.message,
                 "device_info": self.device_info,
+                "log": self.logger.path.name if self.logger is not None and self.logger.path else None,
                 "channels": {str(k): v for k, v in sorted(self.channels.items())}}
 
     def _capture_state(self) -> dict[str, Any]:
@@ -289,6 +294,7 @@ class Hub:
             self._reader_task = None
         self.tx.pause_all()
         self.player.stop()
+        self._log_stop()
         if self.session is not None:
             try:
                 await self.session.close()
@@ -327,6 +333,8 @@ class Hub:
             if slot.enabled and self.channels.get(slot.channel, {}).get("open"):
                 await self._apply_slot(slot)
         self._reader_task = asyncio.create_task(self._reader(session))
+        if self.settings["log_autostart"]:
+            self._log_start()
         self.state = "opened"
         self.broadcast(self._status())
         self.broadcast(self._filters_state())
@@ -417,8 +425,8 @@ class Hub:
         out = replace(frame, timestamp=ts, ts_source=src, direction="tx")
         self._tx_count += 1
         self.capture.append(out)
-        if self.logger is not None and self.settings["log_record_tx"]:
-            self.logger.write(out)
+        if self.logger is not None:
+            self.logger.write(out)          # TX или нет — решает логгер по настройке
 
     # ---------------------------------------------------------------- тикер
     async def _ticker(self) -> None:
@@ -512,9 +520,56 @@ class Hub:
         self.settings = merge_settings(self.settings, msg.get("patch") or {})
         if self.settings["aggregator"] != before["aggregator"]:
             self.monitor.set_aggregator(self.settings["aggregator"])
+        if self.logger is not None:
+            self.logger.settings = self.settings
+        if self.settings["log_autostart"] != before["log_autostart"]:
+            if self.settings["log_autostart"] and self.session is not None:
+                self._log_start()
+            elif not self.settings["log_autostart"]:
+                self._log_stop()
+            self.broadcast(self._status())
+        if self.settings["tracer_max_1s"] != self.player.config.max_1s:
+            self.player.config = PlayerConfig.from_patch(self.player.config, {"max_1s": self.settings["tracer_max_1s"]})
+            self._tracer_changed()
         self.store.save("settings", self.settings)
         self.broadcast({"type": "settings", "settings": self.settings})
         return {"settings": self.settings}
+
+    # ------------------------------------------------- местное время
+    def _local_now(self) -> datetime:
+        """Местное время пользователя — для имени лога и `# $LocalTime` трейсов."""
+        if self.tz:
+            try:
+                return datetime.now(ZoneInfo(self.tz))
+            except (KeyError, ValueError):
+                pass
+        return datetime.now().astimezone()
+
+    async def _cmd_client_tz(self, msg: dict) -> dict:
+        tz = str(msg.get("tz") or "")
+        try:
+            ZoneInfo(tz)
+        except (KeyError, ValueError):
+            raise CommandError(f"Неизвестный часовой пояс: {tz}") from None
+        if tz != self.tz:
+            self.tz = tz
+            self.store.save("tz", tz)
+        return {}
+
+    # ------------------------------------------------- фоновое логирование
+    def _log_start(self) -> None:
+        if self.logger is not None:
+            return
+        self.logger = StreamLogger(self.traces_dir, self.settings, now=self._local_now)
+        self.logger.start(trc_meta(self.settings["log_meta"]))
+
+    def _log_stop(self) -> None:
+        logger, self.logger = self.logger, None
+        if logger is None:
+            return
+        path = logger.stop()
+        if path is not None:
+            self._toast("info", f"Записан трейс: {path.name}")
 
     async def _cmd_bitrates_set(self, msg: dict) -> dict:
         items = []
@@ -575,11 +630,11 @@ class Hub:
         ext = ".jsonl" if msg.get("format") == "jsonl" else ".trc"
         name = safe_name(msg.get("name"), TRACE_EXT, ext)
         frames = self.capture.frames()
-        meta = {k: v for k, v in self.settings["log_meta"].items() if v}
+        meta = trc_meta(self.settings["log_meta"])
         doc = TraceDoc(frames=frames, markers=list(self.capture.markers),
                        comments=self._row_comments(frames), meta=meta)
         self.traces_dir.mkdir(parents=True, exist_ok=True)
-        write_trace(self.traces_dir / name, doc, local_time=datetime.now())
+        write_trace(self.traces_dir / name, doc, local_time=self._local_now())
         self.broadcast({"type": "toast", "level": "info", "message": "Поток данных сохранён!"})
         return {"name": name}
 
@@ -875,6 +930,11 @@ class Hub:
 
     async def _cmd_tracer_config(self, msg: dict) -> dict:
         self.player.config = PlayerConfig.from_patch(self.player.config, msg.get("patch") or {})
+        if self.player.config.max_1s != self.settings["tracer_max_1s"]:
+            # «Макс. 1 сек» — одна настройка: меню паузы отладчика и «Настройки приложения»
+            self.settings = merge_settings(self.settings, {"tracer_max_1s": self.player.config.max_1s})
+            self.store.save("settings", self.settings)
+            self.broadcast({"type": "settings", "settings": self.settings})
         self._tracer_changed()
         return {}
 

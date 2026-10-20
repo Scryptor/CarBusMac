@@ -143,30 +143,38 @@ def _fmt_duration(ms: int) -> str:
     return f"{prefix}{h:02d}:{m:02d}:{s:02d}.{msec:03d}"
 
 
+def trc_header(count: int, dur_ms: int, local_time: datetime | None, meta: dict[str, str]) -> list[str]:
+    """Заголовок .trc: сигнатура с числом кадров и длительностью, `# $LocalTime`, метаинформация."""
+    out = [f"@ {TRC_SIGNATURE} @ {TRC_VERSION} @ 64 @ 0 @ {count} @ {dur_ms} @ {_fmt_duration(dur_ms)} @"]
+    if local_time is not None and count:
+        out.append(f"# $LocalTime={local_time.strftime('%H:%M:%S')}.{local_time.microsecond // 1000:03d}")
+    for k, v in meta.items():
+        if k != "$LocalTime" or local_time is None:
+            out.append(f"# {k}={v}")
+    return out
+
+
+def trc_frame_line(f: CanFrame, t_first: float, comment: str = "") -> str:
+    us = round((f.timestamp - t_first) * 1e6) % _MINUTE_US
+    flags = (_F_FD if f.fd else _F_CAN) | (_F_EXT if f.extended else 0) | (_F_RTR if f.rtr else 0)
+    can_id = f"{f.can_id:08X}" if f.extended else f"{f.can_id:03X}"
+    data = " ".join(f"{b:02X}" for b in f.data)
+    return (f"{us // 1_000_000:02d},{us % 1_000_000:06d}\t{f.channel}\t{flags:08x}\t{can_id}\t"
+            f"{len(f.data)}\t{data:<23}\t00000000\t{_ascii(f.data)}\t{comment}")
+
+
 def format_trc(doc: TraceDoc, local_time: datetime | None = None) -> str:
     frames = doc.frames
     t_first = frames[0].timestamp if frames else 0.0
     dur_ms = round((frames[-1].timestamp - t_first) * 1000) if frames else 0
-    out = [f"@ {TRC_SIGNATURE} @ {TRC_VERSION} @ 64 @ 0 @ {len(frames)} @ {dur_ms} @ {_fmt_duration(dur_ms)} @"]
-    if local_time is not None and frames:
-        out.append(f"# $LocalTime={local_time.strftime('%H:%M:%S')}.{local_time.microsecond // 1000:03d}")
-    for k, v in doc.meta.items():
-        if k != "$LocalTime" or local_time is None:
-            out.append(f"# {k}={v}")
+    out = trc_header(len(frames), dur_ms, local_time, doc.meta)
     marks: dict[int, list[Marker]] = {}
     for m in doc.markers:
         marks.setdefault(m.index, []).append(m)
     for i, f in enumerate(frames):
         for m in marks.get(i, []):
             out.append(f"------\t{m.label}\t{m.comment}")
-        us = round((f.timestamp - t_first) * 1e6) % _MINUTE_US
-        flags = (_F_FD if f.fd else _F_CAN) | (_F_EXT if f.extended else 0) | (_F_RTR if f.rtr else 0)
-        can_id = f"{f.can_id:08X}" if f.extended else f"{f.can_id:03X}"
-        data = " ".join(f"{b:02X}" for b in f.data)
-        out.append(
-            f"{us // 1_000_000:02d},{us % 1_000_000:06d}\t{f.channel}\t{flags:08x}\t{can_id}\t"
-            f"{len(f.data)}\t{data:<23}\t00000000\t{_ascii(f.data)}\t{doc.comments.get(i, '')}"
-        )
+        out.append(trc_frame_line(f, t_first, doc.comments.get(i, "")))
     for m in marks.get(len(frames), []):
         out.append(f"------\t{m.label}\t{m.comment}")
     return EOL.join(out) + EOL

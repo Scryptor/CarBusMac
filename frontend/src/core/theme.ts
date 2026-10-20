@@ -1,7 +1,7 @@
 /** Применение настроек оформления: тема (с «как в ОС»), шрифт таблиц, цвет и время
  * подсветки изменившихся байтов — через атрибут data-theme и CSS-переменные. */
 import type { Settings } from "./types";
-import { rowHeight } from "../ui/grid/VirtualGrid";
+import { gridScale, rowHeight } from "../ui/grid/VirtualGrid";
 
 let mq: MediaQueryList | null = null;
 let current: Settings | null = null;
@@ -21,8 +21,12 @@ export function applyTheme(s: Settings): void {
   root.dataset.theme = resolve(s.theme);
   root.style.setProperty("--grid-font", `"${s.grid_font}", "SF Mono", Menlo, Monaco, monospace`);
   root.style.setProperty("--grid-size", `${s.grid_font_size}px`);
-  rowHeight.value = Math.round(s.grid_font_size * 1.7);
-  root.style.setProperty("--row-h", `${rowHeight.value}px`);
+  // высоту строки не читаем из сигнала: иначе эффект, вызывающий applyTheme, подписался бы
+  // на неё и откатывал предпросмотр шрифта в настройках
+  const rh = Math.round(s.grid_font_size * 1.7);
+  rowHeight.value = rh;
+  gridScale.value = s.grid_font_size / 13;
+  root.style.setProperty("--row-h", `${rh}px`);
   root.style.setProperty("--mark", s.mark_color);
   root.style.setProperty("--hold", `${s.mark_hold_ms}ms`);
 }

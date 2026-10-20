@@ -447,3 +447,62 @@ def test_row_edit_into_hidden_id_shifts_positions(tmp_path):
         assert call(ws, type="tracer_row_edit", pos=0, row={"ch": 1, "id": 0x200, "data": ""})["ok"]
         st = recv_until(ws, lambda m: m["type"] == "tracer_state" and m["visible"] == 2)
         assert st["rev"] > st0["rev"]
+
+
+def test_background_log_starts_on_connect_and_lands_on_disconnect(tmp_path):
+    env = Env(tmp_path)
+    with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        assert call(ws, type="settings_set", patch={"log_autostart": True, "log_meta": {"brand": "Lada"}})["ok"]
+        connect(ws)
+        st = recv_until(ws, lambda m: m["type"] == "status" and m["state"] == "opened")
+        assert st["log"] and st["log"].endswith(".trc")
+        env.sessions[-1].push(CanFrame(1, 0x321, b"\x05", timestamp=1.0))
+        env.sessions[-1].push(CanFrame(1, 0x321, b"\x06", timestamp=1.5))
+        recv_until(ws, lambda m: m["type"] == "monitor_delta" and any(r["count"] == 2 for r in m["rows"]))
+        assert call(ws, type="disconnect")["ok"]
+        toast = recv_until(ws, lambda m: m["type"] == "toast" and st["log"] in m["message"])
+        assert toast["level"] == "info"
+        text = (env.traces / st["log"]).read_bytes().decode("utf-8")
+        assert " @ 2 @ 500 @ " in text and "# TransportBrand=Lada" in text
+        assert recv_until(ws, lambda m: m["type"] == "status" and m["state"] == "closed")["log"] is None
+
+
+def test_log_autostart_toggle_while_connected(tmp_path):
+    env = Env(tmp_path)
+    with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        connect(ws)
+        recv_until(ws, lambda m: m["type"] == "status" and m["state"] == "opened")
+        assert call(ws, type="settings_set", patch={"log_autostart": True})["ok"]
+        st = recv_until(ws, lambda m: m["type"] == "status" and m.get("log"))
+        assert call(ws, type="settings_set", patch={"log_autostart": False})["ok"]
+        assert recv_until(ws, lambda m: m["type"] == "status" and m["state"] == "opened" and m.get("log") is None)
+
+
+def test_tracer_max_1s_is_one_setting_for_dialog_and_player(tmp_path):
+    env = Env(tmp_path)
+    with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        assert call(ws, type="settings_set", patch={"tracer_max_1s": True})["ok"]
+        assert recv_until(ws, lambda m: m["type"] == "tracer_state")["config"]["max_1s"] is True
+        assert call(ws, type="tracer_config", patch={"max_1s": False})["ok"]
+        assert recv_until(ws, lambda m: m["type"] == "settings" and m["settings"]["tracer_max_1s"] is False)
+        assert json.loads((env.data / "settings.json").read_text())["tracer_max_1s"] is False
+
+
+def test_client_timezone_sets_local_time_for_logs(tmp_path):
+    """В Docker время контейнера — UTC; местное время берём из часового пояса браузера."""
+    import asyncio
+    from datetime import timedelta
+
+    from app.hub import CommandError, Hub
+    from app.store import JsonStore
+
+    hub = Hub(lambda *a: FakeSession(), JsonStore(tmp_path / "data"), tmp_path / "traces", tmp_path / "data")
+    asyncio.run(hub._cmd_client_tz({"tz": "Asia/Vladivostok"}))
+    assert hub._local_now().utcoffset() == timedelta(hours=10)
+    with pytest.raises(CommandError):
+        asyncio.run(hub._cmd_client_tz({"tz": "Mars/Olympus"}))
+    again = Hub(lambda *a: FakeSession(), JsonStore(tmp_path / "data"), tmp_path / "traces", tmp_path / "data")
+    assert again._local_now().utcoffset() == timedelta(hours=10)

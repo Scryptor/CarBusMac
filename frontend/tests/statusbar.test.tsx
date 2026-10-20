@@ -40,3 +40,9 @@ test("channelText formats custom and failed channels", () => {
   expect(channelText(2, { open: false, alias: "", bitrate: 500000, timing: null, listen_only: false, terminator: false, error: "boom" })).toBe("К2: отказ");
   expect(channelText(1, { open: true, alias: "", bitrate: null, timing: { prescaler: 6, seg1: 15, seg2: 4, sjw: 1 }, listen_only: false, terminator: true, error: null })).toBe("К1: своя скорость, 120 Ом");
 });
+
+test("status bar shows the background log file while it is written", async () => {
+  applyEvent({ type: "status", state: "opened", message: "", device_info: null, channels: {}, log: "2026-10-20_17-30-05.trc" });
+  render(<StatusBar />);
+  expect(await screen.findByText("Фоновая запись: 2026-10-20_17-30-05.trc")).toBeTruthy();
+});

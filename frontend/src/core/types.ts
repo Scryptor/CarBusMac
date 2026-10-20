@@ -87,6 +87,8 @@ export interface StatusState {
   message: string;
   device_info: DeviceInfo | null;
   channels: Record<string, ChannelState>;
+  /** файл фоновой записи потока, пока она идёт */
+  log?: string | null;
 }
 
 export interface ChannelConfig {

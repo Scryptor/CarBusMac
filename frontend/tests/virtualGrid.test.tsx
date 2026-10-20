@@ -62,3 +62,17 @@ test("shift/ctrl clicks select rows without selecting page text", async () => {
     spy.mockRestore();
   }
 });
+
+test("column widths grow with the table font so data is not cut", async () => {
+  const { gridScale } = await import("../src/ui/grid/VirtualGrid");
+  gridScale.value = 16 / 13;
+  try {
+    const columns = [{ key: "data", title: "Данные", width: 130, render: () => "" }];
+    const { container } = render(
+      <VirtualGrid<{ n: number }> gridId="scale" ariaLabel="t" columns={columns} rowCount={0} getRow={() => undefined} />,
+    );
+    expect(container.querySelector<HTMLElement>(".gh")!.style.width).toBe("160px");
+  } finally {
+    gridScale.value = 1;
+  }
+});

@@ -9,6 +9,9 @@ import type { Selection } from "./selection";
 
 /** Высота строки в px (из настроек шрифта таблиц, ставится applyTheme). */
 export const rowHeight = signal(22);
+/** Масштаб ширин колонок по шрифту таблиц (13 px = 1): крупный шрифт не обрезает данные.
+ * Ширины, заданные перетаскиванием, хранятся в тех же базовых единицах. */
+export const gridScale = signal(1);
 
 export interface Column<R> {
   key: string;
@@ -77,7 +80,8 @@ export function VirtualGrid<R>(props: Props<R>) {
   const atBottom = useRef(true);
   const lastRange = useRef<{ first: number; last: number; version?: number }>({ first: -1, last: -1 });
 
-  const own = (c: Column<R>) => widths[c.key] ?? c.width;
+  const scale = gridScale.value;
+  const own = (c: Column<R>) => Math.round((widths[c.key] ?? c.width) * scale);
   const ownTotal = columns.reduce((s, c) => s + own(c), 0);
   const fillCol = columns.find((c) => c.fill);
   const width = (c: Column<R>) => (c === fillCol ? Math.max(own(c), own(c) + viewportW - ownTotal) : own(c));
@@ -180,7 +184,7 @@ export function VirtualGrid<R>(props: Props<R>) {
     target.setPointerCapture(e.pointerId);
     const onMove = (ev: PointerEvent) => {
       const w = Math.max(c.minWidth ?? 32, Math.round(startW + ev.clientX - startX));
-      setWidths((old) => ({ ...old, [c.key]: w }));
+      setWidths((old) => ({ ...old, [c.key]: Math.round((w / scale) * 10) / 10 }));
     };
     const onUp = () => {
       target.removeEventListener("pointermove", onMove);
