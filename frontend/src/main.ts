@@ -7,6 +7,7 @@ import { initBitmap } from "./bitmap";
 import { initStream } from "./stream";
 import { initFilters } from "./filters";
 import { initTransmit } from "./transmit";
+import { initTracer } from "./tracer";
 import "./style.css";
 
 function el<T extends HTMLElement = HTMLElement>(id: string): T {
@@ -80,5 +81,6 @@ initMonitor();
 initStream();
 initFilters();
 initTransmit();
+initTracer();
 initTabs();
 client.connect();
