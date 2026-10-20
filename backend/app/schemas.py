@@ -45,11 +45,16 @@ def row_to_dict(r: MonitorRow) -> dict:
         "ch": r.channel,
         "id": r.can_id,
         "ext": r.extended,
+        "rtr": r.rtr,
+        "fd": r.fd,
+        "brs": r.brs,
         "dlc": r.dlc,
         "data": r.data.hex(),
         "count": r.count,
         "period_ms": r.period_ms,
-        "changed_mask": r.changed_mask,
+        "changed": r.changed_mask,
+        "stable_ms": r.stable_ms,
+        "fc": r.fc,
         "ts": r.last_ts,
     }
 

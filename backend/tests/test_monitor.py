@@ -43,3 +43,65 @@ def test_distinct_keys_for_std_and_ext_same_id():
     m.update(CanFrame(1, 0x1, b"\x00", extended=False))
     m.update(CanFrame(1, 0x1, b"\x00", extended=True))
     assert len(m.snapshot_delta()) == 2
+
+
+# --- A2: флаги, стабильность байт, агрегатор уникальных данных ---
+import pytest  # noqa: E402
+
+from app.schemas import row_to_dict  # noqa: E402
+
+
+def test_stable_ms_measures_time_before_change():
+    m = MonitorState()
+    m.update(CanFrame(1, 0x10, b"\x00\x00", timestamp=0.0))
+    m.update(CanFrame(1, 0x10, b"\x00\x00", timestamp=5.0))
+    m.update(CanFrame(1, 0x10, b"\x01\x00", timestamp=7.0))
+    r = m.snapshot_delta()[0]
+    assert r.changed_mask == 0b11  # первый снапшот: все байты новые
+    m.update(CanFrame(1, 0x10, b"\x02\x00", timestamp=7.5))
+    r = m.snapshot_delta()[0]
+    assert r.changed_mask == 0b01 and r.stable_ms[0] == pytest.approx(500.0)
+    assert r.stable_ms[1] is None
+
+
+def test_first_change_measures_from_first_appearance():
+    m = MonitorState()
+    m.update(CanFrame(1, 0x11, b"\x00", timestamp=10.0))
+    m.update(CanFrame(1, 0x11, b"\x05", timestamp=22.0))
+    r = m.snapshot_delta()[0]
+    assert r.stable_ms[0] == pytest.approx(12000.0)
+
+
+def test_aggregator_counts_unique_payloads_and_caps():
+    m = MonitorState(aggregator=True, unique_cap=2)
+    for i, d in enumerate([b"\x01", b"\x02", b"\x01", b"\x03"]):
+        m.update(CanFrame(1, 0x20, d, timestamp=i * 0.1))
+    r = m.snapshot_delta()[0]
+    assert r.fc == 2                     # третий уникальный не влез в cap
+    u = m.unique_frames(1, 0x20, False)
+    assert [x.data for x in u] == [b"\x01", b"\x02"] and u[0].count == 2
+    assert u[0].period_ms == pytest.approx(200.0)
+
+
+def test_aggregator_off_reports_zero_and_can_be_enabled():
+    m = MonitorState()
+    m.update(CanFrame(1, 0x21, b"\x01"))
+    assert m.snapshot_delta()[0].fc == 0 and m.unique_frames(1, 0x21, False) == []
+    m.set_aggregator(True)
+    m.update(CanFrame(1, 0x21, b"\x02"))
+    assert m.snapshot_delta()[0].fc == 1
+
+
+def test_snapshot_all_returns_every_row_without_consuming_delta():
+    m = MonitorState()
+    m.update(CanFrame(1, 1, b"\x00", timestamp=0))
+    assert len(m.snapshot_all()) == 1 and len(m.snapshot_delta()) == 1
+
+
+def test_row_flags_and_dict_keys():
+    m = MonitorState()
+    m.update(CanFrame(2, 0x7E0, b"", rtr=True, timestamp=1.0))
+    d = row_to_dict(m.snapshot_delta()[0])
+    assert d["rtr"] is True and d["fd"] is False and d["ch"] == 2
+    assert set(d) == {"ch", "id", "ext", "rtr", "fd", "brs", "dlc", "data", "count",
+                      "period_ms", "changed", "stable_ms", "fc", "ts"}
