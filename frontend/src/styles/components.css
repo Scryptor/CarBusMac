@@ -486,3 +486,120 @@ select.inp {
     animation-timing-function: steps(1, end) !important;
   }
 }
+
+/* ---------- виртуальный грид ---------- */
+.grid {
+  position: relative;
+  height: 100%;
+  overflow: auto;
+  background: var(--panel);
+  font-family: var(--grid-font);
+  font-size: var(--grid-size);
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+.grid:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.grid-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  min-width: 100%;
+  height: 26px;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--line-strong);
+  font: 600 12px/26px var(--ui-font);
+  color: var(--text-2);
+}
+.gh {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 0 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-right: 1px solid var(--line);
+  user-select: none;
+}
+.gh:last-child {
+  flex: 1 0 auto;
+  border-right: 0;
+}
+.gh-resize {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 7px;
+  height: 100%;
+  cursor: col-resize;
+}
+.grid-body {
+  position: relative;
+  min-width: 100%;
+}
+.gr {
+  position: absolute;
+  left: 0;
+  min-width: 100%;
+  display: flex;
+  align-items: center;
+  line-height: var(--row-h);
+  cursor: default;
+}
+.gr.odd {
+  background: var(--zebra);
+}
+.gr.sel {
+  background: var(--sel);
+  color: var(--sel-text);
+}
+.grid:focus .gr.focus,
+.grid:focus-within .gr.focus {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.gr.disabled {
+  color: var(--text-3);
+}
+.gr.loading::after {
+  content: "";
+}
+.gc {
+  flex: 0 0 auto;
+  padding: 0 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.gc:last-child {
+  flex: 1 0 auto;
+}
+.gc.right,
+.gh.right {
+  text-align: right;
+}
+.gc.center,
+.gh.center {
+  text-align: center;
+}
+.grid-empty {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--text-2);
+  font-family: var(--ui-font);
+  font-size: 13px;
+  padding: 0 24px;
+}
+/* байты данных: фиксированные ячейки, подсветка изменений */
+.byte {
+  display: inline-block;
+  width: 2.4ch;
+  margin-right: 0.45ch;
+  text-align: center;
+  border-radius: 3px;
+}
