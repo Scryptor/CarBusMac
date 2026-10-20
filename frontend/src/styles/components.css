@@ -847,3 +847,68 @@ select.inp {
   margin-left: 6px;
   color: var(--warn);
 }
+
+/* ---------- фильтры ---------- */
+.filters-panel {
+  min-height: 0;
+}
+.flt-tab {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.flt-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--line);
+}
+.flt-body {
+  flex: 1;
+  min-height: 0;
+}
+.flt-body.tree {
+  overflow: auto;
+  padding: 6px 0;
+}
+.flt-hint {
+  padding: 6px 10px;
+  border-top: 1px solid var(--line);
+  background: var(--panel-2);
+}
+.tree-ch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 4px;
+  font-weight: 600;
+}
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  padding: 0 10px 0 22px;
+  cursor: default;
+  font-family: var(--grid-font);
+  font-size: var(--grid-size);
+}
+.tree-item.sub {
+  padding-left: 44px;
+  color: var(--text-2);
+}
+.tree-item:hover {
+  background: var(--panel-2);
+}
+.tree-item.sel {
+  background: var(--sel);
+  color: var(--sel-text);
+}
+.gr.active {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.txt-icon {
+  font: 600 12px var(--grid-font);
+}
