@@ -71,3 +71,34 @@
 .panel-empty {
   padding: 24px;
 }
+.split-receive {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 1px;
+  background: var(--line);
+}
+.split-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+}
+.split-head {
+  height: 26px;
+  flex: 0 0 26px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
+}
+.split-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}

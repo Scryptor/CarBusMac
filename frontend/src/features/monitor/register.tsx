@@ -5,7 +5,8 @@ import { t } from "../../i18n/ru";
 import type { MenuItem } from "../../ui/Menu";
 import { ToolButton, ToolSep, ToolSplit } from "../../ui/Toolbar";
 import { registerMonitorActions } from "./actions";
-import { ReceiveArea } from "./ReceiveArea";
+import { ReceiveArea, receiveSlots } from "./ReceiveArea";
+import { SplitMonitor } from "./SplitMonitor";
 
 const commentMenu = (): MenuItem[] => [
   { action: "comment" },
@@ -39,5 +40,6 @@ function MainViewButtons() {
 export function registerMonitor(): void {
   registerMonitorActions();
   slots.receive = () => <ReceiveArea />;
+  receiveSlots.split = () => <SplitMonitor />;
   viewToolbars.main = () => <MainViewButtons />;
 }

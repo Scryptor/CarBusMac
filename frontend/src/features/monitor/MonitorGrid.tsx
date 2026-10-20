@@ -61,22 +61,30 @@ function DataCells({ row }: { row: MonitorRowJson }) {
   );
 }
 
-export function monitorColumns(hex: boolean, aggregator: boolean, comments: Record<string, string>): Column<MonitorRowJson>[] {
-  const cols: Column<MonitorRowJson>[] = [
-    {
+export function monitorColumns(
+  hex: boolean,
+  aggregator: boolean,
+  comments: Record<string, string>,
+  withCh = true,
+): Column<MonitorRowJson>[] {
+  const cols: Column<MonitorRowJson>[] = [];
+  if (withCh) {
+    cols.push({
       key: "ch",
       title: t.col.ch,
       width: 40,
       align: "center",
       render: (r) => <span class={`ch-tag${r.ch === 2 ? " ch2" : ""}`}>{r.ch}</span>,
-    },
-    { key: "flags", title: t.col.flags, width: 72, render: (r) => fmtFlags(r) },
-    { key: "id", title: t.col.id, width: 96, align: "right", render: (r) => fmtId(r.id, r.ext, hex) },
-    { key: "dlc", title: t.col.dlc, width: 46, align: "center", render: (r) => r.dlc },
+    });
+  }
+  cols.push(
+    { key: "flags", title: t.col.flags, width: withCh ? 72 : 64, render: (r) => fmtFlags(r) },
+    { key: "id", title: t.col.id, width: withCh ? 96 : 88, align: "right", render: (r) => fmtId(r.id, r.ext, hex) },
+    { key: "dlc", title: t.col.dlc, width: 48, align: "center", render: (r) => r.dlc },
     { key: "data", title: t.col.data, width: 222, render: (r) => <DataCells row={r} /> },
-    { key: "period", title: t.col.period, width: 92, align: "right", render: (r) => fmtPeriod(r.period_ms) },
-    { key: "count", title: t.col.count, width: 88, align: "right", render: (r) => r.count },
-  ];
+    { key: "period", title: t.col.period, width: withCh ? 92 : 82, align: "right", render: (r) => fmtPeriod(r.period_ms) },
+    { key: "count", title: t.col.count, width: withCh ? 88 : 76, align: "right", render: (r) => r.count },
+  );
   if (aggregator) cols.push({ key: "fc", title: t.col.fc, width: 56, align: "right", render: (r) => r.fc });
   cols.push(
     { key: "ascii", title: t.col.ascii, width: 92, render: (r) => fmtAscii(r.data) },
@@ -118,14 +126,15 @@ export function MonitorPanel({ channel }: { channel?: number }) {
   else if (sel.focus !== idx) sel.click(idx);
 
   const columns = useMemo(
-    () => monitorColumns(s.monitor_hex_ids, s.aggregator, comments),
-    [s.monitor_hex_ids, s.aggregator, comments],
+    () => monitorColumns(s.monitor_hex_ids, s.aggregator, comments, channel == null),
+    [s.monitor_hex_ids, s.aggregator, comments, channel],
   );
+  const alias = channel != null ? store.status.value.channels[String(channel)]?.alias ?? "" : "";
 
   return (
     <VirtualGrid<MonitorRowJson>
-      gridId={s.aggregator ? "monitor-fc" : "monitor"}
-      ariaLabel={channel ? t.receive.channelCaption(channel, "") : t.receive.monitor}
+      gridId={(channel != null ? "monitor-split" : "monitor") + (s.aggregator ? "-fc" : "")}
+      ariaLabel={channel != null ? t.receive.channelCaption(channel, alias) : t.receive.monitor}
       columns={columns}
       rowCount={keys.length}
       getRow={(i) => monitorStore.get(keys[i])}

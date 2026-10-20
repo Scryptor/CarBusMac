@@ -1,5 +1,5 @@
 /** Действия монитора (тулбар, контекстное меню, хоткеи) — названия и хоткеи десктопа. */
-import { Eraser, MessageSquare, Timer } from "lucide-preact";
+import { Columns2, Eraser, MessageSquare, Timer } from "lucide-preact";
 import { openDialog, ui } from "../../app/ui";
 import { registerActions, type Action } from "../../core/actions";
 import { cmd } from "../../core/client";
@@ -116,6 +116,18 @@ export function monitorActions(): Action[] {
         cmd("filters_add_id", { channel: r.ch, id: r.id, ext: r.ext })
           .then(() => pushToast("info", `ID ${fmtId(r.id, r.ext, true)} добавлен в фильтр канала ${r.ch}`))
           .catch(toastErr);
+      },
+    },
+    {
+      id: "split",
+      label: t.receive.separate,
+      hint: t.hint.split,
+      icon: Columns2,
+      scope: "main",
+      checked: () => ui.split.value,
+      run: () => {
+        ui.receiveMode.value = "monitor";
+        ui.split.value = !ui.split.value;
       },
     },
     { id: "commentsClear", label: t.comment.clear, scope: "main", run: () => cmd("comments_clear").catch(toastErr) },
