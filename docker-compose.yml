@@ -1,0 +1,12 @@
+services:
+  backend:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"          # UI и WS только на localhost мака
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - CARBUS_BRIDGE=host.docker.internal:7000   # нативный мост на маке
+    volumes:
+      - ./traces:/app/traces           # трейсы остаются на маке
+    restart: unless-stopped
