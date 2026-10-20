@@ -17,7 +17,7 @@ from app.can_session import CanSession
 from app.monitor import MonitorState
 from app.schemas import FrameMsg, frame_to_dict, row_to_dict
 from app.trace import TracePlayer, TraceReader, TraceWriter
-from app.transmit import Trigger, TransmitManager, TxTask
+from app.transmit import TransmitManager, TxTask
 
 TRACES_DIR = Path(__file__).resolve().parents[2] / "traces"
 FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
@@ -90,7 +90,7 @@ class Connection:
             self.session = None
             self._emit({"type": "status", "connected": False, "bus": False, "message": str(e)})
             return
-        self.tx = TransmitManager(self.session)
+        self.tx = TransmitManager(send=self.session.send)
         info = await self.session.get_device_info()
         self._emit({"type": "device_info", "info": info})
         self.bg.append(asyncio.create_task(self._reader()))
@@ -126,34 +126,26 @@ class Connection:
 
     async def _cmd_tx_add(self, cmd: dict) -> None:
         t = cmd["task"]
-        self.tx.add_task(TxTask(id=t["id"], frame=FrameMsg(**t["frame"]).to_frame(),
-                                period_ms=t.get("period_ms")))
+        f = FrameMsg(**t["frame"]).to_frame()
+        self.tx.upsert(TxTask(id=t["id"], channel=f.channel, can_id=f.can_id, ext=f.extended,
+                              rtr=f.rtr, data=f.data, period_ms=t.get("period_ms") or 10))
         self._ok("tx_add")
 
     async def _cmd_tx_run(self, cmd: dict) -> None:
-        await self.tx.run(cmd["id"])
+        self.tx.start(cmd["id"])
         self._ok("tx_run")
 
     async def _cmd_tx_stop(self, cmd: dict) -> None:
-        self.tx.stop(cmd["id"])
+        self.tx.pause(cmd["id"])
         self._ok("tx_stop")
 
     async def _cmd_tx_run_all(self, cmd: dict) -> None:
-        await self.tx.run_all()
+        self.tx.start_all()
         self._ok("tx_run_all")
 
     async def _cmd_tx_stop_all(self, cmd: dict) -> None:
-        self.tx.stop_all()
+        self.tx.pause_all()
         self._ok("tx_stop_all")
-
-    async def _cmd_trigger_add(self, cmd: dict) -> None:
-        t = cmd["trigger"]
-        self.tx.add_trigger(Trigger(
-            match_channel=t["channel"], match_id=t["can_id"],
-            match_data=bytes.fromhex(t["data"]), match_mask=bytes.fromhex(t["mask"]),
-            action=FrameMsg(**t["action"]).to_frame(),
-        ))
-        self._ok("trigger_add")
 
     async def _cmd_record_start(self, cmd: dict) -> None:
         TRACES_DIR.mkdir(parents=True, exist_ok=True)
