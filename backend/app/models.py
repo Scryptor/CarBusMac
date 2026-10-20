@@ -18,6 +18,7 @@ class CanFrame:
     brs: bool = False
     timestamp: float = 0.0
     ts_source: str = "device"
+    direction: str = "rx"   # "rx" — принят из шины, "tx" — отправлен нами
 
     @property
     def dlc(self) -> int:
