@@ -96,3 +96,14 @@ test("dialog without fields takes focus itself so Escape and Enter work", () => 
   fireEvent.keyDown(document.activeElement!, { key: "Escape" });
   expect([ok, closed]).toEqual([1, 1]);
 });
+
+test("switching the view closes an open context menu", async () => {
+  const { ui } = await import("../src/app/ui");
+  const { popup } = await import("../src/ui/ContextMenu");
+  ui.view.value = "main";
+  openContextMenu(10, 10, [{ label: "Пункт", run: () => {} }]);
+  expect(popup.value).not.toBeNull();
+  ui.view.value = "tracer";
+  expect(popup.value).toBeNull();
+  ui.view.value = "main";
+});

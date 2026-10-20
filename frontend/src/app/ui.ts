@@ -2,6 +2,7 @@
  * localStorage браузера; плюс хост модальных диалогов и плавающих окон. */
 import { signal, effect, type Signal } from "@preact/signals";
 import type { VNode } from "preact";
+import { closeContextMenu } from "../ui/ContextMenu";
 
 function persisted<T>(key: string, initial: T): Signal<T> {
   let start = initial;
@@ -37,6 +38,14 @@ export const ui = {
   /** «Недавно открытые» трейсы — список имён, свежие сверху */
   tracerRecent: persisted<string[]>("tracerRecent", []),
 };
+
+// меню всегда относится к виду, где его открыли: при смене вида (F12, F2) закрываем
+let lastView = ui.view.value;
+effect(() => {
+  const v = ui.view.value;
+  if (v !== lastView) closeContextMenu();
+  lastView = v;
+});
 
 /** Один модальный диалог за раз (как в десктопе). */
 export const dialog = signal<VNode | null>(null);

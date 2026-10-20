@@ -73,9 +73,36 @@
   задержка; строка/редактор — `TDLGTRACERROW`, `TDLGTRACERDELAY`.
 - Stream-запись (`TFRMSTREAM`): Record/Pause, save/load, Monitor toggle.
 
-## Не входит в порт v1 (есть в десктопе)
+## Статус порта (этап 1, ветка `build/desktop-parity`)
 
-DBC-менеджер (`TFRMDBCMANAGER`, `TFRMDBCGRAPH`, `TFRMDBCSIGNALVIEWER`),
-JS-консоль (`TFRMJSENGINECONSOLE`), **bruteforce** (`TFRMBRUTEFORCECAN/LIN`),
-UDS (`TDLGUDSSAVE` и прочее), LIN-канал, статистика шины (`TFRMDEVICESTAT`),
-расширенный режим (`TFRMMAINADV`).
+Сверка по формам; «сделано» значит, что элементы формы есть в вебе и проверены в
+браузере на 1366×768 / 1366×650, отличия перечислены. Паритетом всего приложения это
+не является — отсутствующее перечислено ниже.
+
+| Форма десктопа | Статус | Отличия / что не сделано |
+|---|---|---|
+| `TFRMMAIN` главное окно | сделано | меню, тулбар с подсказками и хоткеями, приём, док передачи, панель фильтров, статусбар; нет Gateway, DBC, вкладок LIN/FD передачи |
+| `TFRAMERECEIVE` монитор | сделано | колонки, подсветка, редкие данные, контекстное меню; нет «Show message signals» (DBC), «Clear protect bits» |
+| `TFRAMESPLITRECEIVE` / `TFRAMERECEIVECHANNEL` | сделано | раздельный приём по каналам |
+| `TFRMDETAILS` битовая карта | сделано | плавающее окно, можно несколько |
+| `TDLGFRAMESVIEW` данные сообщения | сделано | нужен включённый агрегатор |
+| `TFRMSTREAM` поток | сделано | вид «Поток» в окне приёма, а не отдельное окно |
+| `TDLGMARKER` / `TDLGMARKERLIST` | сделано | |
+| `TFRMTRANSMIT` / `TFRAMECANTASKS` / `TFRAMEBASETASKS` / `TFRAMEDATA8` | сделано | док внизу; `.tsk` десктопа читается и пишется |
+| `TFRAMEFDTASKS` / `TFRAMEBASE64TASKS` / `TFRAMEDATA64` / `TFRAMEASCIIDATA64` | нет | CAN-FD |
+| `TFRAMELINTRANSMIT` / `TFRAMELINRESPONSE` / `TDLGBITRATELIN` | нет | LIN (carbus-lib не умеет кадры LIN) |
+| `TFRMFILTER` / `TFRAMEHARDWAREFILTER` / `TDLGHWFILTEREDIT` | сделано | набор фильтров сохраняется в наш `.json` (формат `.flt` десктопа не восстановлен) |
+| `TFRAMERANGEFILTER` / `TDLGRANGEFILTEREDIT` / `TDLGRANGEFILTEREXEDIT` | сделано | |
+| `TFRAMEGATEWAYDEVICE` / `TDLGGATEWAYEDIT` | нет | шлюз CAN1⇔CAN2 |
+| `TDLGDEVICECONFIGURE` / `TFRAMEDEVICECHANNEL` | сделано | вместо типа устройства и COM-порта — адрес моста; каналы рядом, а не вкладками |
+| `TDLGBITRATE` | сделано | только свои скорости, стандартные — из таблицы прибора |
+| `TDLGDEVICEINFO` | сделано | текст как memo + «Копировать» |
+| `TDLGDEVCHANSPEEDINFO`, `TFRMDEVICESTAT`, `TFRMDEVICELIST` | нет | автоопределение скорости, статистика загрузки, список устройств |
+| `TFRMTRACER` / `TDLGTRACERROW` / `TDLGTRACERDELAY` | сделано | вид F12 вместо отдельного окна; нет режимов отображения времени (метка/линейное/локальное) |
+| `TFRAMETRACERSIGNAL*`, `TFRMDBC*`, `TDLGNEWSIGNAL` | нет | DBC |
+| `TDLGAPPSETTINGS` | сделано | без опций «в отдельном окне», «поверх окон», «Символ завершения строки», вкладки «Обновления» |
+| `TDLGLOGSETTINGS` / `TFRAMELOGCHANNELFILTER` | частично | одна конфигурация лога в папке traces; нет списка пресетов, выбора папки, бинарного лога, фильтра каналов лога |
+| `TDLGCOMMENT`, `TDLGRAREPERIOD`, `TDLGABOUT` | сделано | «О программе» — свой текст |
+| `TDLMSGIDEDIT` «Set frame message ID», `TDLGFHPROPERTIES` «Reopen menu properties» | нет | список «Недавно открытые» отладчика есть (10 файлов, хранится в браузере), окна его настройки нет |
+| `TFRMBRUTEFORCECAN/LIN`, `TFRMJSENGINECONSOLE`, `TFRMESEDITOR`, `TDLGUDSSAVE`, `TDLGLICENSE` | нет | Bomber, JS, UDS, лицензия |
+| `TFRMMAINADV`, `TFRMHIDDEN`, `TDMBASE` | — | служебные формы десктопа |
