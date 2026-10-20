@@ -607,3 +607,84 @@ select.inp {
   color: var(--text-3);
   background: none;
 }
+
+/* ---------- битовая карта и «Данные сообщения» ---------- */
+.bitmap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px 12px;
+}
+.bm-grid {
+  font-family: var(--grid-font);
+  font-size: var(--grid-size);
+  font-variant-numeric: tabular-nums;
+}
+.bm-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 3px 0;
+}
+.bm-head {
+  font: 600 12px var(--ui-font);
+  color: var(--text-2);
+}
+.bm-idx {
+  width: 22px;
+  color: var(--text-2);
+  text-align: right;
+  margin-right: 4px;
+}
+.bm-w,
+.bit {
+  width: 34px;
+  text-align: center;
+}
+.bit {
+  height: 24px;
+  line-height: 22px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  color: var(--text-2);
+  background: var(--panel);
+}
+.bit.on {
+  color: var(--text);
+  font-weight: 700;
+  background: var(--accent-weak);
+  border-color: var(--accent);
+}
+.bm-dec {
+  width: 56px;
+  text-align: right;
+}
+.bm-none {
+  padding: 8px 0;
+  font-family: var(--ui-font);
+}
+.bm-comment {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.frames {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.frames-grid {
+  flex: 1;
+  min-height: 0;
+}
+.frames-foot {
+  padding: 4px 10px;
+  border-top: 1px solid var(--line);
+  background: var(--panel-2);
+}
+.frames-off {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}

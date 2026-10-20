@@ -1,5 +1,5 @@
 /** Действия монитора (тулбар, контекстное меню, хоткеи) — названия и хоткеи десктопа. */
-import { Columns2, Eraser, MessageSquare, Timer } from "lucide-preact";
+import { Columns2, Eraser, Grid3x3, Layers, MessageSquare, Timer } from "lucide-preact";
 import { openDialog, ui } from "../../app/ui";
 import { registerActions, type Action } from "../../core/actions";
 import { cmd } from "../../core/client";
@@ -7,7 +7,9 @@ import { fmtAscii, fmtData, fmtFlags, fmtId, fmtPeriod } from "../../core/format
 import { commentKey, pushToast, store } from "../../core/store";
 import type { MonitorRowJson, Settings } from "../../core/types";
 import { t } from "../../i18n/ru";
+import { openBitmap } from "./BitmapWindow";
 import { CommentDialog, RarePeriodDialog } from "./dialogs";
+import { openFrames } from "./FramesWindow";
 import { monitorSelection, monitorStore } from "./MonitorGrid";
 
 const toastErr = (e: Error) => pushToast("error", e.message);
@@ -52,6 +54,32 @@ export function monitorActions(): Action[] {
       icon: Eraser,
       scope: "main",
       run: () => cmd(ui.receiveMode.value === "stream" ? "capture_clear" : "monitor_clear").catch(toastErr),
+    },
+    {
+      id: "bitmap",
+      label: t.rxMenu.bitmap,
+      hint: t.hint.bitmap,
+      shortcut: "F3",
+      icon: Grid3x3,
+      scope: "main",
+      enabled: () => sel() != null,
+      run: () => {
+        const r = sel();
+        if (r) openBitmap(r.ch, r.id, r.ext);
+      },
+    },
+    {
+      id: "frames",
+      label: t.rxMenu.frames,
+      hint: t.hint.frames,
+      shortcut: "Ctrl+F3",
+      icon: Layers,
+      scope: "main",
+      enabled: () => sel() != null,
+      run: () => {
+        const r = sel();
+        if (r) openFrames(r.ch, r.id, r.ext);
+      },
     },
     {
       id: "comment",
