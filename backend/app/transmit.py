@@ -33,7 +33,8 @@ def _masked_match(frame: CanFrame, t: Trigger) -> bool:
     if len(frame.data) < len(t.match_data):
         return False
     for i in range(len(t.match_data)):
-        if (frame.data[i] & t.match_mask[i]) != (t.match_data[i] & t.match_mask[i]):
+        m = t.match_mask[i] if i < len(t.match_mask) else 0  # короткая маска: остальное — wildcard
+        if (frame.data[i] & m) != (t.match_data[i] & m):
             return False
     return True
 

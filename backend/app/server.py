@@ -25,7 +25,7 @@ TICK_SECONDS = 0.04
 
 
 class Connection:
-    def __init__(self, ws: WebSocket, factory: Callable[[], CanSession]) -> None:
+    def __init__(self, ws: WebSocket, factory: Callable[..., CanSession]) -> None:
         self.ws = ws
         self.factory = factory
         self.session: CanSession | None = None
@@ -33,6 +33,7 @@ class Connection:
         self.tx: TransmitManager | None = None
         self.writer: TraceWriter | None = None
         self.player_task: asyncio.Task | None = None
+        self.player: TracePlayer | None = None
         self.loaded_frames: list = []
         self.out: asyncio.Queue[dict] = asyncio.Queue()
         self.bg: list[asyncio.Task] = []
@@ -82,7 +83,7 @@ class Connection:
 
     # --- команды ---
     async def _cmd_connect(self, cmd: dict) -> None:
-        self.session = self.factory()
+        self.session = self.factory(cmd.get("bridge_host"), cmd.get("bridge_port"))
         try:
             await self.session.connect()
         except Exception as e:
@@ -156,7 +157,7 @@ class Connection:
 
     async def _cmd_record_start(self, cmd: dict) -> None:
         TRACES_DIR.mkdir(parents=True, exist_ok=True)
-        name = cmd.get("name") or "trace"
+        name = Path(str(cmd.get("name") or "trace")).name  # только basename — без обхода каталога
         self.writer = TraceWriter(str(TRACES_DIR / f"{name}.jsonl"))
         self._ok("record_start")
 
@@ -167,7 +168,9 @@ class Connection:
         self._ok("record_stop")
 
     async def _cmd_tracer_load(self, cmd: dict) -> None:
-        self.loaded_frames = TraceReader(str(TRACES_DIR / cmd["name"])).frames()
+        name = Path(str(cmd["name"])).name  # только basename — без обхода каталога
+        self.loaded_frames = TraceReader(str(TRACES_DIR / name)).frames()
+        self.player = TracePlayer(self.loaded_frames)
         self._ok(f"loaded {len(self.loaded_frames)} frames")
 
     async def _cmd_tracer_play(self, cmd: dict) -> None:
@@ -194,6 +197,9 @@ class Connection:
         self._ok("tracer_stop")
 
     async def _cmd_tracer_step(self, cmd: dict) -> None:
+        frame = self.player.step() if self.player else None
+        if frame is not None:
+            self.monitor.update(frame)   # шаг показывает кадр в мониторе, в шину не шлёт
         self._ok("tracer_step")
 
     async def _cmd_clear(self, cmd: dict) -> None:
@@ -202,13 +208,21 @@ class Connection:
 
     # --- фоновые петли ---
     async def _reader(self) -> None:
-        async for f in self.session.frames():
-            self.monitor.update(f)
-            self.stream_buf.append(f)
-            if self.writer:
-                self.writer.write(f)
-            if self.tx:
-                await self.tx.on_frame(f)
+        try:
+            async for f in self.session.frames():
+                self.monitor.update(f)
+                self.stream_buf.append(f)
+                if self.writer:
+                    self.writer.write(f)
+                if self.tx:
+                    await self.tx.on_frame(f)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:  # обрыв моста/прибора в середине сессии — сообщить, не молчать
+            self.session = None
+            self._emit(
+                {"type": "status", "connected": False, "bus": False, "message": f"RX stopped: {e}"}
+            )
 
     async def _ticker(self) -> None:
         while True:
@@ -221,7 +235,7 @@ class Connection:
                 self._emit({"type": "stream", "frames": [frame_to_dict(f) for f in buf]})
 
 
-def create_app(session_factory: Callable[[], CanSession]) -> FastAPI:
+def create_app(session_factory: Callable[..., CanSession]) -> FastAPI:
     app = FastAPI(title="CarBUS for Mac")
 
     @app.get("/api/traces")
@@ -240,17 +254,19 @@ def create_app(session_factory: Callable[[], CanSession]) -> FastAPI:
     return app
 
 
-def default_session_factory() -> CanSession:
-    """Боевая фабрика для uvicorn: CarbusSession к мосту из env CARBUS_BRIDGE
-    (по умолчанию host.docker.internal:7000). carbus-lib импортируется лениво,
-    чтобы серверные тесты не зависели от него."""
+def default_session_factory(host: str | None = None, port: int | None = None) -> CanSession:
+    """Боевая фабрика для uvicorn: CarbusSession к мосту. Хост/порт берутся из команды
+    connect (полоса подключения в UI), иначе — из env CARBUS_BRIDGE
+    (по умолчанию host.docker.internal:7000). carbus-lib импортируется лениво."""
     import os
 
     from app.carbus_session import CarbusSession
 
+    if host and port:
+        return CarbusSession(str(host), int(port))
     target = os.environ.get("CARBUS_BRIDGE", "host.docker.internal:7000")
-    host, _, port = target.partition(":")
-    return CarbusSession(host, int(port or "7000"))
+    h, _, p = target.partition(":")
+    return CarbusSession(h, int(p or "7000"))
 
 
 # Точка входа для uvicorn: `uvicorn app.server:app`

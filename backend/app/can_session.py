@@ -27,9 +27,15 @@ class FakeSession:
     """Тестовая сессия: `push` кладёт принятый кадр в `frames()`, `sent` копит
     отправленные, `info` настраивается, `fail_connect` имитирует недоступный мост."""
 
-    def __init__(self, info: dict | None = None, fail_connect: bool = False) -> None:
+    def __init__(
+        self,
+        info: dict | None = None,
+        fail_connect: bool = False,
+        raise_on_frames: Exception | None = None,
+    ) -> None:
         self.info = info or {}
         self.fail_connect = fail_connect
+        self.raise_on_frames = raise_on_frames
         self.sent: list[CanFrame] = []
         self.channels: list[tuple[int, int, bool]] = []
         self.filters: list[tuple[int, int, int, int, bool]] = []
@@ -65,5 +71,7 @@ class FakeSession:
         self._queue.put_nowait(frame)
 
     async def frames(self) -> AsyncIterator[CanFrame]:
+        if self.raise_on_frames is not None:
+            raise self.raise_on_frames
         while True:
             yield await self._queue.get()

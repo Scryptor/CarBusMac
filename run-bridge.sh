@@ -20,7 +20,11 @@ if [ ! -x "$VENV/bin/python" ]; then
   "$VENV/bin/pip" -q install carbus-lib
 fi
 
-echo "Мост: $DEV → 0.0.0.0:$PORT  (контейнер ходит через host.docker.internal:$PORT)"
-echo "Примечание: мост слушает все интерфейсы (нужно для Docker на маке);"
-echo "держите firewall включённым или работайте в доверенной сети."
-exec "$VENV/bin/python" -m carbus_async.tcp_bridge --serial "$DEV" --port "$PORT" --host 0.0.0.0
+# По умолчанию слушаем только loopback: Docker Desktop на маке дотягивается до
+# сервисов хоста на 127.0.0.1 через host.docker.internal (проверено). Это не
+# публикует мост в LAN. Если ваш рантайм не достаёт loopback — задайте
+# CARBUS_BRIDGE_HOST=0.0.0.0 (и держите firewall включённым).
+BIND="${CARBUS_BRIDGE_HOST:-127.0.0.1}"
+echo "Мост: $DEV → $BIND:$PORT  (контейнер ходит через host.docker.internal:$PORT)"
+[ "$BIND" = "127.0.0.1" ] || echo "ВНИМАНИЕ: мост слушает $BIND — не только localhost; следите за firewall."
+exec "$VENV/bin/python" -m carbus_async.tcp_bridge --serial "$DEV" --port "$PORT" --host "$BIND"

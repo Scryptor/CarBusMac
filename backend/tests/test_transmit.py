@@ -23,6 +23,16 @@ async def test_trigger_fires_on_masked_match():
     assert [f.can_id for f in s.sent] == [0x321]
 
 
+async def test_trigger_short_mask_does_not_crash():
+    s = FakeSession()
+    await s.connect()
+    tm = TransmitManager(s)
+    # маска короче данных — не должно падать IndexError
+    tm.add_trigger(Trigger(1, 0x10, b"\x10\x20", b"\xf0", CanFrame(1, 0x99, b"")))
+    await tm.on_frame(CanFrame(1, 0x10, b"\x1A\x20"))  # byte0 1A&F0=10 match; byte1 без маски
+    assert [f.can_id for f in s.sent] == [0x99]
+
+
 async def test_periodic_repeats_then_stops():
     s = FakeSession()
     await s.connect()
