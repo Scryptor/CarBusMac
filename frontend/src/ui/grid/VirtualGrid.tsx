@@ -15,6 +15,8 @@ export interface Column<R> {
   title: string;
   width: number;
   minWidth?: number;
+  /** забирает свободную ширину таблицы (обычно «Комментарий») */
+  fill?: boolean;
   align?: "left" | "right" | "center";
   render: (row: R, i: number) => ComponentChildren;
   title_hint?: string;
@@ -69,12 +71,16 @@ export function VirtualGrid<R>(props: Props<R>) {
   const ref = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [viewport, setViewport] = useState(400);
+  const [viewportW, setViewportW] = useState(0);
   const [widths, setWidths] = useState<Record<string, number>>(() => loadWidths(gridId));
   const [, setTick] = useState(0);
   const atBottom = useRef(true);
-  const lastRange = useRef<{ first: number; last: number }>({ first: -1, last: -1 });
+  const lastRange = useRef<{ first: number; last: number; version?: number }>({ first: -1, last: -1 });
 
-  const width = (c: Column<R>) => widths[c.key] ?? c.width;
+  const own = (c: Column<R>) => widths[c.key] ?? c.width;
+  const ownTotal = columns.reduce((s, c) => s + own(c), 0);
+  const fillCol = columns.find((c) => c.fill);
+  const width = (c: Column<R>) => (c === fillCol ? Math.max(own(c), own(c) + viewportW - ownTotal) : own(c));
   const totalWidth = columns.reduce((s, c) => s + width(c), 0);
   const bodyViewport = Math.max(0, viewport - HEAD_H);
   const { first, last } = visibleRange(scrollTop, bodyViewport, rowH, rowCount);
@@ -82,9 +88,13 @@ export function VirtualGrid<R>(props: Props<R>) {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setViewport(el.clientHeight));
+    const measure = () => {
+      setViewport(el.clientHeight);
+      setViewportW(el.clientWidth);
+    };
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
-    setViewport(el.clientHeight);
+    measure();
     return () => ro.disconnect();
   }, []);
 
@@ -108,9 +118,12 @@ export function VirtualGrid<R>(props: Props<R>) {
     setScrollTop(el.scrollTop);
   }, [rowCount, props.follow]);
 
+  // диапазон просим заново и при смене версии данных: после сброса кэша (новый трейс,
+  // смена фильтра) видимые строки те же, но их уже нет
   useEffect(() => {
-    if (lastRange.current.first !== first || lastRange.current.last !== last) {
-      lastRange.current = { first, last };
+    const r = lastRange.current;
+    if (r.first !== first || r.last !== last || r.version !== props.version) {
+      lastRange.current = { first, last, version: props.version };
       props.onRange?.(first, last);
     }
   });
@@ -123,6 +136,10 @@ export function VirtualGrid<R>(props: Props<R>) {
   const select = (e: MouseEvent, i: number) => {
     if (!selection) return;
     if (e.button === 2 && selection.has(i)) return;
+    if (multi && (e.shiftKey || e.ctrlKey || e.metaKey)) {
+      e.preventDefault(); // Shift/Ctrl-клик выделяет строки, а не текст страницы
+      ref.current?.focus();
+    }
     if (multi && e.shiftKey) selection.shiftClick(i);
     else if (multi && (e.metaKey || e.ctrlKey) && e.button === 0) selection.ctrlClick(i);
     else selection.click(i);

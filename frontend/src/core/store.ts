@@ -47,10 +47,13 @@ const EMPTY_TRACER: TracerState = {
   name: null,
   modified: false,
   count: 0,
+  visible: 0,
   channels: [],
   rev: 0,
+  data_rev: 0,
   state: "stopped",
   current: null,
+  pos: null,
   config: {
     delay_mode: "timestamp",
     fixed_ms: 100,
@@ -170,6 +173,7 @@ export function applyEvent(e: Record<string, unknown>): void {
       store.tracer.value = {
         ...store.tracer.value,
         current: e.current as number | null,
+        pos: (e.pos as number | null | undefined) ?? null,
         state: e.state as TracerState["state"],
       };
       break;

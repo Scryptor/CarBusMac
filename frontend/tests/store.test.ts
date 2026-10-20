@@ -43,8 +43,9 @@ test("tx_counts merges counters into tasks", () => {
 
 test("tracer_progress updates current row and state", () => {
   applyEvent(hello);
-  applyEvent({ type: "tracer_progress", current: 7, state: "playing" });
+  applyEvent({ type: "tracer_progress", current: 7, pos: 5, state: "playing" });
   expect(store.tracer.value.current).toBe(7);
+  expect(store.tracer.value.pos).toBe(5);
   expect(store.tracer.value.state).toBe("playing");
 });
 

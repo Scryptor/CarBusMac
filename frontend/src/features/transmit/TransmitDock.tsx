@@ -95,7 +95,7 @@ function TaskGrid({ tasks }: { tasks: TxTaskJson[] }) {
     { key: "data", title: t.col.data, width: 222, render: (r) => fmtData(r.data).map((b) => <span class="byte">{b}</span>) },
     { key: "period", title: t.col.period, width: 84, align: "right", render: (r) => r.period_ms },
     { key: "count", title: t.col.count, width: 84, align: "right", render: (r) => r.count },
-    { key: "comment", title: t.col.comment, width: 200, render: (r) => r.comment },
+    { key: "comment", title: t.col.comment, width: 200, fill: true, render: (r) => r.comment },
   ];
 
   return (

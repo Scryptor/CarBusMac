@@ -31,6 +31,11 @@ export const ui = {
   filtersOpen: persisted<boolean>("filtersOpen", false),
   filtersWidth: persisted<number>("filtersWidth", 340),
   tracerIdsOpen: persisted<boolean>("tracerIdsOpen", true),
+  tracerIdsWidth: persisted<number>("tracerIdsWidth", 270),
+  /** «Разрешить передавать выделенные фреймы» */
+  tracerPlaySelected: persisted<boolean>("tracerPlaySelected", false),
+  /** «Недавно открытые» трейсы — список имён, свежие сверху */
+  tracerRecent: persisted<string[]>("tracerRecent", []),
 };
 
 /** Один модальный диалог за раз (как в десктопе). */

@@ -1,7 +1,9 @@
 """Отладчик (окно «Отладчик» десктопа): документ трейса и проигрыватель.
 
 Документ — строки трейса с флагами «разрешена», точка останова, задержки до/после и
-комментарий; таблица ID (воспроизводятся только отмеченные ID); правка строк.
+комментарий; таблица ID — «фильтр сообщений»: строки неотмеченных ID скрыты из таблицы
+и не воспроизводятся. Интерфейс адресует строки позициями среди видимых («pos»), документ
+хранит и правит их по индексам («i»).
 Проигрыватель шлёт строки в шину (Канал 1/Канал 2 — канал кадра переписывается) или
 в окно Приём, с паузой между строками по меткам времени («Макс. 1 сек» обрезает
 большие паузы) или фиксированной; останавливается перед точкой останова и при приёме
@@ -9,6 +11,7 @@
 from __future__ import annotations
 
 import asyncio
+from bisect import bisect_left
 from dataclasses import dataclass, field, replace
 from typing import Any, Awaitable, Callable
 
@@ -42,13 +45,40 @@ class TracerDoc:
         self.markers: list[Marker] = []
         self.modified = False
         self._disabled_ids: set[IdKey] = set()
+        self._visible: list[int] | None = None   # индексы видимых строк, по возрастанию
 
     def load(self, doc: TraceDoc, name: str | None) -> None:
         self.name = name
         self.rows = [TraceRow(f, comment=doc.comments.get(i, "")) for i, f in enumerate(doc.frames)]
         self.markers = list(doc.markers)
         self._disabled_ids = set()
+        self._visible = None
         self.modified = False
+
+    # --- видимые строки (фильтр по ID) ---
+    def visible(self) -> list[int]:
+        if self._visible is None:
+            if self._disabled_ids:
+                self._visible = [i for i, r in enumerate(self.rows) if _key(r.frame) not in self._disabled_ids]
+            else:
+                self._visible = list(range(len(self.rows)))
+        return self._visible
+
+    def visible_count(self) -> int:
+        return len(self.visible())
+
+    def indices(self, positions: list[int]) -> list[int]:
+        vis = self.visible()
+        return [vis[p] for p in positions if 0 <= p < len(vis)]
+
+    def position(self, index: int) -> int | None:
+        vis = self.visible()
+        p = bisect_left(vis, index)
+        return p if p < len(vis) and vis[p] == index else None
+
+    def find(self, key: IdKey) -> list[int]:
+        key = (int(key[0]), int(key[1]), bool(key[2]))
+        return [p for p, i in enumerate(self.visible()) if _key(self.rows[i].frame) == key]
 
     def to_trace_doc(self) -> TraceDoc:
         return TraceDoc(
@@ -59,17 +89,19 @@ class TracerDoc:
 
     # --- просмотр ---
     def rows_view(self, start: int, count: int) -> list[dict[str, Any]]:
+        vis = self.visible()
         start = max(0, start)
-        end = min(len(self.rows), start + max(0, count))
+        end = min(len(vis), start + max(0, count))
         t0 = self.rows[0].frame.timestamp if self.rows else 0.0
         marks = {m.index: m for m in self.markers}
         out = []
-        for i in range(start, end):
+        for pos in range(start, end):
+            i = vis[pos]
             r = self.rows[i]
             f = r.frame
             m = marks.get(i)
             out.append({
-                "i": i, "t": round(f.timestamp - t0, 6), "ch": f.channel, "dir": f.direction,
+                "i": i, "pos": pos, "t": round(f.timestamp - t0, 6), "ch": f.channel, "dir": f.direction,
                 "id": f.can_id, "ext": f.extended, "rtr": f.rtr, "dlc": len(f.data),
                 "data": f.data.hex(), "enabled": r.enabled, "bp": r.bp,
                 "before_ms": r.before_ms, "after_ms": r.after_ms, "comment": r.comment,
@@ -95,6 +127,7 @@ class TracerDoc:
                 self._disabled_ids.discard(k)
             else:
                 self._disabled_ids.add(k)
+        self._visible = None
 
     def playable(self, i: int, only_channel: int | None) -> bool:
         r = self.rows[i]
@@ -112,11 +145,13 @@ class TracerDoc:
             for m in self.markers:
                 if m.index >= idx:
                     m.index += 1
+        self._visible = None
         self.modified = True
         return idx
 
     def edit(self, index: int, row: TraceRow) -> None:
         self.rows[index] = row
+        self._visible = None
         self.modified = True
 
     def delete(self, indices: list[int]) -> None:
@@ -127,6 +162,7 @@ class TracerDoc:
         self.rows = [r for i, r in enumerate(self.rows) if i not in dropset]
         for m in self.markers:
             m.index -= sum(1 for d in drop if d < m.index)
+        self._visible = None
         self.modified = True
 
     def set_enabled(self, indices: list[int], on: bool) -> None:

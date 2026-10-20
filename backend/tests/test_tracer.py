@@ -187,8 +187,37 @@ def test_ids_table_counts_and_rows_view():
                    {"ch": 1, "id": 0x200, "ext": False, "count": 1, "enabled": True}]
     v = doc.rows_view(1, 5)
     assert [r["i"] for r in v] == [1, 2] and v[0]["t"] == 0.5 and v[1]["comment"] == "c"
-    assert set(v[0]) == {"i", "t", "ch", "dir", "id", "ext", "rtr", "dlc", "data", "enabled", "bp",
+    assert set(v[0]) == {"i", "pos", "t", "ch", "dir", "id", "ext", "rtr", "dlc", "data", "enabled", "bp",
                          "before_ms", "after_ms", "comment", "marker"}
+
+
+def test_unchecked_ids_are_hidden_from_rows_view():
+    doc = _doc((0, 1), (1, 2), (2, 1), (3, 3))
+    doc.set_ids_enabled([(1, 2, False)], False)
+    assert doc.visible_count() == 3
+    v = doc.rows_view(0, 10)
+    assert [(r["pos"], r["i"]) for r in v] == [(0, 0), (1, 2), (2, 3)]
+    assert doc.rows_view(1, 1)[0]["i"] == 2
+
+
+def test_positions_map_to_indices_and_back():
+    doc = _doc((0, 1), (1, 2), (2, 1), (3, 3))
+    doc.set_ids_enabled([(1, 2, False)], False)
+    assert doc.indices([0, 1, 2, 9]) == [0, 2, 3]
+    assert [doc.position(i) for i in range(4)] == [0, None, 1, 2]
+    assert doc.find((1, 1, False)) == [0, 1]
+    doc.set_ids_enabled([(1, 2, False)], True)
+    assert doc.find((1, 2, False)) == [1] and doc.visible_count() == 4
+
+
+def test_visible_rows_follow_edits():
+    doc = _doc((0, 1), (1, 2), (2, 1))
+    doc.set_ids_enabled([(1, 2, False)], False)
+    doc.add(TraceRow(CanFrame(1, 2, b"", timestamp=0.5)), index=1)
+    doc.add(TraceRow(CanFrame(1, 5, b"", timestamp=0.7)), index=2)
+    assert [r["id"] for r in doc.rows_view(0, 10)] == [1, 5, 1]
+    doc.delete([0])
+    assert [r["i"] for r in doc.rows_view(0, 10)] == [1, 3]
 
 
 def test_to_trace_doc_keeps_comments_and_markers():

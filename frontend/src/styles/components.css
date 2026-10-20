@@ -199,6 +199,14 @@ select.inp {
 .toolbtn.rec-on {
   color: var(--rec);
 }
+.toolbtn.menu {
+  gap: 4px;
+  padding-right: 3px;
+}
+/* «зелёные» кнопки воспроизведения: будет проиграно только выделенное (как в десктопе) */
+.toolbtn.go-sel:not(:disabled) {
+  color: var(--ok);
+}
 .tool-split {
   display: inline-flex;
 }
@@ -1026,4 +1034,100 @@ select.inp {
 }
 .txt-icon {
   font: 600 12px var(--grid-font);
+}
+
+/* ---------- отладчик ---------- */
+.tracer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+}
+.tr-options {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 36px;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.tr-name {
+  min-width: 0;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tr-rows {
+  font-variant-numeric: tabular-nums;
+}
+.tr-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.tr-grid {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.tr-side {
+  flex: 0 0 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--line);
+}
+.tr-ids {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.tr-ids-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.tr-ids-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* текущая строка воспроизведения — зелёная полоса, найденные по ID — янтарный фон */
+.gr.current:not(.sel) {
+  background: color-mix(in srgb, var(--ok) 16%, transparent);
+}
+.gr.current {
+  box-shadow: inset 3px 0 0 var(--ok);
+}
+.gr.found:not(.sel) {
+  background: color-mix(in srgb, var(--mark) 24%, transparent);
+}
+.bp-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--err);
+  vertical-align: middle;
+}
+.progress {
+  display: inline-block;
+  width: 120px;
+  height: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--panel-2);
+}
+.progress > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
 }

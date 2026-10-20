@@ -31,6 +31,8 @@ export interface FrameRowJson {
 }
 
 export interface TracerRowJson extends FrameRowJson {
+  /** позиция среди видимых строк (строки неотмеченных ID скрыты); `i` — номер в трейсе */
+  pos: number;
   enabled: boolean;
   bp: boolean;
   before_ms: number;
@@ -214,12 +216,26 @@ export interface TracerState {
   name: string | null;
   modified: boolean;
   count: number;
+  /** строк видно (без неотмеченных в таблице ID) */
+  visible: number;
   channels: number[];
+  /** ревизия позиций строк; data_rev — ревизия их содержимого */
   rev: number;
+  data_rev: number;
   state: "stopped" | "playing" | "paused";
+  /** текущая строка: номер в трейсе и позиция в таблице (null — скрыта) */
   current: number | null;
+  pos: number | null;
   config: PlayerConfig;
-  breakpoints: number[];
+  breakpoints: { i: number; pos: number | null }[];
+}
+
+export interface TracerIdJson {
+  ch: number;
+  id: number;
+  ext: boolean;
+  count: number;
+  enabled: boolean;
 }
 
 export interface FileInfo {

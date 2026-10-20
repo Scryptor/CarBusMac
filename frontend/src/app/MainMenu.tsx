@@ -1,12 +1,19 @@
-/** Главное меню как в десктопе: Файл · Подключиться · Поток · Отладчик · Настройки · ? */
+/** Главное меню как в десктопе: Файл · Подключиться · Поток · Отладчик · Настройки · ?
+ * В виде отладчика вместо «Файл» и «Поток» — меню отладчика «Трейс» и «Комментарий». */
 import { store } from "../core/store";
 import { t } from "../i18n/ru";
 import { MenuBar, type TopMenu } from "../ui/MenuBar";
 import { ui } from "./ui";
 
+/** Меню вида отладчика («Трейс», «Комментарий») — их строит features/tracer. */
+export const menuHooks: { tracer: () => TopMenu[] } = { tracer: () => [] };
+
 export function MainMenu() {
   const connected = store.status.value.state === "opened";
-  const menus: TopMenu[] = [
+  const tracerView = ui.view.value === "tracer";
+  const viewMenus: TopMenu[] = tracerView
+    ? menuHooks.tracer()
+    : [
     {
       label: t.menu.file,
       items: [
@@ -22,9 +29,14 @@ export function MainMenu() {
         { action: "saveStream" },
       ],
     },
+  ];
+  const menus: TopMenu[] = [
+    ...viewMenus,
     { label: connected ? t.menu.disconnect : t.menu.connect, action: "connect" },
-    { label: ui.receiveMode.value === "stream" ? t.receive.menuMonitor : t.menu.stream, action: "streamSwitch" },
-    { label: t.menu.tracer, action: "tracer" },
+    ...(tracerView
+      ? []
+      : [{ label: ui.receiveMode.value === "stream" ? t.receive.menuMonitor : t.menu.stream, action: "streamSwitch" }]),
+    { label: tracerView ? t.menu.closeTracer : t.menu.tracer, action: "tracer" },
     {
       label: t.menu.settings,
       items: [{ action: "appSettings" }, { action: "logSettings" }, { separator: true }, { action: "deviceSettings" }],

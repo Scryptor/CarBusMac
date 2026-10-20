@@ -38,13 +38,15 @@ client.on("capture_state", (e) => {
   syncRev(Number(e.rev));
   streamVersion.value++;
 });
-client.on("hello", () => {
-  rev = -1;
+client.on("hello", (e) => {
+  // ревизия из снапшота: иначе после перезагрузки страницы строки не подгрузятся,
+  // пока не придёт capture_state (без записи — не придёт)
+  rev = Number((e.capture as { rev?: number } | undefined)?.rev ?? -1);
   streamCache.reset();
   streamVersion.value++;
 });
 
-function fetchRange(first: number, last: number): void {
+export function fetchRange(first: number, last: number): void {
   const total = store.capture.value.count;
   for (const p of streamCache.missingPages(first, Math.min(last, total), total)) {
     streamCache.markPending(p);
@@ -110,6 +112,7 @@ export function StreamPanel() {
       {
         key: "comment",
         title: t.col.comment,
+        fill: true,
         width: 160,
         render: (r) =>
           r.marker ? (

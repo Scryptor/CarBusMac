@@ -88,7 +88,7 @@ export function monitorColumns(
   if (aggregator) cols.push({ key: "fc", title: t.col.fc, width: 56, align: "right", render: (r) => r.fc });
   cols.push(
     { key: "ascii", title: t.col.ascii, width: 92, render: (r) => fmtAscii(r.data) },
-    { key: "comment", title: t.col.comment, width: 160, render: (r) => comments[commentKey(r.id, r.ext)] ?? "" },
+    { key: "comment", title: t.col.comment, width: 160, fill: true, render: (r) => comments[commentKey(r.id, r.ext)] ?? "" },
   );
   return cols;
 }

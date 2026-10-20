@@ -309,3 +309,99 @@ def test_bitrates_keep_clock_and_reject_bad_timing(tmp_path):
         assert ev["bitrates"] == [item]
         bad = {**item, "timing": {"prescaler": 0, "seg1": 1, "seg2": 1, "sjw": 1}}
         assert call(ws, type="bitrates_set", bitrates=[bad])["ok"] is False
+
+
+def _trace_with_ids(env, ws):
+    """Трейс 100,200,100,300 в отладчике (через файл .trc)."""
+    from app.tracefmt import TraceDoc, write_trace
+    env.traces.mkdir(parents=True, exist_ok=True)
+    frames = [CanFrame(1, cid, bytes([k]), timestamp=k * 0.01) for k, cid in enumerate([0x100, 0x200, 0x100, 0x300])]
+    write_trace(env.traces / "ids.trc", TraceDoc(frames=frames))
+    assert call(ws, type="tracer_open", name="ids.trc")["ok"]
+
+
+def test_tracer_id_filter_hides_rows_and_commands_use_positions(tmp_path):
+    env = Env(tmp_path)
+    with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
+        hello = ws.receive_json()
+        _trace_with_ids(env, ws)
+        st0 = recv_until(ws, lambda m: m["type"] == "tracer_state" and m["count"] == 4)
+        assert st0["visible"] == 4 and st0["pos"] is None
+        r = call(ws, type="tracer_ids_set", keys=[[1, 0x200, False]], enabled=False)
+        assert r["ok"]
+        st = recv_until(ws, lambda m: m["type"] == "tracer_state" and m["visible"] == 3)
+        assert st["rev"] > st0["rev"]
+        rows = call(ws, type="tracer_rows", start=0, count=10)["data"]["rows"]
+        assert [(x["pos"], x["i"], x["id"]) for x in rows] == [(0, 0, 0x100), (1, 2, 0x100), (2, 3, 0x300)]
+        assert call(ws, type="tracer_bp", pos=1)["ok"]
+        st = recv_until(ws, lambda m: m["type"] == "tracer_state" and m["breakpoints"])
+        assert st["breakpoints"] == [{"i": 2, "pos": 1}]
+        assert call(ws, type="tracer_find", key=[1, 0x100, False])["data"]["positions"] == [0, 1]
+        assert call(ws, type="tracer_rows_enable", positions=[2], enabled=False)["ok"]
+        assert call(ws, type="tracer_rows", start=2, count=1)["data"]["rows"][0]["enabled"] is False
+        assert call(ws, type="tracer_comment", pos=0, text="первый")["ok"]
+        assert call(ws, type="tracer_rows", start=0, count=1)["data"]["rows"][0]["comment"] == "первый"
+        assert call(ws, type="tracer_row_add", after=0, row={"ch": 1, "id": 0x555, "data": "01"})["ok"]
+        rows = call(ws, type="tracer_rows", start=0, count=10)["data"]["rows"]
+        assert [x["id"] for x in rows] == [0x100, 0x555, 0x100, 0x300]
+
+
+def test_tracer_play_selection_is_positions(tmp_path):
+    env = Env(tmp_path)
+    with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        _trace_with_ids(env, ws)
+        call(ws, type="tracer_ids_set", keys=[[1, 0x200, False]], enabled=False)
+        assert call(ws, type="tracer_config", patch={"dest": "monitor", "delay_mode": "fixed", "fixed_ms": 10})["ok"]
+        assert call(ws, type="tracer_play", selection=[2])["ok"]      # позиция 2 = строка 3 (ID 300)
+        d = recv_until(ws, lambda m: m["type"] == "monitor_delta" and m["rows"])
+        assert [r["id"] for r in d["rows"]] == [0x300]
+        prog = recv_until(ws, lambda m: m["type"] == "tracer_progress" and m["current"] == 3)
+        assert prog["pos"] == 2
+
+
+def test_tracer_progress_is_coalesced_per_tick(tmp_path):
+    """Проигрыватель сообщает о каждой строке (до ~2000/с) — клиенту уходит не чаще тика;
+    смена состояния (пауза, стоп) — сразу."""
+    from app.hub import Hub
+    from app.store import JsonStore
+
+    class Sink:
+        def __init__(self):
+            self.msgs = []
+
+        def send(self, msg):
+            self.msgs.append(msg)
+
+    hub = Hub(lambda *a: FakeSession(), JsonStore(tmp_path / "data"), tmp_path / "traces", tmp_path / "data")
+    sink = Sink()
+    hub.clients.add(sink)
+    progress = lambda: [m for m in sink.msgs if m["type"] == "tracer_progress"]
+    for i in range(50):
+        hub._player_progress(i, "playing")
+    assert [m["current"] for m in progress()] == [0]
+    hub._tick()
+    assert [m["current"] for m in progress()] == [0, 49]
+    hub._tick()
+    assert len(progress()) == 2
+    hub._player_progress(50, "paused")
+    assert progress()[-1]["state"] == "paused" and progress()[-1]["current"] == 50
+
+
+def test_row_flags_bump_data_revision_not_positions(tmp_path):
+    """Точка останова, комментарий, запрет строки меняют данные строк, но не позиции —
+    выделение в таблице должно пережить такую правку."""
+    env = Env(tmp_path)
+    with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        _trace_with_ids(env, ws)
+        st0 = recv_until(ws, lambda m: m["type"] == "tracer_state" and m["count"] == 4)
+        for cmd in ({"type": "tracer_bp", "pos": 1}, {"type": "tracer_comment", "pos": 0, "text": "x"},
+                    {"type": "tracer_rows_enable", "positions": [2], "enabled": False}):
+            assert call(ws, **cmd)["ok"]
+            st = recv_until(ws, lambda m: m["type"] == "tracer_state")
+            assert st["rev"] == st0["rev"] and st["data_rev"] > st0["data_rev"]
+            st0 = st
+        assert call(ws, type="tracer_rows_delete", positions=[0])["ok"]
+        st = recv_until(ws, lambda m: m["type"] == "tracer_state")
+        assert st["rev"] > st0["rev"]

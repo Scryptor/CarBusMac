@@ -24,6 +24,15 @@ export class Selection {
     this.anchor = this.focus = i;
   }
 
+  /** Добавить строки к выделению («Выделить сообщения» по ID) — курсор не двигается. */
+  addMany(list: number[]): void {
+    for (const i of list) this.items.add(i);
+  }
+
+  removeMany(list: number[]): void {
+    for (const i of list) this.items.delete(i);
+  }
+
   move(delta: number, total: number, extend: boolean): void {
     if (total <= 0) return;
     const from = this.focus ?? (delta > 0 ? -1 : total);

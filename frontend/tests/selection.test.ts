@@ -52,3 +52,13 @@ test("clear and clamp after rows removed", () => {
   expect(s.selected()).toEqual([]);
   expect(s.focus).toBeNull();
 });
+
+test("addMany and removeMany change the set without moving the cursor", () => {
+  const s = new Selection();
+  s.click(2);
+  s.addMany([5, 7, 2]);
+  expect(s.selected()).toEqual([2, 5, 7]);
+  expect(s.focus).toBe(2);
+  s.removeMany([2, 7]);
+  expect(s.selected()).toEqual([5]);
+});

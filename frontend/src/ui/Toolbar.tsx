@@ -1,6 +1,7 @@
 /** Кнопки тулбара из реестра действий: иконка, подсказка «Текст (хоткей)», нажатое
  * состояние для переключателей, сплит-кнопка с выпадающим меню. */
 import { ChevronDown } from "lucide-preact";
+import type { ComponentType } from "preact";
 import { actionsVersion, getAction, hintText, isEnabled, runAction } from "../core/actions";
 import { openMenuBelow } from "./ContextMenu";
 import type { MenuItem } from "./Menu";
@@ -52,6 +53,40 @@ export function ToolSplit({ action, items, showLabel }: { action: string; items:
         <ChevronDown size={14} />
       </button>
     </span>
+  );
+}
+
+/** Кнопка с выпадающим меню (без собственного действия): иконка, подпись текущего
+ * значения и стрелка — «Пауза между сообщениями», «Точка назначения». */
+export function ToolMenu({ id, icon: Icon, label, title, items }: {
+  id: string;
+  icon?: ComponentType<{ size?: number | string; strokeWidth?: number | string }>;
+  label?: string;
+  title: string;
+  items: () => MenuItem[];
+}) {
+  const owner = `menu:${id}`;
+  const open = (el: HTMLElement) => openMenuBelow(el, items(), owner);
+  return (
+    <button
+      type="button"
+      class="toolbtn menu"
+      title={title}
+      aria-label={label ? `${title}: ${label}` : title}
+      aria-haspopup="menu"
+      data-menu-owner={owner}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        open(e.currentTarget as HTMLElement);
+      }}
+      onClick={(e) => {
+        if (e.detail === 0) open(e.currentTarget as HTMLElement); // Enter/пробел с клавиатуры
+      }}
+    >
+      {Icon ? <Icon size={18} strokeWidth={1.75} /> : null}
+      {label ? <span>{label}</span> : null}
+      <ChevronDown size={14} />
+    </button>
   );
 }
 

@@ -157,7 +157,10 @@ class Hub:
         self.soft = SoftFilters()
         self._restore_lists()
         self.tracer = TracerDoc()
-        self.tracer_rev = 0
+        self.tracer_rev = 0          # позиции строк (структура, фильтр ID)
+        self.tracer_data_rev = 0     # содержимое строк (точки останова, комментарии, запрет)
+        self._progress_state = "stopped"          # что последним ушло клиентам
+        self._progress_pending: int | None = None  # строка, ещё не отправленная в тике
         self.player = TracePlayer(self.tracer, send=self._player_send, sleep=sleep,
                                   on_progress=self._player_progress)
 
@@ -204,10 +207,13 @@ class Hub:
     def _tracer_state(self) -> dict[str, Any]:
         cfg = self.player.config
         return {"type": "tracer_state", "name": self.tracer.name, "modified": self.tracer.modified,
-                "count": len(self.tracer.rows), "channels": self.tracer.channels(), "rev": self.tracer_rev,
+                "count": len(self.tracer.rows), "visible": self.tracer.visible_count(),
+                "channels": self.tracer.channels(), "rev": self.tracer_rev, "data_rev": self.tracer_data_rev,
                 "state": self.player.state, "current": self.player.current,
+                "pos": self.tracer.position(self.player.current) if self.player.current is not None else None,
                 "config": dict(cfg.__dict__),
-                "breakpoints": [i for i, r in enumerate(self.tracer.rows) if r.bp]}
+                "breakpoints": [{"i": i, "pos": self.tracer.position(i)}
+                                for i, r in enumerate(self.tracer.rows) if r.bp]}
 
     def hello(self) -> dict[str, Any]:
         return {
@@ -424,6 +430,9 @@ class Hub:
                 self.broadcast({"type": "error", "message": f"tick: {e}"})
 
     def _tick(self) -> None:
+        if self._progress_pending is not None:
+            self._send_progress(self._progress_pending, self._progress_state)
+            self._progress_pending = None
         rows = self.monitor.snapshot_delta()
         if rows:
             self.broadcast({"type": "monitor_delta", "rows": [row_to_dict(r) for r in rows]})
@@ -709,13 +718,34 @@ class Hub:
         return {}
 
     # ------------------------------------------------------------- отладчик
-    def _tracer_changed(self, reset: bool = False) -> None:
+    def _tracer_changed(self, reset: bool = False, data: bool = False) -> None:
+        """reset — сдвинулись позиции строк (клиент сбрасывает и выделение);
+        data — поменялось только содержимое строк (клиент перечитывает видимые)."""
         if reset:
             self.tracer_rev += 1
+        if reset or data:
+            self.tracer_data_rev += 1
         self.broadcast(self._tracer_state())
 
     def _player_progress(self, current: int | None, state: str) -> None:
-        self.broadcast({"type": "tracer_progress", "current": current, "state": state})
+        """Смена состояния — клиентам сразу; строки во время игры — не чаще тика."""
+        if state == "playing" and self._progress_state == "playing":
+            self._progress_pending = current
+            return
+        self._progress_state = state
+        self._progress_pending = None
+        self._send_progress(current, state)
+
+    def _send_progress(self, current: int | None, state: str) -> None:
+        pos = self.tracer.position(current) if current is not None else None
+        self.broadcast({"type": "tracer_progress", "current": current, "pos": pos, "state": state})
+
+    def _tracer_index(self, msg: dict, key: str = "pos") -> int:
+        """Строка по позиции среди видимых (так её видит таблица отладчика)."""
+        found = self.tracer.indices([int(msg[key])])
+        if not found:
+            raise CommandError("Нет такой строки в трейсе")
+        return found[0]
 
     async def _player_send(self, frame: CanFrame, target: str) -> None:
         if target == "monitor":
@@ -753,7 +783,8 @@ class Hub:
 
     async def _cmd_tracer_rows(self, msg: dict) -> dict:
         count = min(int(msg.get("count", 100)), MAX_ROWS_PER_REQUEST)
-        return {"rows": self.tracer.rows_view(int(msg.get("start", 0)), count), "rev": self.tracer_rev}
+        return {"rows": self.tracer.rows_view(int(msg.get("start", 0)), count), "rev": self.tracer_rev,
+                "data_rev": self.tracer_data_rev}
 
     async def _cmd_tracer_ids(self, msg: dict) -> dict:
         return {"ids": self.tracer.ids()}
@@ -761,21 +792,28 @@ class Hub:
     async def _cmd_tracer_ids_set(self, msg: dict) -> dict:
         keys = [(int(k[0]), int(k[1]), bool(k[2])) for k in msg.get("keys") or []]
         self.tracer.set_ids_enabled(keys, bool(msg.get("enabled")))
-        self._tracer_changed()
+        self._tracer_changed(reset=True)            # видимые строки и их позиции сменились
         return {"ids": self.tracer.ids()}
 
+    async def _cmd_tracer_find(self, msg: dict) -> dict:
+        k = msg["key"]
+        return {"positions": self.tracer.find((int(k[0]), int(k[1]), bool(k[2])))}
+
     async def _cmd_tracer_row_add(self, msg: dict) -> dict:
-        idx = self.tracer.add(row_from_dict(msg.get("row") or {}), msg.get("index"))
+        """Без `after` — в конец трейса («Добавить»), иначе сразу после строки («Вставить»)."""
+        after = msg.get("after")
+        index = None if after is None else self._tracer_index(msg, "after") + 1
+        idx = self.tracer.add(row_from_dict(msg.get("row") or {}), index)
         self._tracer_changed(reset=True)
-        return {"index": idx}
+        return {"index": idx, "pos": self.tracer.position(idx)}
 
     async def _cmd_tracer_row_edit(self, msg: dict) -> dict:
-        self.tracer.edit(int(msg["index"]), row_from_dict(msg.get("row") or {}))
+        self.tracer.edit(self._tracer_index(msg), row_from_dict(msg.get("row") or {}))
         self._tracer_changed(reset=True)
         return {}
 
     async def _cmd_tracer_rows_delete(self, msg: dict) -> dict:
-        self.tracer.delete([int(i) for i in msg.get("indices") or []])
+        self.tracer.delete(self.tracer.indices([int(p) for p in msg.get("positions") or []]))
         self._tracer_changed(reset=True)
         return {}
 
@@ -785,26 +823,26 @@ class Hub:
             k = msg["key"]
             self.tracer.set_enabled_by_id((int(k[0]), int(k[1]), bool(k[2])), on)
         else:
-            self.tracer.set_enabled([int(i) for i in msg.get("indices") or []], on)
-        self._tracer_changed(reset=True)
+            self.tracer.set_enabled(self.tracer.indices([int(p) for p in msg.get("positions") or []]), on)
+        self._tracer_changed(data=True)
         return {}
 
     async def _cmd_tracer_bp(self, msg: dict) -> dict:
-        idx = int(msg["index"])
+        idx = self._tracer_index(msg)
         on = msg.get("on")
         self.tracer.set_bp(idx, (not self.tracer.rows[idx].bp) if on is None else bool(on))
-        self._tracer_changed(reset=True)
+        self._tracer_changed(data=True)
         return {}
 
     async def _cmd_tracer_bp_clear(self, msg: dict) -> dict:
         for r in self.tracer.rows:
             r.bp = False
-        self._tracer_changed(reset=True)
+        self._tracer_changed(data=True)
         return {}
 
     async def _cmd_tracer_comment(self, msg: dict) -> dict:
-        self.tracer.set_comment(int(msg["index"]), str(msg.get("text") or ""))
-        self._tracer_changed(reset=True)
+        self.tracer.set_comment(self._tracer_index(msg), str(msg.get("text") or ""))
+        self._tracer_changed(data=True)
         return {}
 
     async def _cmd_tracer_config(self, msg: dict) -> dict:
@@ -816,7 +854,7 @@ class Hub:
         if self.player.config.dest != "monitor":
             self._require_session()
         sel = msg.get("selection")
-        await self.player.play([int(i) for i in sel] if sel else None)
+        await self.player.play(self.tracer.indices([int(p) for p in sel]) if sel else None)
         return {}
 
     async def _cmd_tracer_pause(self, msg: dict) -> dict:
