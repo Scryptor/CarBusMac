@@ -23,3 +23,14 @@ async def test_fake_session_connect_can_fail():
 
 def test_fake_session_satisfies_cansession_protocol():
     assert isinstance(FakeSession(), CanSession)
+
+
+async def test_fake_session_records_timing_terminator_and_slot_clear():
+    s = FakeSession()
+    await s.connect()
+    await s.open_channel(1, None, False, timing={"prescaler": 6, "seg1": 15, "seg2": 4, "sjw": 1})
+    await s.set_terminator(2, True)
+    await s.set_hw_filter(1, 3, 0x7E0, 0x7FF, False)
+    await s.clear_hw_filter(1, 3)
+    assert s.channels[-1] == (1, None, False) and s.timings[1]["prescaler"] == 6
+    assert s.terminators == {2: True} and s.filters == [] and s.cleared == [(1, 3)]

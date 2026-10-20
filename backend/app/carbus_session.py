@@ -6,6 +6,7 @@ import time
 from typing import AsyncIterator
 
 from carbus_async import CanMessage, CarBusDevice
+from carbus_async.device import CanTiming
 
 from app.models import CanFrame
 
@@ -15,6 +16,8 @@ class CarbusSession:
         self._host = host
         self._port = port
         self._dev: CarBusDevice | None = None
+        self._last_raw: int | None = None   # для развёртки 32-битной метки прибора
+        self._wraps = 0
 
     async def connect(self) -> None:
         self._dev = await CarBusDevice.open_tcp(self._host, self._port)
@@ -39,12 +42,30 @@ class CarbusSession:
             "channel_types": info.channel_types,
             "channel_features": info.channel_features,
             "channel_frequencies": info.channel_frequencies,
+            "filters_info": info.filters_info,
         }
 
-    async def open_channel(self, channel: int, bitrate: int, listen_only: bool) -> None:
+    async def open_channel(
+        self, channel: int, bitrate: int | None, listen_only: bool, timing: dict | None = None
+    ) -> None:
+        if timing is not None:
+            await self._dev.open_can_channel_custom(
+                channel,
+                nominal_timing=CanTiming(
+                    int(timing["prescaler"]), int(timing["seg1"]), int(timing["seg2"]), int(timing["sjw"])
+                ),
+                listen_only=listen_only,
+            )
+            return
         await self._dev.open_can_channel(
             channel=channel, nominal_bitrate=bitrate, listen_only=listen_only
         )
+
+    async def set_terminator(self, channel: int, enabled: bool) -> None:
+        await self._dev.set_terminator(channel, enabled)
+
+    async def clear_hw_filter(self, channel: int, index: int) -> None:
+        await self._dev.clear_can_filter(channel, index)
 
     async def send(self, frame: CanFrame) -> None:
         msg = CanMessage(
@@ -68,11 +89,19 @@ class CarbusSession:
     async def clear_filters(self, channel: int) -> None:
         await self._dev.clear_all_filters(channel)
 
+    def _unwrap(self, raw: int) -> float:
+        """Метка прибора — 32-битные мкс (переполнение каждые ~71,6 мин). Большой скачок
+        назад считаем переполнением, мелкий (перестановка кадров) — нет."""
+        if self._last_raw is not None and raw < self._last_raw and self._last_raw - raw > 2**31:
+            self._wraps += 1
+        self._last_raw = raw
+        return (self._wraps * 2**32 + raw) / 1_000_000.0
+
     async def frames(self) -> AsyncIterator[CanFrame]:
         while True:
             channel, msg = await self._dev.receive_can()
             if msg.timestamp_us:
-                ts, src = msg.timestamp_us / 1_000_000.0, "device"
+                ts, src = self._unwrap(msg.timestamp_us), "device"
             else:
                 ts, src = time.time(), "arrival"
             yield CanFrame(
