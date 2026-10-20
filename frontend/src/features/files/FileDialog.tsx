@@ -62,7 +62,7 @@ export function FileDialog({ mode, kind, title, defaultName, formats, withFormat
   const ok = () => {
     if (mode === "open") {
       if (!selected) {
-        setErr("Выберите файл в списке");
+        setErr(t.files.pick);
         return;
       }
       onPick(selected);
@@ -83,7 +83,7 @@ export function FileDialog({ mode, kind, title, defaultName, formats, withFormat
       setErr("");
       await refresh();
     } catch (e) {
-      setErr(`Не удалось загрузить: ${(e as Error).message}`);
+      setErr(t.files.uploadFailed((e as Error).message));
     }
   };
 
@@ -116,7 +116,7 @@ export function FileDialog({ mode, kind, title, defaultName, formats, withFormat
         </span>
       }
     >
-      <div class="file-list" role="listbox" aria-label="Файлы">
+      <div class="file-list" role="listbox" aria-label={t.files.list}>
         <div class="file-row head">
           <span>{t.files.name}</span>
           <span>{t.files.size}</span>

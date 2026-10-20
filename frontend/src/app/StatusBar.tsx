@@ -14,12 +14,12 @@ function kbps(bitrate: number): string {
 }
 
 export function channelText(n: number, ch: ChannelState): string {
-  if (ch.error) return `К${n}: отказ`;
-  if (!ch.open) return `К${n}: закрыт`;
-  const parts = [ch.timing && !ch.bitrate ? "своя скорость" : ch.bitrate ? kbps(ch.bitrate) : "своя скорость"];
-  if (ch.listen_only) parts.push("только прослушивание");
-  if (ch.terminator) parts.push("120 Ом");
-  return `К${n}: ${parts.join(", ")}`;
+  if (ch.error) return t.status.chFail(n);
+  if (!ch.open) return t.status.chClosed(n);
+  const parts = [ch.bitrate ? kbps(ch.bitrate) : t.status.ownRate];
+  if (ch.listen_only) parts.push(t.status.listenOnly);
+  if (ch.terminator) parts.push(t.status.terminator);
+  return t.status.chLine(n, parts.join(", "));
 }
 
 export function deviceText(info: Record<string, unknown> | null): string {

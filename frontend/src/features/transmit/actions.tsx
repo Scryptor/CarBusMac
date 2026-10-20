@@ -114,7 +114,7 @@ export function transmitActions(): Action[] {
                 .then((d) => {
                   txSelected.value = null;
                   ui.dockOpen.value = true;
-                  pushToast("info", `Загружено задач: ${d.count}`);
+                  pushToast("info", t.tx.loaded(d.count));
                 })
                 .catch(toastErr);
             }}

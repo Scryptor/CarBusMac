@@ -2,6 +2,7 @@
  * очередь отправки до открытия сокета и автопереподключение с нарастающей паузой.
  * Сам сокет создаётся фабрикой — в тестах подменяется фейком. */
 import { signal } from "@preact/signals";
+import { t } from "../i18n/ru";
 
 export type ConnState = "connecting" | "open" | "closed";
 
@@ -83,7 +84,7 @@ export class WsClient {
     return new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(reqId);
-        reject(new Error("Превышено время ответа сервера"));
+        reject(new Error(t.err.timeout));
       }, timeoutMs);
       this.pending.set(reqId, { resolve: resolve as (d: unknown) => void, reject, timer });
       this.send({ ...cmd, req_id: reqId });
@@ -103,7 +104,7 @@ export class WsClient {
       this.pending.delete(Number(e.req_id));
       clearTimeout(p.timer);
       if (e.ok) p.resolve(e.data);
-      else p.reject(new Error(String(e.error ?? "ошибка")));
+      else p.reject(new Error(String(e.error ?? t.err.generic)));
       return;
     }
     for (const h of this.handlers.get(e.type) ?? []) h(e);
@@ -115,7 +116,7 @@ export class WsClient {
     this.state.value = "closed";
     for (const [id, p] of this.pending) {
       clearTimeout(p.timer);
-      p.reject(new Error("Нет связи с сервером"));
+      p.reject(new Error(t.status.server.closed));
       this.pending.delete(id);
     }
     if (this.stopped) return;

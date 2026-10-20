@@ -52,7 +52,7 @@ function FramesBody({ ch, id, ext }: { ch: number; id: number; ext: boolean }) {
           class="btn primary"
           onClick={() => cmd("settings_set", { patch: { aggregator: true } }).catch((e: Error) => pushToast("error", e.message))}
         >
-          Включить агрегатор
+          {t.frames.enableAggregator}
         </button>
       </div>
     );
@@ -82,7 +82,7 @@ function FramesBody({ ch, id, ext }: { ch: number; id: number; ext: boolean }) {
             framesPick.current = r ? { ch, id, ext, data: r.data } : null;
           }}
           onActivate={() => runAction("copyFrameToTx")}
-          emptyText="Пока нет данных"
+          emptyText={t.frames.empty}
         />
       </div>
       <div class="frames-foot muted">{t.frames.rows(rows.length)}</div>

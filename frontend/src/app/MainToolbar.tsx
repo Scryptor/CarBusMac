@@ -30,7 +30,7 @@ export function MainToolbar() {
   if (view === "tracer") {
     // отладчик — отдельное окно в десктопе: здесь только связь с прибором и выход из вида
     return (
-      <div class="toolbar" role="toolbar" aria-label="Панель инструментов">
+      <div class="toolbar" role="toolbar" aria-label={t.ui.toolbar}>
         {common}
         <ToolButton action="tracer" />
         {viewBar ? <ToolSep /> : null}
@@ -39,7 +39,7 @@ export function MainToolbar() {
     );
   }
   return (
-    <div class="toolbar" role="toolbar" aria-label="Панель инструментов">
+    <div class="toolbar" role="toolbar" aria-label={t.ui.toolbar}>
       {common}
       <ToolButton action="clear" />
       <ToolButton action="streamSwitch" />

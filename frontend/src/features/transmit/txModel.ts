@@ -2,6 +2,7 @@
  * указанием поля, заполнение данных одним значением, копирование принятого сообщения. */
 import { bytesToHex, hexToBytes, parseHexByte, parseHexId, parseIntRange } from "../../core/format";
 import type { TriggerJson, TxTaskJson } from "../../core/types";
+import { t } from "../../i18n/ru";
 
 export interface TaskForm {
   channel: string;
@@ -88,13 +89,13 @@ function wrap<T>(field: keyof TaskForm, fn: () => T): T {
 export function parseTaskForm(f: TaskForm, base: TxTaskJson): TxTaskJson {
   const can_id = wrap("id", () => parseHexId(f.id, f.ext));
   const dlc = wrap("dlc", () => parseIntRange(f.dlc, 0, 8, "DLC"));
-  const period = wrap("period", () => parseIntRange(f.period, 1, 10000, "Период"));
+  const period = wrap("period", () => parseIntRange(f.period, 1, 10000, t.tx.fieldPeriod));
   const data = f.data.slice(0, dlc).map((b) => b ?? 0);
   let trigger: TriggerJson = { ...base.trigger, action: "none" };
   if (f.trigAction !== "none") {
     const t_id = wrap("trigId", () => parseHexId(f.trigId, Number.parseInt(f.trigId || "0", 16) > 0x7ff));
-    const t_delay = wrap("trigDelay", () => parseIntRange(f.trigDelay || "0", 0, 10000, "Задержка"));
-    const t_dlc = f.trigDlc.trim() === "" ? null : wrap("trigDlc", () => parseIntRange(f.trigDlc, 0, 8, "DLC триггера"));
+    const t_delay = wrap("trigDelay", () => parseIntRange(f.trigDelay || "0", 0, 10000, t.tx.fieldDelay));
+    const t_dlc = f.trigDlc.trim() === "" ? null : wrap("trigDlc", () => parseIntRange(f.trigDlc, 0, 8, t.tx.fieldTrigDlc));
     trigger = {
       action: f.trigAction,
       delay_ms: t_delay,

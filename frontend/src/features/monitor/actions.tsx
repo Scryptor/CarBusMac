@@ -142,7 +142,7 @@ export function monitorActions(): Action[] {
         const r = sel();
         if (!r) return;
         cmd("filters_add_id", { channel: r.ch, id: r.id, ext: r.ext })
-          .then(() => pushToast("info", `ID ${fmtId(r.id, r.ext, true)} добавлен в фильтр канала ${r.ch}`))
+          .then(() => pushToast("info", t.filters.idAdded(fmtId(r.id, r.ext, true), r.ch)))
           .catch(toastErr);
       },
     },

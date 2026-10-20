@@ -147,7 +147,7 @@ export function MonitorPanel({ channel }: { channel?: number }) {
       }}
       onActivate={() => runAction("bitmap")}
       onContextMenu={(e) => openContextMenu(e.clientX, e.clientY, monitorMenu())}
-      emptyText={store.status.value.state === "opened" ? "Ждём кадры с шины…" : "Подключитесь к устройству — кадры появятся здесь"}
+      emptyText={store.status.value.state === "opened" ? t.receive.waiting : t.receive.connectFirst}
     />
   );
 }

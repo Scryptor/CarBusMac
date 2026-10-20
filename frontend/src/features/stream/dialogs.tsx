@@ -23,7 +23,7 @@ export function MarkerDialog() {
         <input id="mk-comment" class="inp" value={comment} maxLength={200} onInput={(e) => setComment((e.target as HTMLInputElement).value)} />
       </div>
       <p class="muted" style={{ margin: 0 }}>
-        Метка встанет перед следующим принятым кадром. Пустая метка получит номер автоматически.
+        {t.stream.markerHint}
       </p>
     </Dialog>
   );
@@ -42,10 +42,10 @@ export function MarkersDialog() {
       <div class="file-list" role="listbox" aria-label={t.stream.markersDialog}>
         <div class="file-row head">
           <span>{t.col.label}</span>
-          <span>Строка</span>
+          <span>{t.stream.row}</span>
           <span>{t.col.comment}</span>
         </div>
-        {markers.length === 0 ? <div class="file-empty muted">Меток нет — F8 или F9 во время записи</div> : null}
+        {markers.length === 0 ? <div class="file-empty muted">{t.stream.noMarkers}</div> : null}
         {markers.map((m, i) => (
           <div
             class={"file-row" + (sel === i ? " sel" : "")}

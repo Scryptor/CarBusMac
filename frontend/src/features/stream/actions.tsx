@@ -59,13 +59,13 @@ export function streamActions(): Action[] {
     },
     {
       id: "autoMarker",
-      label: "Автоматическая метка",
+      label: t.stream.autoMarker,
       shortcut: "F9",
       scope: "main",
       enabled: () => cap().recording,
       run: () =>
         cmd<{ label: string }>("capture_marker", { label: "", comment: "", auto: true })
-          .then((d) => pushToast("info", `Метка ${d.label}`))
+          .then((d) => pushToast("info", t.stream.markerAdded(d.label)))
           .catch(toastErr),
     },
     {
@@ -88,7 +88,7 @@ export function streamActions(): Action[] {
             .then((d) => {
               ui.view.value = "main";
               ui.receiveMode.value = "stream";
-              pushToast("info", `Загружено ${d.count} кадров${d.skipped ? `, пропущено LIN: ${d.skipped}` : ""}`);
+              pushToast("info", t.stream.loaded(d.count, d.skipped));
             })
             .catch(toastErr),
         ),
@@ -143,7 +143,7 @@ export function streamActions(): Action[] {
               closeDialog();
               const append =
                 Object.keys(store.comments.value).length > 0 &&
-                (await confirmDialog(t.menu.loadComments, "Добавить комментарии к уже существующему списку?"));
+                (await confirmDialog(t.menu.loadComments, t.comment.appendAsk));
               cmd("comments_load", { name, append }).catch(toastErr);
             }}
           />,

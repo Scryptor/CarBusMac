@@ -30,7 +30,7 @@ export function ReceiveArea() {
         {mode === "stream" ? (
           <span class="muted">
             {t.col.count}: {store.capture.value.count}
-            {store.capture.value.markers.length ? `, меток: ${store.capture.value.markers.length}` : ""}
+            {store.capture.value.markers.length ? t.receive.markersCount(store.capture.value.markers.length) : ""}
           </span>
         ) : null}
         {store.capture.value.recording ? (
@@ -41,7 +41,7 @@ export function ReceiveArea() {
         <span class="spacer" />
         {mode === "monitor" && s.rare_mode ? (
           <span class="muted">
-            {t.rare.highlight}: от {s.rare_period_ms} {t.common.ms}
+            {t.rare.highlight}: {t.receive.rareFrom(s.rare_period_ms)}
           </span>
         ) : null}
       </div>

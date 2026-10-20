@@ -78,7 +78,7 @@ export function deviceInfoLines(info: DeviceInfo, channels?: Record<string, Chan
   if (types.length) {
     out.push("", `${d.channels}:`);
     for (const [n, type] of types) {
-      const parts = [`Канал ${n}: ${type}`];
+      const parts = [d.channelType(n, type)];
       const hz = info.channel_frequencies?.[n];
       if (hz) parts.push(d.mhz(hz));
       const flt = info.filters_info?.find((f) => String(f.channel) === n);

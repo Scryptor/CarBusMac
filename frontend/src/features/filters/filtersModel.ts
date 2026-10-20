@@ -19,7 +19,7 @@ export function parseExcludeList(s: string): number[] {
     try {
       return parseHexId(p, true);
     } catch {
-      throw new Error(`Неверный идентификатор в списке исключений: ${p}`);
+      throw new Error(t.filters.badExcludeId(p));
     }
   });
 }

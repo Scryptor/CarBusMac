@@ -5,6 +5,7 @@ import type { ComponentType } from "preact";
 import { actionsVersion, getAction, hintText, isEnabled, runAction } from "../core/actions";
 import { openMenuBelow } from "./ContextMenu";
 import type { MenuItem } from "./Menu";
+import { t } from "../i18n/ru";
 
 interface BtnProps {
   action: string;
@@ -43,7 +44,7 @@ export function ToolSplit({ action, items, showLabel }: { action: string; items:
       <button
         type="button"
         class="toolbtn arrow"
-        aria-label={`${a?.label ?? ""}: меню`}
+        aria-label={t.ui.menuOf(a?.label ?? "")}
         data-menu-owner={`split:${action}`}
         onMouseDown={(e) => {
           e.preventDefault();

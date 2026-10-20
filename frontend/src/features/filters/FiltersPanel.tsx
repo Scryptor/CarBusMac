@@ -84,7 +84,7 @@ function HwTab() {
         <IconBtn label={t.filters.save} onClick={saveAs}><Save size={17} /></IconBtn>
         <IconBtn label={t.common.edit} onClick={() => edit(sel.focus != null ? slots[sel.focus] : undefined)}><Pencil size={17} /></IconBtn>
         <span class="tool-spacer" />
-        <span class="muted">{slots.filter((s) => s.enabled).length} из {slots.length}</span>
+        <span class="muted">{t.filters.countOf(slots.filter((s) => s.enabled).length, slots.length)}</span>
       </div>
       <div class="flt-body">
         <VirtualGrid<HwSlotJson>
@@ -97,12 +97,10 @@ function HwTab() {
           rowClass={(s) => (s.enabled ? "active" : undefined)}
           selection={sel}
           onActivate={(i) => edit(slots[i])}
-          emptyText="Слоты фильтров появятся после подключения к прибору"
+          emptyText={t.filters.hwEmpty}
         />
       </div>
-      <div class="flt-hint muted">
-        Включённые фильтры пропускают только совпавшие ID; все выключены — принимается всё.
-      </div>
+      <div class="flt-hint muted">{t.filters.hwHint}</div>
     </div>
   );
 }
@@ -147,7 +145,7 @@ function RangeTab() {
           <div role="group" aria-label={t.receive.channelCaption(ch, "")}>
             <div class="tree-ch">
               <span class={`ch-tag${ch === 2 ? " ch2" : ""}`}>{ch}</span> {t.receive.channelCaption(ch, "")}
-              <span class="muted">{items.some((r) => r.enabled) ? "" : " — принимается всё"}</span>
+              <span class="muted">{items.some((r) => r.enabled) ? "" : t.filters.acceptAll}</span>
             </div>
             {items.map((r) => (
               <>
@@ -157,7 +155,7 @@ function RangeTab() {
                   onClick={() => (rangeSel.value = { id: r.id, ex: null })}
                   onDblClick={() => openDialog(<RangeFilterDialog range={r} />)}
                 >
-                  <input type="checkbox" class="row-check" aria-label={`Включить: ${describeRange(r)}`} checked={r.enabled}
+                  <input type="checkbox" class="row-check" aria-label={t.filters.enableItem(describeRange(r))} checked={r.enabled}
                     onClick={(e) => e.stopPropagation()} onChange={() => upsert({ ...r, enabled: !r.enabled })} />
                   <span>{describeRange(r)}</span>
                 </div>
@@ -168,7 +166,7 @@ function RangeTab() {
                     onClick={() => (rangeSel.value = { id: r.id, ex: i })}
                     onDblClick={() => openDialog(<ExclusionDialog range={r} index={i} />)}
                   >
-                    <input type="checkbox" class="row-check" aria-label={`Включить: ${describeExclusion(ex, simple)}`} checked={ex.enabled}
+                    <input type="checkbox" class="row-check" aria-label={t.filters.enableItem(describeExclusion(ex, simple))} checked={ex.enabled}
                       onClick={(e) => e.stopPropagation()}
                       onChange={() => upsert({ ...r, exclusions: r.exclusions.map((x, k) => (k === i ? { ...x, enabled: !x.enabled } : x)) })} />
                     <span>{describeExclusion(ex, simple)}</span>
@@ -179,7 +177,7 @@ function RangeTab() {
           </div>
         ))}
       </div>
-      <div class="flt-hint muted">Программный фильтр отсеивает кадры до монитора, потока и записи.</div>
+      <div class="flt-hint muted">{t.filters.softHint}</div>
     </div>
   );
 }

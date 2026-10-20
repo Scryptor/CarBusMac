@@ -76,7 +76,7 @@ function BitmapBody({ ch, id, ext }: { ch: number; id: number; ext: boolean }) {
             <span class="bm-dec mono">{b}</span>
           </div>
         ))}
-        {!row ? <div class="muted bm-none">Сообщение пропало из монитора (таблица очищена)</div> : null}
+        {!row ? <div class="muted bm-none">{t.bitmap.gone}</div> : null}
       </div>
       <label class="field stack bm-comment">
         <span>{t.bitmap.comment}</span>

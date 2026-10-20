@@ -74,7 +74,7 @@ export function streamMenu(): MenuItem[] {
     { action: "toTracer" },
     { separator: true },
     { action: "copyStreamToTx" },
-    { action: "clear", label: "Очистить поток" },
+    { action: "clear", label: t.stream.clearStream },
   ];
 }
 
@@ -146,7 +146,7 @@ export function StreamPanel() {
       onActivate={() => runAction("copyStreamToTx")}
       follow
       controller={(c) => (streamGrid.ctl = c)}
-      emptyText={recording ? "Запись идёт — ждём кадры с шины…" : "Поток пуст. Нажмите «Запись» (F5) — кадры начнут записываться сюда"}
+      emptyText={recording ? t.stream.waiting : t.stream.empty}
     />
   );
 }

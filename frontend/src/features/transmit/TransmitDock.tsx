@@ -358,8 +358,8 @@ export function TransmitDock() {
         </button>
         <span class="tool-spacer" />
         <span class="tabs-info muted">
-          Задач: {tasks.length}
-          {running ? `, в цикле: ${running}` : ""}
+          {t.tx.tasksCount(tasks.length)}
+          {running ? t.tx.running(running) : ""}
         </span>
       </div>
       <div class="tx-grid">

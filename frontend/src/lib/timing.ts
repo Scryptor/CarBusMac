@@ -1,6 +1,7 @@
 /** Битрейт CAN: стандартные скорости прибора и расчёт своего тайминга (аналог
  * десктопного «Управление скоростями»). */
 import type { Timing } from "../core/types";
+import { t } from "../i18n/ru";
 
 /** Номинальные скорости, которые прибор открывает по индексу (таблица carbus-lib). */
 export const PRESET_BITRATES = [
@@ -74,16 +75,16 @@ export function timingInfo(
 }
 
 /** Проверка тайминга, введённого руками: текст ошибки или null. */
-export function timingError(t: Timing, limits: TimingLimits = NOMINAL_LIMITS): string | null {
+export function timingError(tm: Timing, limits: TimingLimits = NOMINAL_LIMITS): string | null {
   const fields: [keyof Timing, [number, number], string][] = [
-    ["prescaler", limits.presc, "Делитель"],
-    ["seg1", limits.seg1, "Seg1"],
-    ["seg2", limits.seg2, "Seg2"],
-    ["sjw", limits.sjw, "Sync.Jump Width"],
+    ["prescaler", limits.presc, t.bitrate.prescaler],
+    ["seg1", limits.seg1, t.bitrate.seg1],
+    ["seg2", limits.seg2, t.bitrate.seg2],
+    ["sjw", limits.sjw, t.bitrate.sjw],
   ];
   for (const [k, range, label] of fields) {
-    if (!Number.isInteger(t[k]) || !inRange(t[k], range)) return `${label}: от ${range[0]} до ${range[1]}`;
+    if (!Number.isInteger(tm[k]) || !inRange(tm[k], range)) return t.err.range(label, range[0], range[1]);
   }
-  if (t.sjw > t.seg2) return "Sync.Jump Width не больше Seg2";
+  if (tm.sjw > tm.seg2) return t.bitrate.sjwTooBig;
   return null;
 }
