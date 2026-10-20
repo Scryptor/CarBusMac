@@ -1,0 +1,73 @@
+/* Раскладка главного окна: меню / тулбар / рабочая область / статусбар. */
+.app {
+  display: grid;
+  grid-template-rows: var(--menubar-h) var(--toolbar-h) minmax(0, 1fr) var(--status-h);
+  height: 100vh;
+}
+.workspace {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+.main-area {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+.receive-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+}
+.side-panel {
+  flex: 0 0 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+}
+.dock {
+  flex: 0 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+}
+.panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.panel-head {
+  height: 30px;
+  flex: 0 0 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.panel-head .muted {
+  font-weight: 400;
+}
+.panel-head .spacer {
+  flex: 1;
+}
+.panel-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.panel-empty {
+  padding: 24px;
+}

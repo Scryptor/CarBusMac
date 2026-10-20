@@ -1,13 +1,14 @@
-/** Точка входа: WS-клиент, стор и корневой компонент. Каркас окна — в app/App.tsx (Task 13). */
+/** Точка входа: стили, WS-клиент → стор, регистрация панелей и корневой компонент. */
 import { render } from "preact";
+import { App } from "./app/App";
 import { client } from "./core/client";
 import { applyEvent } from "./core/store";
+import "./styles/tokens.css";
+import "./styles/base.css";
+import "./styles/components.css";
+import "./styles/layout.css";
 
 client.on("*", (e) => applyEvent(e));
 client.connect();
 
-function Boot() {
-  return <div style={{ padding: 16, font: "13px system-ui" }}>CarBUS — загрузка интерфейса…</div>;
-}
-
-render(<Boot />, document.getElementById("app")!);
+render(<App />, document.getElementById("app")!);

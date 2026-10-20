@@ -55,3 +55,19 @@ test("byte cells parse hex, allow empty don't-care and distribute paste", () => 
   fireEvent.paste(cells[0], { clipboardData: { getData: () => "0A 0B 0C 0D" } });
   expect(value).toEqual([0x0a, 0x0b, 0x0c, 0x0d]);
 });
+
+test("menu hides orphan separators around missing actions", async () => {
+  registerActions([{ id: "only", label: "Единственный", run: () => {} }]);
+  render(<ContextMenuLayer />);
+  openContextMenu(10, 10, [
+    { separator: true },
+    { action: "missing1" },
+    { separator: true },
+    { action: "only" },
+    { separator: true },
+    { separator: true },
+    { action: "missing2" },
+  ]);
+  await screen.findByText("Единственный");
+  expect(document.querySelectorAll(".ctx-sep").length).toBe(0);
+});

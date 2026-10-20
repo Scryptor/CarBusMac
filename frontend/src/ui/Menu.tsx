@@ -40,6 +40,24 @@ export function resolveItem(item: MenuItem): Resolved | null {
   };
 }
 
+/** Пункты без пустых (незарегистрированных действий) и без «сиротских» разделителей:
+ * по краям меню и подряд разделитель не рисуется. */
+export function compactItems(items: MenuItem[]): Resolved[] {
+  const out: Resolved[] = [];
+  for (const it of items) {
+    const r = resolveItem(it);
+    if (!r) continue;
+    if (r.kind === "sep" && (out.length === 0 || out[out.length - 1].kind === "sep")) continue;
+    out.push(r);
+  }
+  while (out.length && out[out.length - 1].kind === "sep") out.pop();
+  return out;
+}
+
+export function hasVisibleItems(items: MenuItem[]): boolean {
+  return compactItems(items).length > 0;
+}
+
 /** Позиция всплывающего блока, прижатая к краям окна (ничего не уходит за экран). */
 export function clampToViewport(x: number, y: number, w: number, h: number, margin = 4): { x: number; y: number } {
   const vw = window.innerWidth;
@@ -64,7 +82,7 @@ export function PopupMenu({ x, y, items, onDone, depth = 0 }: PopupProps) {
   const [pos, setPos] = useState({ x, y });
   const [active, setActive] = useState(-1);
   const [sub, setSub] = useState<{ index: number; x: number; y: number } | null>(null);
-  const resolved = items.map(resolveItem);
+  const resolved = compactItems(items);
 
   useLayoutEffect(() => {
     const el = ref.current;

@@ -603,3 +603,7 @@ select.inp {
   text-align: center;
   border-radius: 3px;
 }
+.menubar-item:disabled {
+  color: var(--text-3);
+  background: none;
+}
