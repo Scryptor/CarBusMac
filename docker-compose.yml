@@ -9,4 +9,5 @@ services:
       - CARBUS_BRIDGE=host.docker.internal:7000   # нативный мост на маке
     volumes:
       - ./traces:/app/traces           # трейсы остаются на маке
+      - ./data:/app/data               # настройки, списки передачи, фильтры, комментарии
     restart: unless-stopped
