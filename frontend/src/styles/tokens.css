@@ -1,0 +1,70 @@
+/* Токены оформления. Тема выбирается атрибутом data-theme на <html> (applyTheme):
+   «как в ОС» разрешается в light/dark по prefers-color-scheme.
+   Хромовая обвязка нейтральна, данные — чернила на белом; единственный яркий
+   элемент — янтарное «послесвечение» изменившихся байтов (--mark). */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eceff3;
+  --panel: #ffffff;
+  --panel-2: #f4f6f9;
+  --line: #dfe3e9;
+  --line-strong: #c6cdd7;
+  --text: #1d2532;
+  --text-2: #556171;
+  --text-3: #8a94a3;
+  --accent: #2f6fd6;
+  --accent-text: #ffffff;
+  --accent-weak: #dce8fb;
+  --sel: #cfe0fa;
+  --sel-text: #102a52;
+  --zebra: #f8f9fb;
+  --rec: #d33a2c;
+  --ok: #1e8e4e;
+  --err: #c4352a;
+  --warn: #9a6400;
+  --ch1: #2f6fd6;
+  --ch2: #0f8f81;
+  --shadow: 0 8px 28px rgba(20, 30, 45, 0.18), 0 1px 3px rgba(20, 30, 45, 0.12);
+  --backdrop: rgba(20, 27, 38, 0.32);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121519;
+  --panel: #1a1e24;
+  --panel-2: #20252c;
+  --line: #2b313a;
+  --line-strong: #3b434e;
+  --text: #e3e7ec;
+  --text-2: #a5aebb;
+  --text-3: #6f7884;
+  --accent: #5b9cff;
+  --accent-text: #0b1526;
+  --accent-weak: #1e3352;
+  --sel: #24406a;
+  --sel-text: #eef4ff;
+  --zebra: #1d2128;
+  --rec: #ff5c4f;
+  --ok: #43c27e;
+  --err: #ff6b5e;
+  --warn: #f0b440;
+  --ch1: #6aa8ff;
+  --ch2: #38c8b6;
+  --shadow: 0 10px 32px rgba(0, 0, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --backdrop: rgba(0, 0, 0, 0.45);
+}
+
+:root {
+  --ui-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+  --grid-font: "SF Mono", Menlo, Monaco, "JetBrains Mono", Consolas, monospace;
+  --grid-size: 13px;
+  --row-h: 22px;
+  --mark: #e0a526;
+  --mark-text: #1b1405;
+  --hold: 2000ms;
+  --radius: 5px;
+  --menubar-h: 28px;
+  --toolbar-h: 38px;
+  --status-h: 24px;
+}
