@@ -71,7 +71,7 @@ TypeScript 5, Vite 6, Preact 10, @preact/signals, lucide-preact, vitest 3,
 
 ## Milestone A — Бэкенд
 
-### Task A1: Модель кадра, JSON-хранилище, настройки
+### Task 1 (A1): Модель кадра, JSON-хранилище, настройки
 
 **Files:**
 - Modify: `backend/app/models.py`
@@ -123,7 +123,7 @@ def test_frame_direction_defaults_to_rx():
 - [ ] **Step 4: Run, expect PASS** (вся папка tests зелёная).
 - [ ] **Step 5: Commit** `feat(backend): json store, settings defaults, frame direction`.
 
-### Task A2: Монитор — флаги, стабильность байт, агрегатор уникальных данных
+### Task 2 (A2): Монитор — флаги, стабильность байт, агрегатор уникальных данных
 
 **Files:**
 - Modify: `backend/app/monitor.py`, `backend/app/schemas.py`
@@ -175,7 +175,7 @@ def test_snapshot_all_returns_every_row_without_consuming_delta():
 - [ ] **Step 4: Run, expect PASS.**
 - [ ] **Step 5: Commit** `feat(backend): monitor flags, byte stability, unique-data aggregator`.
 
-### Task A3: Буфер потока (capture)
+### Task 3 (A3): Буфер потока (capture)
 
 **Files:**
 - Create: `backend/app/capture.py`
@@ -222,7 +222,7 @@ def test_capture_append_200k_is_fast():
 - [ ] **Step 2–4:** FAIL → implement → PASS.
 - [ ] **Step 5: Commit** `feat(backend): columnar stream capture with markers`.
 
-### Task A4: Форматы трейсов (`.trc` десктопа v3 и `.jsonl`)
+### Task 4 (A4): Форматы трейсов (`.trc` десктопа v3 и `.jsonl`)
 
 **Files:**
 - Create: `backend/app/tracefmt.py`, `backend/tests/fixtures/desktop_v3.trc`
@@ -291,7 +291,7 @@ def test_jsonl_roundtrip_keeps_direction_and_markers(): ...
 - [ ] **Step 4: Implement**; время при записи: `us_total = round((ts - t_first) * 1e6) % 60_000_000`.
 - [ ] **Step 5: Run, expect PASS. Commit** `feat(backend): desktop .trc v3 and jsonl trace formats`.
 
-### Task A5: Передача — задачи, счётчики, триггеры задач
+### Task 5 (A5): Передача — задачи, счётчики, триггеры задач
 
 **Files:**
 - Modify: `backend/app/transmit.py`
@@ -334,7 +334,7 @@ def test_task_dict_roundtrip(): ...
 - [ ] **Step 2–4:** FAIL → implement → PASS.
 - [ ] **Step 5: Commit** `feat(backend): transmit tasks with counters and per-task triggers`.
 
-### Task A6: Фильтры — аппаратные слоты и программные диапазоны
+### Task 6 (A6): Фильтры — аппаратные слоты и программные диапазоны
 
 **Files:**
 - Create: `backend/app/filters.py`
@@ -360,7 +360,7 @@ def test_task_dict_roundtrip(): ...
 - [ ] **Step 2–4:** FAIL → implement → PASS.
 - [ ] **Step 5: Commit** `feat(backend): hardware filter slots and software range filters`.
 
-### Task A7: Отладчик — документ трейса и проигрыватель
+### Task 7 (A7): Отладчик — документ трейса и проигрыватель
 
 **Files:**
 - Create: `backend/app/tracer.py`
@@ -392,7 +392,7 @@ def test_task_dict_roundtrip(): ...
 - [ ] **Step 2–4:** FAIL → implement → PASS.
 - [ ] **Step 5: Commit** `feat(backend): tracer document and player`.
 
-### Task A8: Сессия прибора — тайминги, терминатор, слоты фильтров, развёртка времени
+### Task 8 (A8): Сессия прибора — тайминги, терминатор, слоты фильтров, развёртка времени
 
 **Files:**
 - Modify: `backend/app/can_session.py`, `backend/app/carbus_session.py`
@@ -414,7 +414,7 @@ def test_task_dict_roundtrip(): ...
 - [ ] **Step 2–4:** FAIL → implement → PASS.
 - [ ] **Step 5: Commit** `feat(backend): custom timing, terminator, filter slot clear, timestamp unwrap`.
 
-### Task A9: Hub, протокол WS, файлы, демо-источник
+### Task 9 (A9): Hub, протокол WS, файлы, демо-источник
 
 **Files:**
 - Create: `backend/app/hub.py`, `backend/app/demo.py`
@@ -478,7 +478,7 @@ def test_task_dict_roundtrip(): ...
 
 ## Milestone B — Фронт: основа
 
-### Task B1: Инструменты, WS-клиент v2, стор, строки, форматирование
+### Task 10 (B1): Инструменты, WS-клиент v2, стор, строки, форматирование
 
 **Files:**
 - Modify: `frontend/package.json`, `frontend/tsconfig.json`, `frontend/vite.config.ts`, `frontend/index.html`
@@ -513,7 +513,7 @@ def test_task_dict_roundtrip(): ...
 - [ ] **Step 2–4:** FAIL → implement → PASS; `npx tsc --noEmit -p .` чисто.
 - [ ] **Step 5: Commit** `feat(frontend): preact tooling, ws client v2, store, ru strings, formatters`.
 
-### Task B2: UI-примитивы, темы, реестр действий и хоткеи
+### Task 11 (B2): UI-примитивы, темы, реестр действий и хоткеи
 
 **Files:**
 - Create: `frontend/src/styles/{tokens,base,components}.css`, `frontend/src/ui/{Menu,MenuBar,ContextMenu,Dialog,FloatingWindow,Toolbar,Tabs,Splitter,Fields,Tooltip}.tsx`,
@@ -542,7 +542,7 @@ def test_task_dict_roundtrip(): ...
 - [ ] **Step 2–4:** FAIL → implement → PASS.
 - [ ] **Step 5: Commit** `feat(frontend): ui primitives, themes, action registry, hotkeys`.
 
-### Task B3: Виртуальный грид
+### Task 12 (B3): Виртуальный грид
 
 **Files:**
 - Create: `frontend/src/ui/grid/{VirtualGrid.tsx,gridMath.ts,selection.ts}`
@@ -558,7 +558,7 @@ def test_task_dict_roundtrip(): ...
 - [ ] **Step 1–4:** тесты `visibleRange clamps`, `shift range`, `ctrl toggle` → implement → PASS.
 - [ ] **Step 5: Commit** `feat(frontend): virtual grid with selection and resizable columns`.
 
-### Task B4: Каркас главного окна
+### Task 13 (B4): Каркас главного окна
 
 **Files:**
 - Create: `frontend/src/main.tsx`, `frontend/src/app/{App,MainMenu,MainToolbar,StatusBar,Workspace}.tsx`
@@ -580,7 +580,7 @@ def test_task_dict_roundtrip(): ...
 
 ## Milestone C — Приём
 
-### Task C1: Монитор
+### Task 14 (C1): Монитор
 
 **Files:**
 - Create: `frontend/src/features/monitor/{monitorModel.ts,highlight.ts,MonitorGrid.tsx,ReceiveArea.tsx,CommentDialog.tsx,RarePeriodDialog.tsx,actions.ts}`
@@ -609,7 +609,7 @@ def test_task_dict_roundtrip(): ...
   меню целиком в экране, диалог комментария, колонки читаемы на 1366×650.
 - [ ] **Step 6: Commit** `feat(frontend): receive monitor with highlighting, context menu, comments`.
 
-### Task C2: Раздельный приём
+### Task 15 (C2): Раздельный приём
 
 **Files:** Create `frontend/src/features/monitor/SplitMonitor.tsx`; Modify `ReceiveArea.tsx`
 - Interfaces: при `split` — по гриду на канал с заголовком «Канал N: <название>»
@@ -618,7 +618,7 @@ def test_task_dict_roundtrip(): ...
 - [ ] **Проверить в браузере** (2 канала бок о бок на 1366 при открытой панели фильтров).
 - [ ] **Commit** `feat(frontend): separate receive per channel`.
 
-### Task C3: Битовая карта и агрегатор
+### Task 16 (C3): Битовая карта и агрегатор
 
 **Files:** Create `frontend/src/features/monitor/{BitmapWindow.tsx,FramesWindow.tsx,bitHistory.ts}`; Test `frontend/tests/bitHistory.test.ts`
 - Interfaces: `BitHistory.update(bytes: number[], now: number)`, `changedUntil(): number[][]`
@@ -635,7 +635,7 @@ def test_task_dict_roundtrip(): ...
 
 ## Milestone D — Поток
 
-### Task D1: Режим Поток, запись, метки, файлы
+### Task 17 (D1): Режим Поток, запись, метки, файлы
 
 **Files:**
 - Create: `frontend/src/features/stream/{StreamGrid.tsx,streamCache.ts,MarkerDialog.tsx,MarkersDialog.tsx,actions.ts}`,
@@ -661,7 +661,7 @@ def test_task_dict_roundtrip(): ...
 
 ## Milestone E — Передача
 
-### Task E1: Док «CAN Передача»
+### Task 18 (E1): Док «CAN Передача»
 
 **Files:**
 - Create: `frontend/src/features/transmit/{txModel.ts,TransmitDock.tsx,TaskGrid.tsx,TaskEditor.tsx,TriggerRow.tsx,actions.ts}`
@@ -687,7 +687,7 @@ def test_task_dict_roundtrip(): ...
 
 ## Milestone F — Фильтры
 
-### Task F1: Панель фильтров
+### Task 19 (F1): Панель фильтров
 
 **Files:**
 - Create: `frontend/src/features/filters/{FiltersPanel.tsx,HwFilterGrid.tsx,HwFilterDialog.tsx,RangeTree.tsx,RangeFilterDialog.tsx,RangeExclusionDialog.tsx,filtersModel.ts}`
@@ -709,7 +709,7 @@ def test_task_dict_roundtrip(): ...
 
 ## Milestone G — Прибор и каналы
 
-### Task G1: Подключение, скорости, информация
+### Task 20 (G1): Подключение, скорости, информация
 
 **Files:**
 - Create: `frontend/src/features/device/{ConnectDialog.tsx,BitrateManager.tsx,DeviceInfoDialog.tsx,ChannelMenu.tsx}`
@@ -737,7 +737,7 @@ def test_task_dict_roundtrip(): ...
 
 ## Milestone H — Отладчик
 
-### Task H1: Вид отладчика — просмотр и воспроизведение
+### Task 21 (H1): Вид отладчика — просмотр и воспроизведение
 
 **Files:**
 - Create: `frontend/src/features/tracer/{TracerView.tsx,TracerGrid.tsx,IdTable.tsx,tracerStore.ts,actions.ts,DelayMenu.tsx,CustomDelayDialog.tsx}`
@@ -756,7 +756,7 @@ def test_task_dict_roundtrip(): ...
   монитор оживает; таблица ID и грид помещаются на 1366×650.
 - [ ] **Commit** `feat(frontend): tracer view with playback`.
 
-### Task H2: Отладчик — правка, точки останова, копирование
+### Task 22 (H2): Отладчик — правка, точки останова, копирование
 
 **Files:**
 - Create: `frontend/src/features/tracer/{RowEditorDialog.tsx,BreakpointsDialog.tsx,copyRows.ts}`
@@ -776,7 +776,7 @@ def test_task_dict_roundtrip(): ...
 
 ## Milestone I — Настройки и завершение
 
-### Task I1: Настройки приложения и фоновое логирование
+### Task 23 (I1): Настройки приложения и фоновое логирование
 
 **Files:**
 - Create: `frontend/src/features/settings/SettingsDialog.tsx`, `backend/app/logger.py`
@@ -793,7 +793,7 @@ def test_task_dict_roundtrip(): ...
 - [ ] **Проверить в браузере**: светлая и тёмная тема, крупный шрифт 16 не ломает колонки.
 - [ ] **Commit** `feat: application settings dialog and background stream logging`.
 
-### Task I2: Документация и финальная проверка
+### Task 24 (I2): Документация и финальная проверка
 
 **Files:** Modify `README.md`, `docs/reference/carbus-dfm/UI_MAP.md` (раздел «Статус порта»)
 
