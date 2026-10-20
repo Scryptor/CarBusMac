@@ -130,7 +130,8 @@ def parse_trc(text: str) -> TraceDoc:
 
 
 def _ascii(data: bytes) -> str:
-    return "".join(chr(b) if 0x20 <= b < 0x7F else "." for b in data)
+    """Как пишет десктоп: непечатные байты — пробелы, ширина не меньше 8."""
+    return "".join(chr(b) if 0x20 <= b < 0x7F else " " for b in data).ljust(8)
 
 
 def _fmt_duration(ms: int) -> str:

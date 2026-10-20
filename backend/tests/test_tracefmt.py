@@ -44,7 +44,7 @@ def test_trc_frame_line_layout():
     f = line.split("\t")
     assert f[0] == "00,000000" and f[1] == "1" and f[2] == "00000005" and f[3] == "18DAF110"
     assert f[4] == "3" and f[5].rstrip() == "02 7E 00" and f[6] == "00000000"
-    assert f[7] == ".~." and f[8] == "ответ"
+    assert f[7] == " ~      " and f[8] == "ответ"   # как в реальных файлах десктопа: пробелы, ширина 8
 
 
 def test_trc_unsupported_version_is_explicit():

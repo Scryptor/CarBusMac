@@ -22,6 +22,7 @@ from typing import Any, Awaitable, Callable, Protocol
 
 from app.can_session import CanSession
 from app.capture import Capture
+from app.deskfmt import format_cmt, format_tsk, parse_cmt, parse_tsk
 from app.filters import HwFilters, SoftFilters, layout_from_device, range_from_dict, slot_from_dict
 from app.models import CanFrame
 from app.monitor import MonitorState
@@ -36,7 +37,7 @@ TICK_SECONDS = 0.04
 PRESET_BITRATES = (10000, 20000, 33300, 50000, 62500, 83300, 95200, 100000, 125000, 250000,
                    400000, 500000, 800000, 1000000)
 TRACE_EXT = (".trc", ".jsonl")
-LIST_EXT = (".json",)
+LIST_EXT = (".json", ".cmt", ".tsk")
 _NAME_RE = re.compile(r"^[^/\\\x00-\x1f]+$")
 MAX_ROWS_PER_REQUEST = 2000
 
@@ -459,13 +460,21 @@ class Hub:
         return {}
 
     async def _cmd_comments_save(self, msg: dict) -> dict:
-        name = safe_name(msg.get("name"), LIST_EXT, ".json")
-        self._write_list(name, {"comments": self.comments})
+        ext = ".json" if msg.get("format") == "json" else ".cmt"
+        name = safe_name(msg.get("name"), LIST_EXT, ext)
+        if name.lower().endswith(".cmt"):
+            self._write_text(name, format_cmt(self.comments))
+        else:
+            self._write_list(name, {"comments": self.comments})
         return {"name": name}
 
     async def _cmd_comments_load(self, msg: dict) -> dict:
-        data = self._read_list(safe_name(msg.get("name"), LIST_EXT, ".json"))
-        loaded = {str(k): str(v) for k, v in (data.get("comments") or {}).items()}
+        name = safe_name(msg.get("name"), LIST_EXT, ".cmt")
+        if name.lower().endswith(".cmt"):
+            loaded = parse_cmt(self._read_text(name))
+        else:
+            data = self._read_list(name)
+            loaded = {str(k): str(v) for k, v in (data.get("comments") or {}).items()}
         self.comments = {**self.comments, **loaded} if msg.get("append") else loaded
         self._comments_changed()
         return {}
@@ -599,14 +608,21 @@ class Hub:
         return {}
 
     async def _cmd_tx_save(self, msg: dict) -> dict:
-        name = safe_name(msg.get("name"), LIST_EXT, ".json")
-        self._write_list(name, {"transmit": self.tx.to_list()})
+        ext = ".json" if msg.get("format") == "json" else ".tsk"
+        name = safe_name(msg.get("name"), LIST_EXT, ext)
+        if name.lower().endswith(".tsk"):
+            self._write_text(name, format_tsk(self.tx.to_list()))
+        else:
+            self._write_list(name, {"transmit": self.tx.to_list()})
         return {"name": name}
 
     async def _cmd_tx_load(self, msg: dict) -> dict:
-        data = self._read_list(safe_name(msg.get("name"), LIST_EXT, ".json"))
-        self.tx.load_list(data.get("transmit") or [])
-        return {}
+        name = safe_name(msg.get("name"), LIST_EXT, ".tsk")
+        if name.lower().endswith(".tsk"):
+            self.tx.load_list(parse_tsk(self._read_text(name)))
+        else:
+            self.tx.load_list(self._read_list(name).get("transmit") or [])
+        return {"count": len(self.tx.tasks)}
 
     # -------------------------------------------------------------- фильтры
     def _filters_changed(self) -> None:
@@ -814,6 +830,20 @@ class Hub:
     def _write_list(self, name: str, data: dict) -> None:
         self.lists_dir.mkdir(parents=True, exist_ok=True)
         (self.lists_dir / name).write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    def _write_text(self, name: str, text: str) -> None:
+        self.lists_dir.mkdir(parents=True, exist_ok=True)
+        (self.lists_dir / name).write_text(text, encoding="utf-8", newline="")
+
+    def _read_text(self, name: str) -> str:
+        path = self.lists_dir / name
+        if not path.exists():
+            raise CommandError(f"Файл {name} не существует!")
+        raw = path.read_bytes()
+        try:
+            return raw.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            return raw.decode("cp1251")
 
     def _read_list(self, name: str) -> dict:
         path = self.lists_dir / name

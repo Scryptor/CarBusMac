@@ -254,3 +254,29 @@ def test_capture_save_rejects_bad_names(tmp_path, name):
     with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
         ws.receive_json()
         assert call(ws, type="capture_save", name=name, format="trc")["ok"] is False
+
+
+def test_desktop_cmt_and_tsk_files_load_and_save(tmp_path):
+    env = Env(tmp_path)
+    lists = env.data / "lists"
+    lists.mkdir(parents=True)
+    (lists / "car.cmt").write_bytes("0000012F=Замок колонки\r00000186=Обороты\r".encode("utf-8"))
+    (lists / "car.tsk").write_bytes("\r".join([
+        "Task.Begin", "Task.Message.Proto=CAN", "Task.Message.Channel=1", "Task.Message.ExtMsgID=false",
+        "Task.Message.RTR=false", "Task.Message.MsgID=1EC", "Task.Message.DLC=2", "Task.Message.Data=0102",
+        "Task.Delay=50", "Task.Comment=тест", "Task.Trigger.Trigger=None", "Task.Trigger.Delay=0", "Task.End", "",
+    ]).encode("utf-8"))
+    with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        assert call(ws, type="comments_load", name="car.cmt", append=False)["ok"]
+        c = recv_until(ws, lambda m: m["type"] == "comments")
+        assert c["comments"][f"{0x12F}:0"] == "Замок колонки"
+        assert call(ws, type="tx_load", name="car.tsk")["ok"]
+        st = recv_until(ws, lambda m: m["type"] == "tx_state" and m["tasks"])
+        assert st["tasks"][0]["can_id"] == 0x1EC and st["tasks"][0]["period_ms"] == 50
+        files = call(ws, type="files_list", kind="lists")["data"]["files"]
+        assert {f["name"] for f in files} == {"car.cmt", "car.tsk"}
+        assert call(ws, type="comments_save", name="out", format="cmt")["data"]["name"] == "out.cmt"
+        assert call(ws, type="tx_save", name="out", format="tsk")["data"]["name"] == "out.tsk"
+    assert (lists / "out.cmt").read_bytes().startswith(b"0000012F=")
+    assert (lists / "out.tsk").read_bytes().startswith(b"Task.Begin\r")
