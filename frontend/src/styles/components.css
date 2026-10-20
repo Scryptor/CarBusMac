@@ -430,10 +430,12 @@ select.inp {
 .ch-tag {
   display: inline-block;
   min-width: 18px;
+  height: 16px;
   padding: 0 4px;
   border-radius: 3px;
-  font-weight: 600;
+  font: 600 12px/16px var(--ui-font);
   text-align: center;
+  vertical-align: middle;
   color: #fff;
   background: var(--ch1);
 }
@@ -687,4 +689,80 @@ select.inp {
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
+}
+
+/* ---------- диалог файлов ---------- */
+.file-list {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  max-height: min(320px, 40vh);
+  overflow: auto;
+}
+.file-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 130px;
+  gap: 10px;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  cursor: default;
+}
+.file-row.head {
+  position: sticky;
+  top: 0;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--line);
+  color: var(--text-2);
+  font-weight: 600;
+  font-size: 12px;
+}
+.file-row:not(.head):hover {
+  background: var(--panel-2);
+}
+.file-row.sel {
+  background: var(--sel);
+  color: var(--sel-text);
+}
+.file-row .fname {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-empty {
+  padding: 16px 10px;
+}
+.file-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+.file-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+/* ---------- поток ---------- */
+.gr.marker {
+  background: var(--accent-weak);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.gr.tx {
+  color: var(--accent);
+}
+.gr.tx.sel {
+  color: var(--sel-text);
+}
+.marker-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+}
+.rec-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--rec);
+  font-weight: 600;
 }

@@ -27,6 +27,17 @@ export function ReceiveArea() {
       <div class="panel-head">
         <span>{mode === "stream" ? t.receive.stream : t.receive.monitor}</span>
         {mode === "monitor" ? <span class="muted">ID: {monitorStore.size}</span> : null}
+        {mode === "stream" ? (
+          <span class="muted">
+            {t.col.count}: {store.capture.value.count}
+            {store.capture.value.markers.length ? `, меток: ${store.capture.value.markers.length}` : ""}
+          </span>
+        ) : null}
+        {store.capture.value.recording ? (
+          <span class="rec-badge">
+            <span class="dot rec" /> {t.stream.recording}
+          </span>
+        ) : null}
         <span class="spacer" />
         {mode === "monitor" && s.rare_mode ? (
           <span class="muted">
