@@ -10,7 +10,7 @@
 [CAN-Hacker v3.2 / HW_CH32]
     │ USB CDC-ACM → /dev/cu.usbmodem…  (драйверы не нужны; VID:PID 0483:5740, «CAN-Hacker v3.2 …»)
     ▼
-[Мак, нативно]  run-bridge.sh → python -m app.bridge (127.0.0.1:7000, только pyserial)
+[Мак, нативно]  run-bridge.sh → python -m app.bridge (127.0.0.1:7700, только pyserial)
     │   находит CAN-Hacker по USB-описателям; LIST — список портов, OPEN — порт прибора
     │ TCP, только 127.0.0.1 (контейнер видит хост как host.docker.internal)
     ▼
@@ -49,11 +49,14 @@ USB-serial на маке не работает), поэтому порт при�
 
 **Мост** (`python -m app.bridge`, его запускает `run-bridge.sh` в своём окружении с
 pyserial и pyserial-asyncio тех же версий, что у бэкенда; Python 3.9+ — подходит и
-системный `python3` macOS). Протокол — строки JSON:
+системный `python3` macOS). Порт по умолчанию — 7700 (`bridge.DEFAULT_PORT`): 7000, порт
+`tcp_bridge` из carbus-lib, на macOS 12+ на всех адресах держит «Приёмник AirPlay», и без моста
+бэкенд попадал в него. Сохранённый адрес моста на 7000 (локальный хост) при старте бэкенда
+переносится на 7700 (`moved_off_legacy_port` в `hub.py`). Протокол — строки JSON:
 
 1. Клиент подключается и молчит; через 0,1 с мост шлёт приветствие
    `{"bridge": "carbus", "version": 1}`. Если по адресу слушает что-то другое (прежний
-   `tcp_bridge` из carbus-lib, «Приёмник AirPlay» на порту 7000), приветствия не будет —
+   `tcp_bridge` из carbus-lib, другая программа на этом порту), приветствия не будет —
    клиент закроет соединение, не отправив ни байта, и в прибор через чужой мост ничего не
    уйдёт.
 2. `LIST` → `{"ok": true, "ports": [...]}` — порты с видом, серийным номером, прошивкой и
@@ -249,7 +252,7 @@ cd backend && python3.12 -m venv .venv            # бэкенду нужен Py
 .venv/bin/pip install -c constraints.txt -e ".[dev]"
 .venv/bin/pytest -q                                  # тесты на FakeSession, демо-источнике, поддельном приборе за мостом
 .venv/bin/python -m app.demo --port 8765             # http://127.0.0.1:8765, данные и трейсы — в ./data и ./traces
-CARBUS_BRIDGE=127.0.0.1:7000 .venv/bin/pytest -q tests/test_carbus_session_smoke.py   # на реальном железе, мост запущен
+CARBUS_BRIDGE=127.0.0.1:7700 .venv/bin/pytest -q tests/test_carbus_session_smoke.py   # на реальном железе, мост запущен
 .venv/bin/python -m app.bridge                       # мост из окружения бэкенда (то же, что ./run-bridge.sh)
 
 # фронт
@@ -264,7 +267,7 @@ npm run build                                        # frontend/dist — его 
 сборщика: статика от архитектуры не зависит), `python:3.12-slim`
 ставит бэкенд с версиями из `backend/constraints.txt` (сборка воспроизводима; обновлять
 осознанно, с прогоном pytest) и отдаёт статику; `docker-compose.yml` публикует
-`127.0.0.1:8000`, монтирует `./traces` и `./data`, задаёт `CARBUS_BRIDGE=host.docker.internal:7000`
+`127.0.0.1:8000`, монтирует `./traces` и `./data`, задаёт `CARBUS_BRIDGE=host.docker.internal:7700`
 и `CARBUS_HOST_DIR=${PWD}` (папка, из которой подняли контейнер, — для команды запуска моста).
 Готовый образ `ghcr.io/scryptor/carbusmac` (`linux/amd64` и `linux/arm64`) собирает GitHub
 Actions (`.github/workflows/docker.yml`) на каждую заливку в `main` (тег `latest` и `sha-…`) и

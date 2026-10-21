@@ -21,6 +21,7 @@ from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconn
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.bridge import DEFAULT_PORT
 from app.can_session import CanSession
 from app.hub import CommandError, Hub, safe_name
 from app.logger import recover_parts
@@ -183,7 +184,7 @@ def create_app(
 def default_session_factory(cfg: dict | None = None, device: dict | None = None) -> CanSession:
     """Боевая фабрика для uvicorn: CarbusSession к прибору, выбранному в app/devices.py —
     напрямую в USB-порт (виден бэкенду) или через мост по адресу из «Настроек устройства»
-    (по умолчанию — env CARBUS_BRIDGE, host.docker.internal:7000). carbus-lib импортируется
+    (по умолчанию — env CARBUS_BRIDGE, host.docker.internal:7700). carbus-lib импортируется
     лениво."""
     from app.carbus_session import CarbusSession
 
@@ -192,8 +193,8 @@ def default_session_factory(cfg: dict | None = None, device: dict | None = None)
     if cfg:
         host, port = str(cfg["bridge_host"]), int(cfg["bridge_port"])
     else:
-        host, _, p = os.environ.get("CARBUS_BRIDGE", "host.docker.internal:7000").partition(":")
-        port = int(p or "7000")
+        host, _, p = os.environ.get("CARBUS_BRIDGE", f"host.docker.internal:{DEFAULT_PORT}").partition(":")
+        port = int(p or DEFAULT_PORT)
     return CarbusSession(host, port, (device or {}).get("path", ""))
 
 

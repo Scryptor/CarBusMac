@@ -124,9 +124,9 @@ export interface DeviceEntry {
 
 export interface BridgeInfo {
   /** unknown — ещё не опрашивали; down — по адресу никто не слушает; foreign — отвечает не
-   * мост CarBUS (старый мост, «Приёмник AirPlay» на порту 7000); off — мост не используется */
+   * мост CarBUS (старый мост, другая программа на его порту); off — мост не используется */
   state: "unknown" | "ok" | "down" | "foreign" | "off";
-  /** "host.docker.internal:7000" */
+  /** "host.docker.internal:7700" */
   address: string;
   /** подробность ошибки, может быть "" */
   message: string;

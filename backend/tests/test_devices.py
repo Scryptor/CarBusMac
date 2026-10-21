@@ -10,7 +10,7 @@ from app.bridge import BridgeDown, BridgeForeign
 from app.devices import DeviceError, bridge_command, discover, pick
 from app.usbports import describe
 
-CFG = {"bridge_host": "host.docker.internal", "bridge_port": 7000}
+CFG = {"bridge_host": "host.docker.internal", "bridge_port": 7700}
 HACKER = describe("/dev/cu.usbmodem00000000001A1", product="CAN-Hacker v3.2 0000000000001B26 2.2.3.57 A06021201",
                   manufacturer="Spectratek", vid=0x0483, pid=0x5740, serial_number="00000000001A")
 LG = describe("/dev/cu.usbmodem506NTBKGE1012", product="LG Monitor Controls", vid=0x043E, pid=0x9A39)
@@ -19,7 +19,7 @@ ACM = describe("/dev/ttyACM0", product="CAN-Hacker v3.2 0000000000000ABC 2.2.3.5
 
 def listing(ports=None, exc=None):
     async def fn(host, port, timeout):
-        assert (host, port) == ("host.docker.internal", 7000)
+        assert (host, port) == ("host.docker.internal", 7700)
         if exc:
             raise exc
         return [{**p, "busy": False, "forced": False} for p in ports or []]
@@ -31,7 +31,7 @@ async def test_mac_docker_sees_the_device_through_the_bridge_only():
     assert [(d["key"], d["selectable"]) for d in snap["devices"]] == [
         ("bridge:/dev/cu.usbmodem00000000001A1", True), ("bridge:/dev/cu.usbmodem506NTBKGE1012", False)]
     assert {k: snap["bridge"][k] for k in ("state", "address", "message")} == {
-        "state": "ok", "address": "host.docker.internal:7000", "message": ""}
+        "state": "ok", "address": "host.docker.internal:7700", "message": ""}
     assert snap["usb"] == {"state": "ok", "in_container": True} and snap["hint"] == ""
     assert pick(snap, "")["path"] == "/dev/cu.usbmodem00000000001A1"
 
@@ -45,7 +45,8 @@ async def test_hint_explains_why_nothing_was_found():
     down = await discover(CFG, scan=lambda: [], listing=listing(exc=BridgeDown("соединение отклонено")))
     assert down["bridge"]["state"] == "down" and "./run-bridge.sh" in down["hint"]
     foreign = await discover(CFG, scan=lambda: [], listing=listing(exc=BridgeForeign("нет приветствия")))
-    assert foreign["bridge"]["state"] == "foreign" and "AirPlay" in foreign["hint"]
+    assert foreign["bridge"]["state"] == "foreign" and "другая программа" in foreign["hint"]
+    assert "./run-bridge.sh" in foreign["hint"]
     empty = await discover(CFG, scan=lambda: [LG], listing=listing([]))
     assert empty["hint"] == "Мост работает, но CAN-Hacker не подключён по USB."
     with pytest.raises(DeviceError, match="не подключён по USB"):
@@ -106,7 +107,7 @@ def run(shell: list[str], command: str, **env: str) -> str:
 
 
 @pytest.mark.parametrize("shell", SHELLS)
-@pytest.mark.parametrize(("port", "args"), [(7000, ""), (7070, " 7070")])
+@pytest.mark.parametrize(("port", "args"), [(7700, ""), (7000, " 7000")])     # 7700 — порт моста по умолчанию
 def test_bridge_command_starts_the_bridge_in_the_project_folder(tmp_path, shell, port, args):
     folder = (tmp_path / "My Projects" / "carbus-mac").resolve()     # пробел в пути
     fake_bridge(folder)
@@ -124,8 +125,8 @@ def test_without_the_project_folder_the_command_fetches_it_from_github_once(tmp_
     git.chmod(0o755)
     env = {"HOME": str(home.resolve()), "PATH": f"{tools}:{os.environ['PATH']}"}
     target = home.resolve() / "CarBusMac"
-    assert run(shell, bridge_command(7000, ""), **env) == f"bridge: {target}"
-    assert run(shell, bridge_command(7000, ""), **env) == f"bridge: {target}"      # второй раз — без клонирования
+    assert run(shell, bridge_command(7700, ""), **env) == f"bridge: {target}"
+    assert run(shell, bridge_command(7700, ""), **env) == f"bridge: {target}"      # второй раз — без клонирования
     assert (home / "git.log").read_text().splitlines() == [f"clone https://github.com/Scryptor/CarBusMac.git {target}"]
 
 

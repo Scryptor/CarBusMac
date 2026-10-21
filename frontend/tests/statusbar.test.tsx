@@ -74,7 +74,7 @@ const devices = (list: DeviceEntry[], state = "ok", hint = "") =>
   applyEvent({
     type: "devices",
     devices: list,
-    bridge: { state, address: "host.docker.internal:7000", message: "" },
+    bridge: { state, address: "host.docker.internal:7700", message: "" },
     usb: { state: "ok", in_container: true },
     hint,
   });
@@ -104,7 +104,7 @@ test("several found devices are counted, each one in the tooltip", () => {
 test("no device: plain text with the server's explanation; nothing before the first scan", () => {
   render(<StatusBar />);
   expect(screen.queryByText("Прибор не найден")).toBeNull();
-  const hint = "Мост на маке не запущен (host.docker.internal:7000). Запустите ./run-bridge.sh — прибор появится здесь сам.";
+  const hint = "Мост на маке не запущен (host.docker.internal:7700). Запустите ./run-bridge.sh — прибор появится здесь сам.";
   act(() => devices([MONITOR], "down", hint));
   const cell = screen.getByText("Прибор не найден");
   expect(cell.title).toBe(hint);

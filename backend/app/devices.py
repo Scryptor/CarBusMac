@@ -13,11 +13,10 @@ import shlex
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from app.bridge import BridgeDown, BridgeForeign, BridgeRefused, bridge_list
+from app.bridge import DEFAULT_PORT, BridgeDown, BridgeForeign, BridgeRefused, bridge_list
 from app.usbports import KIND_ORDER, label, scan_ports
 
 BRIDGE_TIMEOUT_S = 1.0     # мост локальный: дольше молчит — значит, не он
-BRIDGE_PORT = 7000         # порт run-bridge.sh без аргумента
 REPO_URL = "https://github.com/Scryptor/CarBusMac.git"
 
 Snapshot = dict[str, Any]
@@ -58,7 +57,7 @@ def host_project_dir() -> str:
 def bridge_command(port: int, folder: str) -> str:
     """Команда для Терминала мака, запускающая мост: из папки проекта, а если она неизвестна —
     из ~/CarBusMac, куда проект один раз скачивается с GitHub."""
-    run = "./run-bridge.sh" if port == BRIDGE_PORT else f"./run-bridge.sh {port}"
+    run = "./run-bridge.sh" if port == DEFAULT_PORT else f"./run-bridge.sh {port}"
     if folder:
         return f"cd {shlex.quote(folder)} && {run}"
     return f"[ -d ~/CarBusMac ] || git clone {REPO_URL} ~/CarBusMac; cd ~/CarBusMac && {run}"
@@ -71,7 +70,7 @@ def in_container() -> bool:
 def empty_snapshot(cfg: dict[str, Any] | None = None, state: str = "unknown") -> Snapshot:
     address = f"{cfg['bridge_host']}:{cfg['bridge_port']}" if cfg else ""
     folder = host_project_dir()
-    command = bridge_command(int(cfg["bridge_port"]) if cfg else BRIDGE_PORT, folder)
+    command = bridge_command(int(cfg["bridge_port"]) if cfg else DEFAULT_PORT, folder)
     return {"devices": [], "bridge": {"state": state, "address": address, "message": "",
                                       "project_dir": folder, "command": command},
             "usb": {"state": "ok", "in_container": in_container()}, "hint": ""}
@@ -83,8 +82,8 @@ def not_found_hint(snap: Snapshot) -> str:
     if bridge["state"] == "down":
         return f"Мост не запущен ({addr}). Запустите на маке ./run-bridge.sh — прибор появится здесь сам."
     if bridge["state"] == "foreign":
-        return (f"Мост не отвечает: по адресу {addr} слушает другая программа (без моста порт 7000 на macOS "
-                "занимает «Приёмник AirPlay»). Запустите на маке ./run-bridge.sh — прибор появится здесь сам.")
+        return (f"Мост не отвечает: по адресу {addr} слушает другая программа. Запустите на маке "
+                "./run-bridge.sh — прибор появится здесь сам.")
     if bridge["state"] == "ok":
         return "Мост работает, но CAN-Hacker не подключён по USB."
     if bridge["state"] == "unknown":

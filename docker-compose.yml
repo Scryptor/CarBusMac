@@ -7,7 +7,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      - CARBUS_BRIDGE=host.docker.internal:7000   # нативный мост на маке
+      - CARBUS_BRIDGE=host.docker.internal:7700   # нативный мост на маке (./run-bridge.sh)
       - CARBUS_HOST_DIR=${PWD:-}                  # папка проекта: интерфейс покажет команду запуска моста
     volumes:
       - ./traces:/app/traces           # трейсы остаются на маке

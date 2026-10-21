@@ -70,7 +70,7 @@ const TASKS = [
   task("t4", 2, 0x2a0, "0001000000000000", 100, "Пример: эмуляция кнопки"),
 ];
 const channel = (n: number, alias: string) => ({ channel: n, alias, bitrate: 500000, timing: null, listen_only: false, terminator: false, auto_open: true });
-const CONNECTION = { bridge_host: "host.docker.internal", bridge_port: 7000, channels: [channel(1, "Двигатель"), channel(2, "Кузов")] };
+const CONNECTION = { bridge_host: "host.docker.internal", bridge_port: 7700, channels: [channel(1, "Двигатель"), channel(2, "Кузов")] };
 
 async function seed(dataDir: string): Promise<void> {
   await mkdir(path.join(dataDir, "lists"), { recursive: true });

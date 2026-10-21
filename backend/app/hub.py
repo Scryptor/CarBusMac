@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, Protocol
 from zoneinfo import ZoneInfo
 
+from app.bridge import DEFAULT_PORT
 from app.can_session import CanSession
 from app.capture import Capture, copy_markers
 from app.deskfmt import format_cmt, format_tsk, parse_cmt, parse_tsk
@@ -47,6 +48,8 @@ BACKGROUND_COMMANDS = frozenset({"connect", "capture_save", "capture_load", "cap
                                  "tracer_open", "tracer_save", "devices_scan", "capture_frames"})
 DEVICE_POLL_S = 2.0              # как часто искать прибор на USB, пока открыт интерфейс
 _DEVICE_KEY_RE = re.compile(r"^(bridge|usb|demo):")
+LEGACY_BRIDGE_PORT = 7000       # порт моста по умолчанию до 21.10.2026 (на маке его держит AirPlay)
+LOCAL_BRIDGE_HOSTS = frozenset({"host.docker.internal", "127.0.0.1", "localhost"})
 TRACE_EXT = (".trc", ".jsonl")
 LIST_EXT = (".json", ".cmt", ".tsk")
 COMMENT_EXT = (".cmt", ".json")
@@ -105,14 +108,22 @@ def safe_name(name: str, allowed: tuple[str, ...], default_ext: str | None = Non
 
 
 def default_connection() -> dict[str, Any]:
-    target = os.environ.get("CARBUS_BRIDGE", "host.docker.internal:7000")
+    target = os.environ.get("CARBUS_BRIDGE", f"host.docker.internal:{DEFAULT_PORT}")
     host, _, port = target.partition(":")
     return {
         "bridge_host": host or "host.docker.internal",
-        "bridge_port": int(port or 7000),
+        "bridge_port": int(port or DEFAULT_PORT),
         "device": "",
         "channels": [_channel_default(1), _channel_default(2)],
     }
+
+
+def moved_off_legacy_port(cfg: dict[str, Any]) -> dict[str, Any]:
+    """Сохранённый адрес моста на прежнем порту по умолчанию (7000, до 21.10.2026) — на новый:
+    7000 на macOS занят «Приёмником AirPlay». Мост на другой машине не трогаем."""
+    if cfg["bridge_port"] == LEGACY_BRIDGE_PORT and cfg["bridge_host"] in LOCAL_BRIDGE_HOSTS:
+        return {**cfg, "bridge_port": DEFAULT_PORT}
+    return cfg
 
 
 def _channel_default(n: int) -> dict[str, Any]:
@@ -213,7 +224,8 @@ class Hub:
         self.tz: str | None = tz if isinstance(tz, str) else None   # часовой пояс браузера (в Docker своё время — UTC)
         try:
             saved = store.load("connection", None)
-            self.connection = normalize_connection(saved if isinstance(saved, dict) else default_connection())
+            self.connection = moved_off_legacy_port(
+                normalize_connection(saved if isinstance(saved, dict) else default_connection()))
         except (CommandError, TypeError, ValueError, KeyError, AttributeError):
             self.connection = default_connection()
 

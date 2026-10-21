@@ -144,8 +144,7 @@ class CarbusSession:
 
     def _foreign(self) -> str:
         return (f"Мост {self._where()} не отвечает: по этому адресу слушает не мост CarBUS. Запустите или "
-                "перезапустите на маке ./run-bridge.sh (без моста порт 7000 на macOS занимает «Приёмник "
-                "AirPlay» — Системные настройки → Основные → AirDrop и Handoff).")
+                "перезапустите на маке ./run-bridge.sh.")
 
     async def _open(self, dev: CarBusDevice) -> None:
         # то же, что CarBusDevice.open(), но транспорт свой и объект доступен при сбое

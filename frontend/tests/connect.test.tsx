@@ -63,7 +63,7 @@ const MONITOR: DeviceEntry = {
 };
 const snapshot = (devices: DeviceEntry[], over: Partial<DevicesState> = {}): DevicesState => ({
   devices,
-  bridge: { state: "ok", address: "host.docker.internal:7000", message: "" },
+  bridge: { state: "ok", address: "host.docker.internal:7700", message: "" },
   usb: { state: "ok", in_container: true },
   hint: "",
   ...over,
@@ -75,7 +75,7 @@ beforeEach(() => {
   for (const k of Object.keys(replies)) delete replies[k];
   store.connection.value = {
     bridge_host: "host.docker.internal",
-    bridge_port: 7000,
+    bridge_port: 7700,
     device: "",
     channels: [
       { channel: 1, alias: "", bitrate: 500_000, timing: null, listen_only: false, terminator: false, auto_open: true },
@@ -107,7 +107,7 @@ test("connect dialog sends channel configs", () => {
     {
       config: {
         bridge_host: "host.docker.internal",
-        bridge_port: 7000,
+        bridge_port: 7700,
         device: "",
         channels: [
           { channel: 1, alias: "Кузов", bitrate: 500_000, timing: null, listen_only: true, terminator: false, auto_open: true },
@@ -116,6 +116,13 @@ test("connect dialog sends channel configs", () => {
       },
     },
   ]);
+});
+
+test("without a saved connection the dialog looks for the bridge on port 7700", () => {
+  store.connection.value = null;
+  render(<ConnectDialog onClose={vi.fn()} />);
+  expect(field("Порт моста").value).toBe("7700");
+  expect(sent("devices_scan")[0]).toEqual({ bridge_host: "host.docker.internal", bridge_port: 7700 });
 });
 
 test("reopened dialog shows the accepted settings, not the startup snapshot", () => {
@@ -226,8 +233,8 @@ test("a compatible port is marked as a possible CAN-Hacker, a port held by someo
 });
 
 test("no device and the bridge is down: the server's hint is shown and «Дополнительно» opens", () => {
-  const hint = "Мост на маке не запущен (host.docker.internal:7000). Запустите ./run-bridge.sh — прибор появится здесь сам.";
-  store.devices.value = snapshot([], { bridge: { state: "down", address: "host.docker.internal:7000", message: "Connection refused" }, hint });
+  const hint = "Мост на маке не запущен (host.docker.internal:7700). Запустите ./run-bridge.sh — прибор появится здесь сам.";
+  store.devices.value = snapshot([], { bridge: { state: "down", address: "host.docker.internal:7700", message: "Connection refused" }, hint });
   render(<ConnectDialog onClose={vi.fn()} />);
   expect(screen.getByRole("status").textContent).toBe(hint);
   expect(deviceSelect().disabled).toBe(true);
@@ -238,7 +245,7 @@ test("no device and the bridge is down: the server's hint is shown and «Доп�
 
 const NO_BRIDGE = {
   state: "down" as const,
-  address: "host.docker.internal:7000",
+  address: "host.docker.internal:7700",
   message: "Connection refused",
   project_dir: "/Users/igor/dev/canH/carbus-mac",
   command: "cd /Users/igor/dev/canH/carbus-mac && ./run-bridge.sh",
@@ -248,7 +255,7 @@ const help = () => within(screen.getByRole("note", { name: "Что сделат�
 test("Docker without the bridge: the dialog says what to do and copies the command for the Terminal", async () => {
   const writeText = vi.fn(() => Promise.resolve());
   Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
-  store.devices.value = snapshot([], { bridge: NO_BRIDGE, hint: "Мост не запущен (host.docker.internal:7000)." });
+  store.devices.value = snapshot([], { bridge: NO_BRIDGE, hint: "Мост не запущен (host.docker.internal:7700)." });
   render(<ConnectDialog onClose={vi.fn()} />);
   expect(help().getByText(/Откройте Терминал/)).toBeTruthy();
   expect(help().getByText(NO_BRIDGE.command)).toBeTruthy();
@@ -258,7 +265,7 @@ test("Docker without the bridge: the dialog says what to do and copies the comma
 });
 
 test("with the bridge help shown «Дополнительно» stays folded: the address is not the problem", () => {
-  store.devices.value = snapshot([], { bridge: NO_BRIDGE, hint: "Мост не запущен (host.docker.internal:7000). Запустите на маке ./run-bridge.sh — прибор появится здесь сам." });
+  store.devices.value = snapshot([], { bridge: NO_BRIDGE, hint: "Мост не запущен (host.docker.internal:7700). Запустите на маке ./run-bridge.sh — прибор появится здесь сам." });
   render(<ConnectDialog onClose={vi.fn()} />);
   expect(screen.getByRole("status").textContent).toBe("Мост не запущен");
   expect(more().open).toBe(false);
@@ -292,10 +299,10 @@ test("«Дополнительно» opens by itself when the bridge stops answe
   store.devices.value = snapshot([HACKER]);
   render(<ConnectDialog onClose={vi.fn()} />);
   expect(more().open).toBe(false);
-  const foreign = { state: "foreign" as const, address: "host.docker.internal:7000", message: "AirTunes" };
-  act(() => applyEvent({ type: "devices", ...snapshot([], { bridge: foreign, hint: "На порту 7000 отвечает не мост CarBUS." }) }));
+  const foreign = { state: "foreign" as const, address: "host.docker.internal:7700", message: "AirTunes" };
+  act(() => applyEvent({ type: "devices", ...snapshot([], { bridge: foreign, hint: "На порту 7700 отвечает не мост CarBUS." }) }));
   expect(more().open).toBe(true);
-  expect(screen.getByRole("status").textContent).toBe("На порту 7000 отвечает не мост CarBUS.");
+  expect(screen.getByRole("status").textContent).toBe("На порту 7700 отвечает не мост CarBUS.");
 });
 
 test("a devices event updates the list and the status line while the dialog is open", () => {
@@ -328,7 +335,7 @@ test("devices_scan asks with the bridge address and its answer is shown instead 
   store.devices.value = snapshot([HACKER]);
   replies.devices_scan = snapshot([HACKER, HACKER2]);
   render(<ConnectDialog onClose={vi.fn()} />);
-  expect(sent("devices_scan")).toEqual([{ bridge_host: "host.docker.internal", bridge_port: 7000 }]);
+  expect(sent("devices_scan")).toEqual([{ bridge_host: "host.docker.internal", bridge_port: 7700 }]);
   await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Найдено 2 прибора — выберите нужный"));
   expect(screen.getByRole("option", { name: "CAN-Hacker v3.2 · № 7001 · 2.2.3.57 — через мост" })).toBeTruthy();
   // пока окно открыто, показан последний ответ опроса, а не снимок из стора
@@ -340,10 +347,10 @@ test("the dialog polls every 2 s with the current address, skips a bad one and s
   vi.useFakeTimers();
   try {
     render(<ConnectDialog onClose={vi.fn()} />);
-    expect(sent("devices_scan")).toEqual([{ bridge_host: "host.docker.internal", bridge_port: 7000 }]);
+    expect(sent("devices_scan")).toEqual([{ bridge_host: "host.docker.internal", bridge_port: 7700 }]);
     fireEvent.input(field("Адрес моста"), { target: { value: "10.0.0.5" } });
     await vi.advanceTimersByTimeAsync(2000);
-    expect(sent("devices_scan").at(-1)).toEqual({ bridge_host: "10.0.0.5", bridge_port: 7000 });
+    expect(sent("devices_scan").at(-1)).toEqual({ bridge_host: "10.0.0.5", bridge_port: 7700 });
     fireEvent.input(field("Порт моста"), { target: { value: "7k" } });
     await vi.advanceTimersByTimeAsync(4000);
     expect(sent("devices_scan")).toHaveLength(2);

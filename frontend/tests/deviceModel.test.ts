@@ -157,12 +157,12 @@ const MONITOR: DeviceEntry = {
 };
 const snap = (devices: DeviceEntry[], over: Partial<DevicesState> = {}): DevicesState => ({
   devices,
-  bridge: { state: "ok", address: "host.docker.internal:7000", message: "" },
+  bridge: { state: "ok", address: "host.docker.internal:7700", message: "" },
   usb: { state: "ok", in_container: true },
   hint: "",
   ...over,
 });
-const down = { state: "down" as const, address: "host.docker.internal:7000", message: "Connection refused" };
+const down = { state: "down" as const, address: "host.docker.internal:7700", message: "Connection refused" };
 
 test("deviceLabel: model, serial and firmware; a foreign port by its node name", () => {
   expect(deviceLabel(HACKER)).toBe("CAN-Hacker v3.2 · № 6950 · 2.2.3.57");
@@ -215,7 +215,7 @@ test("deviceStatus: searching, not found, found, connected", () => {
     tone: "idle",
     text: "Поиск прибора…",
   });
-  const hint = "Мост на маке не запущен (host.docker.internal:7000). Запустите ./run-bridge.sh — прибор появится здесь сам.";
+  const hint = "Мост на маке не запущен (host.docker.internal:7700). Запустите ./run-bridge.sh — прибор появится здесь сам.";
   expect(deviceStatus(snap([], { bridge: down, hint }), "", "", "")).toEqual({ tone: "err", text: hint });
   expect(deviceStatus(snap([MONITOR]), "", "", "")).toEqual({ tone: "err", text: "CAN-Hacker не найден" });
   expect(deviceStatus(snap([HACKER, MONITOR]), "", HACKER.key, "")).toEqual({ tone: "ok", text: "Найден прибор" });
@@ -256,11 +256,11 @@ test("setupHelp: Docker without the bridge — start it with the server's comman
 });
 
 test("deviceStatus: with the bridge help below, the line only names the reason instead of repeating the server's hint", () => {
-  const hint = "Мост не запущен (host.docker.internal:7000). Запустите на маке ./run-bridge.sh — прибор появится здесь сам.";
+  const hint = "Мост не запущен (host.docker.internal:7700). Запустите на маке ./run-bridge.sh — прибор появится здесь сам.";
   expect(deviceStatus(snap([], { bridge: noBridge, hint }), "", "", "")).toEqual({ tone: "err", text: "Мост не запущен" });
   expect(deviceStatus(snap([], { bridge: { ...noBridge, state: "foreign" }, hint }), "", "", "")).toEqual({
     tone: "err",
-    text: "Мост не отвечает: на его порту другая программа (обычно «Приёмник AirPlay»)",
+    text: "Мост не отвечает: на его порту другая программа",
   });
 });
 

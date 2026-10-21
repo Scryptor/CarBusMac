@@ -47,7 +47,7 @@ const defaultChannel = (n: number): ChannelConfig => ({
 
 const DEFAULT_CONNECTION: ConnectionConfig = {
   bridge_host: "host.docker.internal",
-  bridge_port: 7000,
+  bridge_port: 7700,
   device: "",
   channels: [defaultChannel(1), defaultChannel(2)],
 };

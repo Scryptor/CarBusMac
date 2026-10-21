@@ -6,7 +6,7 @@ const hello = {
   status: { type: "status", state: "opened", message: "", device_info: { hardware_name: "HW_CH32" }, channels: { "1": { open: true } } },
   settings: { theme: "dark", mark_hold_ms: 2000 },
   comments: { "291:0": "кнопка" },
-  connection: { bridge_host: "h", bridge_port: 7000, channels: [] },
+  connection: { bridge_host: "h", bridge_port: 7700, channels: [] },
   bitrates: [],
   monitor: [],
   capture: { type: "capture_state", recording: true, count: 5, duration_s: 1.5, full: false, rev: 0, markers: [] },
@@ -71,7 +71,7 @@ test("hello brings the devices snapshot, a devices event replaces it, reset clea
   };
   applyEvent({ ...hello, devices: snap });
   expect(store.devices.value).toEqual(snap);
-  const none = { ...snap, devices: [], bridge: { state: "down", address: "host.docker.internal:7000", message: "" }, hint: "Мост на маке не запущен" };
+  const none = { ...snap, devices: [], bridge: { state: "down", address: "host.docker.internal:7700", message: "" }, hint: "Мост на маке не запущен" };
   applyEvent({ type: "devices", ...none });
   expect(store.devices.value).toEqual(none); // без поля type
   resetStore();

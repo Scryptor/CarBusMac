@@ -155,7 +155,7 @@ async def test_connect_to_silent_bridge_times_out_and_closes_socket():
     closed = asyncio.Event()
 
     async def handle(reader, writer):
-        while await reader.read(64):                  # принимает, но не отвечает (как AirPlay на :7000)
+        while await reader.read(64):                  # принимает, но не отвечает (чужая программа на порту моста)
             pass
         closed.set()
         writer.close()

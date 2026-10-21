@@ -157,7 +157,7 @@ async def test_second_open_of_a_busy_port_waits_then_refuses(monkeypatch):
 
 
 async def test_client_tells_a_stranger_from_an_absent_bridge():
-    async def silent(reader, writer):            # принимает и молчит — как AirPlay на :7000
+    async def silent(reader, writer):            # принимает и молчит — как чужая программа на порту моста
         await reader.read()
         writer.close()
 
@@ -221,3 +221,14 @@ async def test_usb_session_opens_the_port_itself(monkeypatch):
     finally:
         srv.close()
         await srv.wait_closed()
+
+
+def test_the_bridge_listens_on_loopback_port_7700_by_default(monkeypatch):
+    seen = []
+
+    async def serve(host, port, serial):
+        seen.append((host, port, serial))
+    monkeypatch.setattr(bridge_mod, "serve", serve)
+    monkeypatch.delenv("CARBUS_SERIAL", raising=False)
+    assert bridge_mod.main([]) == 0
+    assert seen == [("127.0.0.1", 7700, None)]

@@ -148,3 +148,26 @@ def test_device_choice_is_validated_and_saved(tmp_path):
         await hub.shutdown()
     asyncio.run(run())
     assert JsonStore(tmp_path / "data").load("connection", {})["device"] == HACKER["key"]
+
+
+def test_saved_bridge_on_the_old_default_port_moves_to_7700(tmp_path):
+    # до 21.10.2026 мост слушал 7000 — а там на macOS 12+ отвечает «Приёмник AirPlay»
+    JsonStore(tmp_path / "data").save("connection", {**CONNECT, "bridge_host": "host.docker.internal", "bridge_port": 7000})
+    hub = make_hub(tmp_path, discover=None)
+    assert (hub.connection["bridge_host"], hub.connection["bridge_port"]) == ("host.docker.internal", 7700)
+
+
+def test_a_bridge_elsewhere_or_on_a_chosen_port_keeps_its_saved_address(tmp_path):
+    for i, (host, port) in enumerate([("10.0.0.5", 7000), ("host.docker.internal", 7070)]):
+        root = tmp_path / str(i)
+        JsonStore(root / "data").save("connection", {**CONNECT, "bridge_host": host, "bridge_port": port})
+        hub = make_hub(root, discover=None)
+        assert (hub.connection["bridge_host"], hub.connection["bridge_port"]) == (host, port)
+    # введённый в «Дополнительно» адрес не переписывается — переезжает только сохранённый старый
+    assert normalize_connection({**CONNECT, "bridge_port": 7000})["bridge_port"] == 7000
+
+
+def test_default_bridge_address_is_port_7700(monkeypatch):
+    monkeypatch.delenv("CARBUS_BRIDGE", raising=False)
+    cfg = hub_mod.default_connection()
+    assert (cfg["bridge_host"], cfg["bridge_port"]) == ("host.docker.internal", 7700)

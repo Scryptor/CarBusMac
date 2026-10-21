@@ -11,7 +11,7 @@ host.docker.internal. О протоколе прибора мост не зна�
                  «OPEN <порт|auto>» — ответ {"ok": true, "port": {...}}, дальше сырые байты
                  прибора в обе стороны; или {"ok": false, "error": "…"} и закрытие.
 Приветствие шлёт мост, клиент до него молчит: если по адресу слушает не мост (прежний
-tcp_bridge из carbus-lib, «Приёмник AirPlay» на порту 7000), клиент не дождётся приветствия
+tcp_bridge из carbus-lib, другая программа на этом порту), клиент не дождётся приветствия
 и ничего не отправит — через чужой мост в прибор не уходит ни байта.
 
 Клиент, который сразу шлёт байты протокола прибора (`CarBusDevice.open_tcp` из carbus-lib),
@@ -21,7 +21,7 @@ tcp_bridge — открывает единственный найденный CA
 Открывается только порт, распознанный как CAN-Hacker / совместимый, или заданный явно
 (--serial, он же CARBUS_SERIAL): служебные порты мониторов, плат и телефонов мост не трогает.
 
-    python -m app.bridge [--host 127.0.0.1] [--port 7000] [--serial /dev/cu.usbmodem…]
+    python -m app.bridge [--host 127.0.0.1] [--port 7700] [--serial /dev/cu.usbmodem…]
 
 Только стандартная библиотека, pyserial и pyserial-asyncio — Python 3.9+ (окружение моста)."""
 from __future__ import annotations
@@ -40,6 +40,9 @@ from typing import Any
 from app.usbports import describe, label, scan_ports
 
 PROTOCOL_VERSION = 1
+# Порт моста по умолчанию. Не 7000 (порт tcp_bridge из carbus-lib): на macOS 12+ его на всех
+# адресах держит «Приёмник AirPlay», и без моста бэкенд попадал в AirPlay вместо «не запущен».
+DEFAULT_PORT = 7700
 GREETING_DELAY_S = 0.1     # столько мост ждёт байтов от клиента старого образца
 COMMAND_TIMEOUT_S = 5.0    # строка команды после приветствия
 BUSY_WAIT_S = 1.5          # порт прошлого подключения ещё закрывается — подождать
@@ -295,7 +298,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.bridge",
                                      description="Мост CarBUS: CAN-Hacker по USB ↔ TCP для бэкенда в Docker")
     parser.add_argument("--host", default="127.0.0.1", help="адрес (по умолчанию 127.0.0.1)")
-    parser.add_argument("--port", type=int, default=7000, help="порт (по умолчанию 7000)")
+    parser.add_argument("--port", type=int, default=DEFAULT_PORT, help=f"порт (по умолчанию {DEFAULT_PORT})")
     parser.add_argument("--serial", default=os.environ.get("CARBUS_SERIAL") or None,
                         help="открывать этот порт, даже если он не похож на CAN-Hacker")
     args = parser.parse_args(argv)
@@ -308,10 +311,9 @@ def main(argv: list[str] | None = None) -> int:
     except OSError as e:
         if e.errno != errno.EADDRINUSE:
             raise
-        log.error("Порт %s:%d уже занят: мост уже запущен или порт держит другая программа "
-                  "(на macOS порт 7000 на всех адресах занимает «Приёмник AirPlay»). "
-                  "Возьмите другой порт: ./run-bridge.sh 7070 — и укажите его в «Настройках устройства» → «Дополнительно».",
-                  args.host, args.port)
+        log.error("Порт %s:%d уже занят: мост уже запущен или порт держит другая программа. "
+                  "Возьмите другой порт: ./run-bridge.sh %d — и укажите его в «Настройках устройства» → «Дополнительно».",
+                  args.host, args.port, args.port + 1)
         return 1
     return 0
 
