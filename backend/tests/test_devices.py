@@ -1,8 +1,13 @@
 """Снимок приборов (свой USB + мост) и выбор прибора для подключения."""
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
 import pytest
 
 from app.bridge import BridgeDown, BridgeForeign
-from app.devices import DeviceError, discover, pick
+from app.devices import DeviceError, bridge_command, discover, pick
 from app.usbports import describe
 
 CFG = {"bridge_host": "host.docker.internal", "bridge_port": 7000}
@@ -25,7 +30,8 @@ async def test_mac_docker_sees_the_device_through_the_bridge_only():
     snap = await discover(CFG, scan=lambda: [], listing=listing([HACKER, LG]), container=True)
     assert [(d["key"], d["selectable"]) for d in snap["devices"]] == [
         ("bridge:/dev/cu.usbmodem00000000001A1", True), ("bridge:/dev/cu.usbmodem506NTBKGE1012", False)]
-    assert snap["bridge"] == {"state": "ok", "address": "host.docker.internal:7000", "message": ""}
+    assert {k: snap["bridge"][k] for k in ("state", "address", "message")} == {
+        "state": "ok", "address": "host.docker.internal:7000", "message": ""}
     assert snap["usb"] == {"state": "ok", "in_container": True} and snap["hint"] == ""
     assert pick(snap, "")["path"] == "/dev/cu.usbmodem00000000001A1"
 
@@ -77,3 +83,65 @@ async def test_bridge_entries_are_sanitised():
     snap = await discover(CFG, scan=lambda: [], listing=listing([weird]))
     d = snap["devices"][0]
     assert (d["kind"], d["title"], d["serial"], d["vid"], d["selectable"]) == ("other", "x", None, None, False)
+
+
+# Команду запуска моста интерфейс показывает для Терминала мака — проверяем её в настоящих
+# оболочках (zsh — оболочка Терминала) на поддельном run-bridge.sh, который сообщает, откуда и
+# с какими аргументами его запустили.
+SHELLS = [pytest.param(["/bin/sh", "-c"], id="sh")]
+if shutil.which("zsh"):
+    SHELLS.append(pytest.param(["zsh", "-f", "-c"], id="zsh"))
+
+
+def fake_bridge(folder: Path) -> None:
+    folder.mkdir(parents=True)
+    script = folder / "run-bridge.sh"
+    script.write_text('#!/bin/sh\necho "bridge: $(pwd -P) $*"\n')
+    script.chmod(0o755)
+
+
+def run(shell: list[str], command: str, **env: str) -> str:
+    return subprocess.run([*shell, command], capture_output=True, text=True, check=True,
+                          env={**os.environ, **env}).stdout.strip()
+
+
+@pytest.mark.parametrize("shell", SHELLS)
+@pytest.mark.parametrize(("port", "args"), [(7000, ""), (7070, " 7070")])
+def test_bridge_command_starts_the_bridge_in_the_project_folder(tmp_path, shell, port, args):
+    folder = (tmp_path / "My Projects" / "carbus-mac").resolve()     # пробел в пути
+    fake_bridge(folder)
+    assert run(shell, bridge_command(port, str(folder))) == f"bridge: {folder}{args}"
+
+
+@pytest.mark.parametrize("shell", SHELLS)
+def test_without_the_project_folder_the_command_fetches_it_from_github_once(tmp_path, shell):
+    home, tools, template = tmp_path / "home", tmp_path / "bin", tmp_path / "template"
+    home.mkdir()
+    tools.mkdir()
+    fake_bridge(template)
+    git = tools / "git"      # «клонирует» поддельный мост и записывает, как его вызвали
+    git.write_text(f'#!/bin/sh\necho "$*" >> "$HOME/git.log"\nmkdir -p "$3" && cp "{template}/run-bridge.sh" "$3/"\n')
+    git.chmod(0o755)
+    env = {"HOME": str(home.resolve()), "PATH": f"{tools}:{os.environ['PATH']}"}
+    target = home.resolve() / "CarBusMac"
+    assert run(shell, bridge_command(7000, ""), **env) == f"bridge: {target}"
+    assert run(shell, bridge_command(7000, ""), **env) == f"bridge: {target}"      # второй раз — без клонирования
+    assert (home / "git.log").read_text().splitlines() == [f"clone https://github.com/Scryptor/CarBusMac.git {target}"]
+
+
+async def test_snapshot_says_how_to_start_the_bridge_in_the_folder_docker_was_started_from(monkeypatch):
+    monkeypatch.setenv("CARBUS_HOST_DIR", "/Users/igor/dev/canH/carbus-mac")      # docker-compose: ${PWD}
+    async def down(host, port, timeout):
+        raise BridgeDown("соединение отклонено")
+    snap = await discover({"bridge_host": "host.docker.internal", "bridge_port": 7070}, scan=lambda: [],
+                          listing=down, container=True)
+    assert snap["bridge"]["project_dir"] == "/Users/igor/dev/canH/carbus-mac"
+    assert snap["bridge"]["command"] == "cd /Users/igor/dev/canH/carbus-mac && ./run-bridge.sh 7070"
+
+
+async def test_container_started_without_the_project_offers_to_fetch_it(monkeypatch):
+    monkeypatch.delenv("CARBUS_HOST_DIR", raising=False)
+    snap = await discover(CFG, scan=lambda: [], listing=listing(exc=BridgeDown("соединение отклонено")),
+                          container=True)
+    assert snap["bridge"]["project_dir"] == ""
+    assert "git clone https://github.com/Scryptor/CarBusMac.git" in snap["bridge"]["command"]

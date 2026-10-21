@@ -236,6 +236,58 @@ test("no device and the bridge is down: the server's hint is shown and «Доп�
   expect(document.activeElement).toBe(field("Адрес моста"));
 });
 
+const NO_BRIDGE = {
+  state: "down" as const,
+  address: "host.docker.internal:7000",
+  message: "Connection refused",
+  project_dir: "/Users/igor/dev/canH/carbus-mac",
+  command: "cd /Users/igor/dev/canH/carbus-mac && ./run-bridge.sh",
+};
+const help = () => within(screen.getByRole("note", { name: "Что сделать" }));
+
+test("Docker without the bridge: the dialog says what to do and copies the command for the Terminal", async () => {
+  const writeText = vi.fn(() => Promise.resolve());
+  Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+  store.devices.value = snapshot([], { bridge: NO_BRIDGE, hint: "Мост не запущен (host.docker.internal:7000)." });
+  render(<ConnectDialog onClose={vi.fn()} />);
+  expect(help().getByText(/Откройте Терминал/)).toBeTruthy();
+  expect(help().getByText(NO_BRIDGE.command)).toBeTruthy();
+  expect(help().getByText(/Не закрывайте окно Терминала/)).toBeTruthy();
+  fireEvent.click(help().getByRole("button", { name: "Копировать" }));
+  await waitFor(() => expect(writeText).toHaveBeenCalledWith(NO_BRIDGE.command));
+});
+
+test("with the bridge help shown «Дополнительно» stays folded: the address is not the problem", () => {
+  store.devices.value = snapshot([], { bridge: NO_BRIDGE, hint: "Мост не запущен (host.docker.internal:7000). Запустите на маке ./run-bridge.sh — прибор появится здесь сам." });
+  render(<ConnectDialog onClose={vi.fn()} />);
+  expect(screen.getByRole("status").textContent).toBe("Мост не запущен");
+  expect(more().open).toBe(false);
+});
+
+test("a container started without the project folder: the command fetches the project from GitHub", () => {
+  const clone = "[ -d ~/CarBusMac ] || git clone https://github.com/Scryptor/CarBusMac.git ~/CarBusMac; cd ~/CarBusMac && ./run-bridge.sh";
+  store.devices.value = snapshot([], { bridge: { ...NO_BRIDGE, project_dir: "", command: clone } });
+  render(<ConnectDialog onClose={vi.fn()} />);
+  expect(help().getByText(clone)).toBeTruthy();
+  expect(help().getByText(/скачает проект с GitHub/)).toBeTruthy();
+});
+
+test("the bridge works but CAN-Hacker is not on USB: the dialog asks to plug it in", () => {
+  store.devices.value = snapshot([MONITOR]);
+  render(<ConnectDialog onClose={vi.fn()} />);
+  expect(help().getByText(/Подключите CAN-Hacker к USB/)).toBeTruthy();
+  expect(help().queryByRole("button", { name: "Копировать" })).toBeNull();
+});
+
+test("the help goes away as soon as the started bridge brings the device", () => {
+  store.devices.value = snapshot([], { bridge: NO_BRIDGE });
+  render(<ConnectDialog onClose={vi.fn()} />);
+  expect(screen.getByRole("note", { name: "Что сделать" })).toBeTruthy();
+  act(() => applyEvent({ type: "devices", ...snapshot([HACKER]) }));
+  expect(screen.queryByRole("note", { name: "Что сделать" })).toBeNull();
+  expect(deviceSelect().value).toBe(HACKER.key);
+});
+
 test("«Дополнительно» opens by itself when the bridge stops answering while the dialog is open", () => {
   store.devices.value = snapshot([HACKER]);
   render(<ConnectDialog onClose={vi.fn()} />);

@@ -1,5 +1,7 @@
 # Сборка фронта (Vite) → статика, затем бэкенд на Python 3.12 отдаёт её и WS.
-FROM node:22-alpine AS frontend
+# Статика от платформы не зависит: когда образ собирается сразу под Intel и Apple Silicon,
+# фронт собирается один раз — на платформе сборщика, без эмуляции.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS frontend
 WORKDIR /fe
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci

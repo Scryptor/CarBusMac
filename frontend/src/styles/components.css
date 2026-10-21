@@ -428,6 +428,44 @@ select.inp {
 .dev-more > p {
   margin: 8px 0 0;
 }
+/* «Что сделать», когда прибора нет: шаги и команда для Терминала */
+.dev-help {
+  margin-top: 10px;
+  padding: 9px 12px 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.dev-help-title {
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.dev-help p,
+.dev-help ol {
+  margin: 0;
+}
+.dev-help ol {
+  display: grid;
+  gap: 6px;
+  padding-left: 20px;
+}
+.dev-cmd-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 2px;
+}
+.dev-cmd {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: 12px/1.45 var(--grid-font);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
 .dev-channels {
   display: grid;
   grid-template-columns: 1fr 1fr;

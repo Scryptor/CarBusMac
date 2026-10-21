@@ -130,6 +130,10 @@ export interface BridgeInfo {
   address: string;
   /** подробность ошибки, может быть "" */
   message: string;
+  /** папка проекта на маке, из которой подняли контейнер; "" — неизвестна */
+  project_dir?: string;
+  /** команда для Терминала мака, запускающая мост (из project_dir или скачав проект с GitHub) */
+  command?: string;
 }
 
 /** Снимок найденных приборов: событие `devices`, `hello.devices` и ответ `devices_scan`. */

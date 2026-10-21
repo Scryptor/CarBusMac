@@ -16,6 +16,7 @@ import {
   parseBridge,
   pickDevice,
   selectableDevices,
+  setupHelp,
 } from "../src/features/device/deviceModel";
 
 const custom: CustomBitrate = {
@@ -239,6 +240,36 @@ test("bridgeUnreachable: the bridge is down or foreign and no device is found", 
   expect(bridgeUnreachable(snap([MONITOR], { bridge: { ...down, state: "foreign" } }))).toBe(true);
   expect(bridgeUnreachable(snap([COMPAT], { bridge: down }))).toBe(false); // USB в контейнере работает и без моста
   expect(bridgeUnreachable(snap([]))).toBe(false);
+});
+
+const RUN = "cd /Users/igor/dev/canH/carbus-mac && ./run-bridge.sh";
+const CLONE = "[ -d ~/CarBusMac ] || git clone https://github.com/Scryptor/CarBusMac.git ~/CarBusMac; cd ~/CarBusMac && ./run-bridge.sh";
+const noBridge = { ...down, project_dir: "/Users/igor/dev/canH/carbus-mac", command: RUN };
+
+test("setupHelp: Docker without the bridge — start it with the server's command; the bridge without a device — plug it in", () => {
+  expect(setupHelp(snap([], { bridge: noBridge }))).toEqual({ kind: "bridge", command: RUN, fromGitHub: false });
+  expect(setupHelp(snap([MONITOR], { bridge: { ...noBridge, state: "foreign" } }))).toEqual({ kind: "bridge", command: RUN, fromGitHub: false });
+  // контейнер запущен из образа без папки проекта — команда сама скачает проект
+  expect(setupHelp(snap([], { bridge: { ...down, project_dir: "", command: CLONE } }))).toEqual({ kind: "bridge", command: CLONE, fromGitHub: true });
+  expect(setupHelp(snap([]))).toEqual({ kind: "plug" });
+  expect(setupHelp(snap([MONITOR]))).toEqual({ kind: "plug" });
+});
+
+test("deviceStatus: with the bridge help below, the line only names the reason instead of repeating the server's hint", () => {
+  const hint = "Мост не запущен (host.docker.internal:7000). Запустите на маке ./run-bridge.sh — прибор появится здесь сам.";
+  expect(deviceStatus(snap([], { bridge: noBridge, hint }), "", "", "")).toEqual({ tone: "err", text: "Мост не запущен" });
+  expect(deviceStatus(snap([], { bridge: { ...noBridge, state: "foreign" }, hint }), "", "", "")).toEqual({
+    tone: "err",
+    text: "Мост не отвечает: на его порту другая программа (обычно «Приёмник AirPlay»)",
+  });
+});
+
+test("setupHelp is silent with a device, while searching, outside Docker and without a command", () => {
+  expect(setupHelp(snap([HACKER]))).toBeNull();
+  expect(setupHelp(snap([COMPAT], { bridge: noBridge }))).toBeNull(); // USB в контейнере работает и без моста
+  expect(setupHelp(snap([], { bridge: { state: "unknown", address: "", message: "" } }))).toBeNull();
+  expect(setupHelp(snap([], { bridge: noBridge, usb: { state: "ok", in_container: false } }))).toBeNull(); // бэкенд без Docker видит USB сам
+  expect(setupHelp(snap([], { bridge: down }))).toBeNull(); // сервер не прислал команду — показывать нечего
 });
 
 test("asDevicesState accepts only a snapshot with a device list", () => {

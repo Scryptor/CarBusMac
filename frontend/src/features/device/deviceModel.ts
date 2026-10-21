@@ -100,6 +100,8 @@ export function deviceStatus(snap: DevicesState, choice: string, picked: string,
   const list = selectableDevices(snap);
   if (snap.bridge.state === "unknown" && !snap.devices.length) return { tone: "idle", text: d.searching };
   if (choice && !list.some((x) => x.key === choice)) return { tone: "warn", text: d.pickedGone };
+  // под строкой — «Что сделать» с командой запуска моста: строка только называет причину
+  if (setupHelp(snap)?.kind === "bridge") return { tone: "err", text: snap.bridge.state === "foreign" ? d.bridgeForeign : d.bridgeDown };
   if (!list.length) return { tone: "err", text: snap.hint || d.notFound };
   if (list.length === 1) return { tone: "ok", text: list[0].key === connected ? d.foundConnected : d.foundOne };
   return picked ? { tone: "ok", text: d.foundMany(list.length) } : { tone: "warn", text: d.foundPick(list.length) };
@@ -108,6 +110,21 @@ export function deviceStatus(snap: DevicesState, choice: string, picked: string,
 /** Мост не отвечает (или по адресу отвечает не он), а приборов нет — адрес мог быть неверным. */
 export function bridgeUnreachable(snap: DevicesState): boolean {
   return (snap.bridge.state === "down" || snap.bridge.state === "foreign") && !selectableDevices(snap).length;
+}
+
+export type SetupHelp = { kind: "bridge"; command: string; fromGitHub: boolean } | { kind: "plug" };
+
+/** Блок «Что сделать», когда прибора нет: в Docker без моста — запустить мост командой от
+ * сервера (fromGitHub — папка проекта неизвестна, команда скачает его); мост отвечает, а
+ * прибора нет — вставить его в USB. null — подсказывать нечего: прибор найден, идёт поиск
+ * или бэкенд без Docker видит USB сам. */
+export function setupHelp(snap: DevicesState): SetupHelp | null {
+  if (selectableDevices(snap).length) return null;
+  const { state, command, project_dir } = snap.bridge;
+  if (state === "down" || state === "foreign") {
+    return snap.usb.in_container && command ? { kind: "bridge", command, fromGitHub: !project_dir } : null;
+  }
+  return state === "ok" ? { kind: "plug" } : null;
 }
 
 /** Ответ `devices_scan`: снимок, если в нём есть список приборов; иначе null. */

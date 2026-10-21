@@ -25,6 +25,8 @@ import {
   parseBridge,
   pickDevice,
   selectableDevices,
+  setupHelp,
+  type SetupHelp,
 } from "./deviceModel";
 
 const DEFAULT_CLOCK_HZ = 120_000_000;
@@ -151,6 +153,42 @@ function ChannelGroup({ ch, customs, terminatorOk, onChange, onConfigure }: {
   );
 }
 
+/** «Что сделать», когда прибора нет: шаги для Терминала с командой запуска моста или просьба
+ * вставить прибор в USB. Пропадает сам, как только прибор появился в списке. */
+function SetupHelpBox({ help }: { help: SetupHelp }) {
+  const h = t.device.help;
+  const copy = (command: string) =>
+    navigator.clipboard
+      .writeText(command)
+      .then(() => pushToast("info", t.device.copied))
+      .catch((e: Error) => pushToast("error", e.message));
+  return (
+    <div class="dev-help" role="note" aria-labelledby="dev-help-title">
+      <div class="dev-help-title" id="dev-help-title">
+        {h.title}
+      </div>
+      {help.kind === "plug" ? (
+        <p>{h.plug}</p>
+      ) : (
+        <ol>
+          <li>{h.terminal}</li>
+          <li>
+            {h.paste}
+            <div class="dev-cmd-row">
+              <code class="dev-cmd">{help.command}</code>
+              <button type="button" class="btn small" onClick={() => copy(help.command)}>
+                {t.device.copy}
+              </button>
+            </div>
+            {help.fromGitHub ? <div class="muted">{h.fromGitHub}</div> : null}
+          </li>
+          <li>{h.keepOpen}</li>
+        </ol>
+      )}
+    </div>
+  );
+}
+
 export function ConnectDialog({ onClose = closeDialog }: { onClose?: () => void }) {
   const conn = store.connection.value ?? DEFAULT_CONNECTION;
   const st = store.status.value;
@@ -160,7 +198,9 @@ export function ConnectDialog({ onClose = closeDialog }: { onClose?: () => void 
   // прибор, выбранный в этом окне ("" — пользователь не выбирал)
   const [choice, setChoice] = useState("");
   const snap = useDevicesScan(host, port) ?? store.devices.value;
-  const unreachable = bridgeUnreachable(snap);
+  const help = setupHelp(snap);
+  // с командой запуска моста в «Что сделать» дело не в адресе — «Дополнительно» не раскрываем
+  const unreachable = bridgeUnreachable(snap) && help?.kind !== "bridge";
   const [more, setMore] = useState(unreachable);
   const [chans, setChans] = useState<ChannelConfig[]>(() =>
     [1, 2].map((n) => ({ ...defaultChannel(n), ...conn.channels.find((c) => c.channel === n) })),
@@ -262,6 +302,7 @@ export function ConnectDialog({ onClose = closeDialog }: { onClose?: () => void 
             <span>{status.text}</span>
           </div>
         </div>
+        {help ? <SetupHelpBox help={help} /> : null}
         {st.state === "opened" && st.device_info && !st.device ? (
           <div class="muted" style={{ marginTop: "8px" }}>
             {`${t.device.connectedDevice}: ${deviceText(st.device_info)}`}
