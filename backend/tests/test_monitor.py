@@ -57,7 +57,7 @@ def test_stable_ms_measures_time_before_change():
     m.update(CanFrame(1, 0x10, b"\x00\x00", timestamp=5.0))
     m.update(CanFrame(1, 0x10, b"\x01\x00", timestamp=7.0))
     r = m.snapshot_delta()[0]
-    assert r.changed_mask == 0b11  # первый снапшот: все байты новые
+    assert r.changed_mask == 0b01  # первый снапшот: отличие от первого значения, а не «всё новое»
     m.update(CanFrame(1, 0x10, b"\x02\x00", timestamp=7.5))
     r = m.snapshot_delta()[0]
     assert r.changed_mask == 0b01 and r.stable_ms[0] == pytest.approx(500.0)
@@ -105,3 +105,13 @@ def test_row_flags_and_dict_keys():
     assert d["rtr"] is True and d["fd"] is False and d["ch"] == 2
     assert set(d) == {"ch", "id", "ext", "rtr", "fd", "brs", "dlc", "data", "count",
                       "period_ms", "changed", "stable_ms", "fc", "ts"}
+
+
+def test_a_new_message_does_not_light_up_entirely():
+    """Новый ID (и всё после «Сбросить полученные данные») не горит целиком: иначе настоящее
+    изменение в первые секунды не разглядеть."""
+    m = MonitorState()
+    m.update(CanFrame(1, 0x12, b"\x01\x02\x03"))
+    assert m.snapshot_delta()[0].changed_mask == 0
+    m.update(CanFrame(1, 0x12, b"\x01\x09\x03"))
+    assert m.snapshot_delta()[0].changed_mask == 0b010

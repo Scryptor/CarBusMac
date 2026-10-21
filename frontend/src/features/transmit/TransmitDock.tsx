@@ -2,7 +2,7 @@
  * редактор выделенной задачи (правка сразу уходит на сервер), строка триггера,
  * кнопки Послать/Добавить/Старт-Пауза/Копировать/Удалить и контекстное меню. */
 import { signal } from "@preact/signals";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
 import { cmd } from "../../core/client";
 import { fmtData, fmtFlags, fmtId } from "../../core/format";
 import { pushToast, store } from "../../core/store";
@@ -13,13 +13,21 @@ import { ByteCells, Check, Select, TextInput } from "../../ui/Fields";
 import type { MenuItem } from "../../ui/Menu";
 import { Selection } from "../../ui/grid/selection";
 import { VirtualGrid, type Column } from "../../ui/grid/VirtualGrid";
-import { FieldError, fillData, newTask, nextTaskId, parseTaskForm, taskToForm, type TaskForm } from "./txModel";
+import { EMPTY8, FieldError, fillData, newTask, nextTaskId, parseTaskForm, taskToForm, type TaskForm } from "./txModel";
 
 /** id выделенной задачи — общий для дока, контекстного меню и действий. */
 export const txSelected = signal<string | null>(null);
 
-/** Операции редактора (досохраняют правку перед командой) — для меню и хоткеев. */
-export const txApi: { send?: () => void; runPause?: () => void; add?: () => void; copy?: () => void; del?: () => void } = {};
+/** Операции редактора (досохраняют правку перед командой) — для меню, хоткеев и таблицы. */
+export const txApi: {
+  send?: () => void;
+  runPause?: () => void;
+  add?: () => void;
+  copy?: () => void;
+  del?: () => void;
+  /** отправить отложенную правку сейчас */
+  flush?: () => Promise<void>;
+} = {};
 
 const toastErr = (e: Error) => pushToast("error", e.message);
 
@@ -55,7 +63,6 @@ function sameContent(a: TxTaskJson, b: TxTaskJson): boolean {
 }
 
 function TaskGrid({ tasks }: { tasks: TxTaskJson[] }) {
-  const hex = store.settings.value.monitor_hex_ids;
   const sel = useMemo(() => new Selection(), []);
   const idx = tasks.findIndex((x) => x.id === txSelected.value);
   if (idx < 0) sel.clear();
@@ -74,7 +81,16 @@ function TaskGrid({ tasks }: { tasks: TxTaskJson[] }) {
           aria-label={`${t.tx.startPause} ${fmtId(r.can_id, r.ext, true)}`}
           checked={r.running}
           onMouseDown={(e) => e.stopPropagation()}
-          onChange={() => cmd(r.running ? "tx_pause" : "tx_start", { id: r.id }).catch(toastErr)}
+          onChange={(e) => {
+            const box = e.currentTarget as HTMLInputElement;
+            void (txApi.flush?.() ?? Promise.resolve())
+              .then(() => cmd(r.running ? "tx_pause" : "tx_start", { id: r.id }))
+              .catch((err: Error) => {
+                // не запустилась (нет подключения) — флажок показывает то, что на самом деле
+                box.checked = store.tasks.value.find((x) => x.id === r.id)?.running ?? false;
+                toastErr(err);
+              });
+          }}
         />
       ),
     },
@@ -90,9 +106,16 @@ function TaskGrid({ tasks }: { tasks: TxTaskJson[] }) {
         </span>
       ),
     },
-    { key: "id", title: t.col.id, width: 96, align: "right", render: (r) => fmtId(r.can_id, r.ext, hex) },
+    // ID — всегда HEX, как в редакторе (и в десктопе): с выключенным в мониторе «ID сообщения
+    // в HEX» одно и то же число стояло бы в таблице в DEC, а в редакторе в HEX
+    { key: "id", title: t.col.id, width: 96, align: "right", render: (r) => fmtId(r.can_id, r.ext, true) },
     { key: "dlc", title: t.col.dlc, width: 48, align: "center", render: (r) => r.data.length / 2 },
-    { key: "data", title: t.col.data, width: 222, render: (r) => fmtData(r.data).map((b) => <span class="byte">{b}</span>) },
+    {
+      key: "data",
+      title: t.col.data,
+      width: 222,
+      render: (r) => (r.rtr ? null : fmtData(r.data).map((b) => <span class="byte">{b}</span>)), // у RTR данных нет
+    },
     { key: "period", title: t.col.period, width: 84, align: "right", render: (r) => r.period_ms },
     { key: "count", title: t.col.count, width: 84, align: "right", render: (r) => r.count },
     { key: "comment", title: t.col.comment, width: 200, fill: true, render: (r) => r.comment },
@@ -115,7 +138,13 @@ function TaskGrid({ tasks }: { tasks: TxTaskJson[] }) {
         if (i != null && tasks[i]) txSelected.value = tasks[i].id;
         openContextMenu(e.clientX, e.clientY, txMenu());
       }}
-      onActivate={() => void cmd("tx_send", { id: txSelected.value }).catch(toastErr)}
+      onActivate={() => (txApi.send ? txApi.send() : void cmd("tx_send", { id: txSelected.value }).catch(toastErr))}
+      onKey={(e) => {
+        if (e.key !== "Escape" || txSelected.value == null) return false;
+        txSelected.value = null;            // Esc снимает выделение — редактор становится черновиком
+        e.preventDefault();
+        return true;
+      }}
       emptyText={t.tx.empty}
     />
   );
@@ -131,25 +160,61 @@ const TRIG_CH = [
   { value: "2", label: "2" },
 ];
 const ACTIONS = (["none", "single", "start", "stop"] as const).map((a) => ({ value: a, label: t.tx.actions[a] }));
+/** Поле ID — под 8 цифр 29-битного ID и при 11-битном: «29 bit» не сдвигает строку. */
+const ID_WIDTH = 96;
+/** Ячейки данных RTR: данных нет — пустые и заблокированы (DLC при этом есть). */
+const NO_DATA = EMPTY8();
 
 function Editor({ tasks }: { tasks: TxTaskJson[] }) {
   const current = tasks.find((x) => x.id === txSelected.value) ?? null;
+  const curId = current?.id ?? null;
   const draftRef = useRef<TxTaskJson>(newTask(nextTaskId(tasks)));
   const base = current ?? draftRef.current;
-  const [form, setForm] = useState<TaskForm>(() => taskToForm(base));
+  /** Поля формы вместе с id задачи, которой они принадлежат (null — черновик). Пока форма не
+   * перезагружена после смены выделения, показываются и правятся поля выделенной задачи, а не
+   * прежней: change() не смешает форму одной задачи с id другой. */
+  const [edit, setEdit] = useState(() => ({ id: curId, form: taskToForm(base) }));
+  const form = edit.id === curId ? edit.form : taskToForm(base);
+  const setForm = (f: TaskForm) => setEdit({ id: curId, form: f });
   const [bad, setBad] = useState<{ field: string; msg: string } | null>(null);
   const [fillValue, setFillValue] = useState("00");
   const dirty = useRef(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const loadedFor = useRef<string | null>(current?.id ?? null);
+  /** Отложенная правка: какая задача и с каким содержимым уйдёт на сервер через 300 мс после
+   * последнего ввода. Хранится вместе с id — правка не теряется при смене выделения и не
+   * достаётся другой задаче. */
+  const pending = useRef<{ task: TxTaskJson; timer: ReturnType<typeof setTimeout> } | null>(null);
+  const loadedFor = useRef<string | null>(curId);
+
+  /** Отправить отложенную правку сейчас. */
+  const flush = async () => {
+    const p = pending.current;
+    if (!p) return;
+    clearTimeout(p.timer);
+    pending.current = null;
+    await cmd("tx_upsert", { task: p.task });
+    if (loadedFor.current === p.task.id && !pending.current) dirty.current = false;
+  };
+
+  /** Перед действием над задачей формы: отложенную правку другой задачи — отправить, своей —
+   * снять (форма уйдёт целиком). */
+  const settle = async () => {
+    const p = pending.current;
+    if (!p) return;
+    if (p.task.id !== current?.id) return flush();
+    clearTimeout(p.timer);
+    pending.current = null;
+  };
 
   // Смена выделения или изменение задачи с сервера (загрузка списка) — перезагрузить форму.
-  useEffect(() => {
-    if (current?.id !== loadedFor.current) {
-      loadedFor.current = current?.id ?? null;
+  // Layout-эффект — сразу после отрисовки, до следующего ввода: обычный эффект выполнялся
+  // после кадра, и правка в эти 20–50 мс уходила выделенной задаче с полями прежней.
+  useLayoutEffect(() => {
+    if (curId !== loadedFor.current) {
+      void flush().catch(toastErr); // правка прежней задачи уходит, а не теряется
+      loadedFor.current = curId;
       dirty.current = false;
       setBad(null);
-      setForm(taskToForm(current ?? draftRef.current));
+      setForm(taskToForm(base));
       return;
     }
     if (current && !dirty.current) {
@@ -174,7 +239,9 @@ function Editor({ tasks }: { tasks: TxTaskJson[] }) {
 
   const upsert = async (task: TxTaskJson) => {
     await cmd("tx_upsert", { task });
-    dirty.current = false;
+    // пока ждали ответ, могли напечатать ещё — тогда форма остаётся «изменённой»,
+    // иначе эхо сервера со старым содержимым откатило бы поля
+    if (!pending.current) dirty.current = false;
     if (!current) {
       loadedFor.current = task.id;
       txSelected.value = task.id;
@@ -186,28 +253,37 @@ function Editor({ tasks }: { tasks: TxTaskJson[] }) {
     const f = { ...form, ...patch };
     setForm(f);
     dirty.current = true;
-    if (timer.current) clearTimeout(timer.current);
+    void settle().catch(toastErr);          // новая правка этой задачи заменяет отложенную
     const task = submit(f);
     if (!task || !current) return;          // черновик сохраняется по «Послать»/«Добавить»
-    timer.current = setTimeout(() => void upsert(task).catch(toastErr), 300);
+    pending.current = { task, timer: setTimeout(() => void flush().catch(toastErr), 300) };
   };
 
-  /** Сначала досохранить правку, потом выполнить команду над задачей. */
-  const withTask = async (fn: (id: string) => Promise<unknown>) => {
-    if (timer.current) clearTimeout(timer.current);
+  /** Сначала досохранить правку, потом выполнить команду над задачей формы. */
+  const withTask = async (fn: (task: TxTaskJson) => Promise<unknown>) => {
+    await settle();
     const task = submit(form);
     if (!task) return;
     if (dirty.current || !current) await upsert(task);
-    await fn(task.id);
+    await fn(task);
   };
 
-  const send = () => void withTask((id) => cmd("tx_send", { id })).catch(toastErr);
-  const runPause = () =>
-    void withTask((id) => cmd(current?.running ? "tx_pause" : "tx_start", { id })).catch(toastErr);
+  const send = () => void withTask((x) => cmd("tx_send", { id: x.id })).catch(toastErr);
+  const runPause = () => {
+    if (!current) return;                   // цикл — только у выделенной задачи; черновик не запускаем
+    void withTask((x) => cmd(current.running ? "tx_pause" : "tx_start", { id: x.id })).catch(toastErr);
+  };
+  /** «Добавить» — новая пустая задача, как в десктопе (копия выделенной — «Копировать»);
+   * без выделения — задача из черновика. */
   const add = () => {
-    const parsed = submit(form);
-    const task = { ...(parsed ?? newTask("")), id: nextTaskId(tasks), running: false, count: 0 };
-    void cmd("tx_upsert", { task })
+    let task = newTask(nextTaskId(tasks));
+    if (!current) {
+      const parsed = submit(form);
+      if (!parsed) return;                  // ошибка в черновике показана — нулевую задачу не добавляем
+      task = { ...parsed, id: task.id, running: false, count: 0 };
+    }
+    void flush()                            // правка выделенной задачи уходит, как ушла бы через 300 мс
+      .then(() => cmd("tx_upsert", { task }))
       .then(() => {
         txSelected.value = task.id;
       })
@@ -215,17 +291,26 @@ function Editor({ tasks }: { tasks: TxTaskJson[] }) {
   };
   const copy = () => {
     if (!current) return;
-    const task = { ...current, id: nextTaskId(tasks), running: false, count: 0 };
-    void cmd("tx_upsert", { task }).then(() => (txSelected.value = task.id)).catch(toastErr);
+    // копия — того, что в редакторе (с несохранённой правкой), а не последнего сохранённого
+    void withTask(async (x) => {
+      const task = { ...x, id: nextTaskId(tasks), running: false, count: 0 };
+      await cmd("tx_upsert", { task });
+      txSelected.value = task.id;
+    }).catch(toastErr);
   };
   const del = () => {
     if (!current) return;
+    const p = pending.current;
+    if (p?.task.id === current.id) {        // отложенная правка не должна воскресить удалённую задачу
+      clearTimeout(p.timer);
+      pending.current = null;
+    }
     const i = tasks.findIndex((x) => x.id === current.id);
     const next = tasks[i + 1] ?? tasks[i - 1] ?? null;
     void cmd("tx_delete", { id: current.id }).then(() => (txSelected.value = next?.id ?? null)).catch(toastErr);
   };
 
-  Object.assign(txApi, { send, runPause, add, copy, del });
+  Object.assign(txApi, { send, runPause, add, copy, del, flush });
   useEffect(
     () => () => {
       for (const k of Object.keys(txApi)) delete txApi[k as keyof typeof txApi];
@@ -233,10 +318,21 @@ function Editor({ tasks }: { tasks: TxTaskJson[] }) {
     [],
   );
 
+  /** «Значение» + «Заполнить»: ошибку показывает само поле «Значение». */
+  const fill = () => {
+    try {
+      change({ data: fillData(fillValue, 8) });
+    } catch (e) {
+      setBad({ field: "value", msg: `${t.tx.value}: ${(e as Error).message}` });
+    }
+  };
+
   const err = (field: string) => bad?.field === field;
   const dlc = Number(form.dlc) || 0;
+  const trigDlc = form.trigDlc.trim() === "" ? 8 : Number(form.trigDlc) || 0; // пустой DLC триггера — любой
   const keyEnter = (e: KeyboardEvent) => {
-    if (e.key === "Enter" && !(e.target instanceof HTMLButtonElement)) {
+    // Enter — «Послать»; поле со своим Enter («Значение» — «Заполнить») уже обработало его
+    if (e.key === "Enter" && !e.defaultPrevented && !(e.target instanceof HTMLButtonElement)) {
       e.preventDefault();
       send();
     }
@@ -252,7 +348,7 @@ function Editor({ tasks }: { tasks: TxTaskJson[] }) {
           </label>
           <label class="field">
             <span>{t.tx.id}</span>
-            <TextInput value={form.id} onChange={(v) => change({ id: v.toUpperCase() })} width={form.ext ? 96 : 64} mono invalid={err("id")} label={t.tx.id} maxLength={8} />
+            <TextInput value={form.id} onChange={(v) => change({ id: v.toUpperCase() })} width={ID_WIDTH} mono invalid={err("id")} label={t.tx.id} maxLength={8} />
           </label>
           <label class="field">
             <span>{t.tx.dlc}</span>
@@ -260,7 +356,13 @@ function Editor({ tasks }: { tasks: TxTaskJson[] }) {
           </label>
           <span class="field">
             <span>{t.tx.data}</span>
-            <ByteCells count={8} active={dlc} value={form.data} onChange={(v) => change({ data: v })} label={t.tx.data} />
+            <ByteCells
+              count={8}
+              active={form.rtr ? 0 : dlc}
+              value={form.rtr ? NO_DATA : form.data}
+              onChange={(v) => change({ data: v })}
+              label={t.tx.data}
+            />
           </span>
           <label class="field grow">
             <span>{t.tx.comment}</span>
@@ -276,20 +378,22 @@ function Editor({ tasks }: { tasks: TxTaskJson[] }) {
           </label>
           <label class="field">
             <span>{t.tx.value}</span>
-            <TextInput value={fillValue} onChange={setFillValue} width={40} mono label={t.tx.value} maxLength={2} />
+            <TextInput
+              value={fillValue}
+              onChange={(v) => {
+                setFillValue(v);
+                if (bad?.field === "value") setBad(null);
+              }}
+              onEnter={fill}
+              width={40}
+              mono
+              invalid={err("value")}
+              label={t.tx.value}
+              maxLength={2}
+              disabled={form.rtr}
+            />
           </label>
-          <button
-            type="button"
-            class="btn small"
-            onClick={() => {
-              try {
-                const bytes = fillData(fillValue, 8);
-                change({ data: bytes });
-              } catch (e) {
-                setBad({ field: "data", msg: (e as Error).message });
-              }
-            }}
-          >
+          <button type="button" class="btn small" onClick={fill} disabled={form.rtr}>
             {t.tx.fill}
           </button>
           <span class="err-text tx-err" role="alert">
@@ -312,15 +416,22 @@ function Editor({ tasks }: { tasks: TxTaskJson[] }) {
             </span>
             <span class="field">
               <span>{t.tx.id}</span>
-              <TextInput value={form.trigId} onChange={(v) => change({ trigId: v.toUpperCase() })} width={84} mono invalid={err("trigId")} label={`${t.tx.trigger} ${t.tx.id}`} maxLength={8} />
+              <TextInput value={form.trigId} onChange={(v) => change({ trigId: v.toUpperCase() })} width={84} mono invalid={err("trigId")} label={t.tx.trig(t.tx.id)} maxLength={8} />
             </span>
             <span class="field">
               <span>{t.tx.dlc}</span>
-              <TextInput value={form.trigDlc} onChange={(v) => change({ trigDlc: v })} width={34} mono invalid={err("trigDlc")} label={`${t.tx.trigger} ${t.tx.dlc}`} maxLength={1} />
+              <TextInput value={form.trigDlc} onChange={(v) => change({ trigDlc: v })} width={34} mono invalid={err("trigDlc")} label={t.tx.trig(t.tx.dlc)} maxLength={1} />
             </span>
             <span class="field">
               <span>{t.tx.data}</span>
-              <ByteCells count={8} allowEmpty value={form.trigData} onChange={(v) => change({ trigData: v })} label={`${t.tx.trigger} ${t.tx.data}`} />
+              <ByteCells
+                count={8}
+                allowEmpty
+                active={trigDlc}
+                value={form.trigData}
+                onChange={(v) => change({ trigData: v })}
+                label={t.tx.trig(t.tx.data)}
+              />
             </span>
           </fieldset>
         </div>
@@ -332,7 +443,7 @@ function Editor({ tasks }: { tasks: TxTaskJson[] }) {
         <button type="button" class="btn" onClick={add}>
           {t.tx.add}
         </button>
-        <button type="button" class="btn" onClick={runPause}>
+        <button type="button" class="btn" onClick={runPause} disabled={!current}>
           {current?.running ? t.tx.pause : t.tx.start}
         </button>
         <button type="button" class="btn" onClick={copy} disabled={!current}>
@@ -345,6 +456,17 @@ function Editor({ tasks }: { tasks: TxTaskJson[] }) {
       </div>
     </div>
   );
+}
+
+/** Щелчок по пустому месту таблицы (ниже строк) снимает выделение — редактор становится
+ * черновиком. Строки, шапка и полоса прокрутки выделение не трогают. */
+function deselectOnBlank(e: MouseEvent) {
+  const el = e.target as HTMLElement;
+  if (e.button !== 0 || !el.matches(".grid, .grid-body")) return;
+  const grid = el.closest<HTMLElement>(".grid")!;
+  const box = grid.getBoundingClientRect();
+  if (e.clientX - box.left >= grid.clientWidth || e.clientY - box.top >= grid.clientHeight) return; // полоса прокрутки
+  txSelected.value = null;
 }
 
 export function TransmitDock() {
@@ -362,7 +484,7 @@ export function TransmitDock() {
           {running ? t.tx.running(running) : ""}
         </span>
       </div>
-      <div class="tx-grid">
+      <div class="tx-grid" onMouseDown={deselectOnBlank}>
         <TaskGrid tasks={tasks} />
       </div>
       <Editor tasks={tasks} />

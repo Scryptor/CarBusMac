@@ -17,6 +17,12 @@ export class BitHistory {
     this.prev = bytes.slice();
   }
 
+  /** Сообщение пропало (монитор очищен): следующие данные — снова «первые». */
+  reset(): void {
+    this.prev = null;
+    this.starts = [];
+  }
+
   start(byte: number, pos: number): number {
     return this.starts[byte]?.[pos] ?? -Infinity;
   }

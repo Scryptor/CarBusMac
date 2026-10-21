@@ -42,3 +42,16 @@ test("put of a short last page marks it complete up to total", () => {
   expect(c.missingPages(100, 130, 130)).toEqual([]);
   expect(c.missingPages(100, 160, 160)).toEqual([1]);
 });
+
+test("trimAround keeps a window around the visible rows once the cache grows big", () => {
+  const c = new StreamCache(100);
+  c.put(0, rows(0, 1000));
+  c.trimAround(500, 520); // небольшой кэш не трогаем
+  expect(c.size).toBe(1000);
+  c.put(0, rows(0, 30000));
+  c.trimAround(25000, 25050); // остаются видимые строки и по 10 страниц с каждой стороны
+  expect(c.size).toBe(25050 + 1000 - (25000 - 1000));
+  expect(c.get(25010)?.i).toBe(25010);
+  expect(c.get(23999)).toBeUndefined();
+  expect(c.get(0)).toBeUndefined();
+});

@@ -105,3 +105,55 @@ test("reconnects with backoff after close and rejects pending requests", async (
   vi.advanceTimersByTime(300);
   expect(FakeSocket.last).not.toBe(second);
 });
+
+// команды на CAN-шину: то, что пользователю уже показали как ошибку, не должно уйти позже
+test("a request made while connecting is sent once the socket opens", async () => {
+  const c = new WsClient("ws://x/ws", (u) => new FakeSocket(u) as unknown as WebSocket);
+  c.connect();
+  const s = FakeSocket.last!;
+  const p = c.request<{ n: number }>({ type: "early" });
+  expect(s.sent).toEqual([]);
+  s.open();
+  const m = JSON.parse(s.sent[0]);
+  expect(m.type).toBe("early");
+  s.recv({ type: "reply", req_id: m.req_id, ok: true, data: { n: 1 } });
+  await expect(p).resolves.toEqual({ n: 1 });
+});
+
+test("a request that timed out while connecting is not sent when the socket opens", async () => {
+  const c = new WsClient("ws://x/ws", (u) => new FakeSocket(u) as unknown as WebSocket);
+  c.connect();
+  const s = FakeSocket.last!;
+  const p = c.request({ type: "tx_send" }, 1000);
+  vi.advanceTimersByTime(1001);
+  await expect(p).rejects.toThrow(/время/);
+  s.open();
+  expect(s.sent).toEqual([]);
+});
+
+test("requests queued for a failed connection attempt are rejected and dropped", async () => {
+  const c = new WsClient("ws://x/ws", (u) => new FakeSocket(u) as unknown as WebSocket);
+  c.connect();
+  const s = FakeSocket.last!;
+  const p = c.request({ type: "tx_send" });
+  s.close(); // попытка подключения не удалась
+  await expect(p).rejects.toThrow(/связи/);
+  vi.advanceTimersByTime(260);
+  const s2 = FakeSocket.last!;
+  expect(s2).not.toBe(s);
+  s2.open();
+  expect(s2.sent).toEqual([]);
+});
+
+test("with no connection a request fails at once and is never sent after reconnect", async () => {
+  const { c, s } = client();
+  s.close(); // связь пропала; новая попытка — через паузу
+  const errors: string[] = [];
+  for (let k = 0; k < 3; k++) c.request({ type: "tx_send" }).catch((e: Error) => errors.push(e.message));
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(errors).toEqual(["Нет связи с сервером", "Нет связи с сервером", "Нет связи с сервером"]);
+  vi.advanceTimersByTime(260);
+  FakeSocket.last!.open();
+  expect(FakeSocket.last!.sent).toEqual([]);
+});

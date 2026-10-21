@@ -24,6 +24,15 @@ test("rangeWithExcludeList keeps masks of existing exclusions", () => {
   const next = rangeWithExcludeList(r, [0x120, 0x150]);
   expect(next.exclusions).toEqual([
     { enabled: false, can_id: 0x120, mask: 0x7f0 },
-    { enabled: true, can_id: 0x150, mask: 0x7ff },
+    { enabled: true, can_id: 0x150, mask: 0x1fffffff },
   ]);
+});
+
+test("an ID from the exclude list matches exactly: all 29 bits, so 18DAF110 is not excluded by 110", () => {
+  const next = rangeWithExcludeList(range, [0x110, 0x18daf1f1]);
+  expect(next.exclusions.map((e) => e.mask)).toEqual([0x1fffffff, 0x1fffffff]);
+  const [ex] = next.exclusions;
+  const excluded = (id: number) => (id & ex.mask) === (ex.can_id & ex.mask); // как SoftFilters.accept бэкенда
+  expect(excluded(0x110)).toBe(true);
+  expect(excluded(0x18daf110)).toBe(false);
 });

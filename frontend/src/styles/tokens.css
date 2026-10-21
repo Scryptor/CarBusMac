@@ -55,6 +55,36 @@
   --backdrop: rgba(0, 0, 0, 0.45);
 }
 
+/* Атрибута ещё нет (скрипт в index.html не сработал) — тёмная ОС получает тёмную тему.
+   Значения — копия блока выше: менять вместе. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --bg: #121519;
+    --panel: #1a1e24;
+    --panel-2: #20252c;
+    --line: #2b313a;
+    --line-strong: #3b434e;
+    --text: #e3e7ec;
+    --text-2: #a5aebb;
+    --text-3: #6f7884;
+    --accent: #5b9cff;
+    --accent-text: #0b1526;
+    --accent-weak: #1e3352;
+    --sel: #24406a;
+    --sel-text: #eef4ff;
+    --zebra: #1d2128;
+    --rec: #ff5c4f;
+    --ok: #43c27e;
+    --err: #ff6b5e;
+    --warn: #f0b440;
+    --ch1: #6aa8ff;
+    --ch2: #38c8b6;
+    --shadow: 0 10px 32px rgba(0, 0, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --backdrop: rgba(0, 0, 0, 0.45);
+  }
+}
+
 :root {
   --ui-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
   --grid-font: "SF Mono", Menlo, Monaco, "JetBrains Mono", Consolas, monospace;

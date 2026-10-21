@@ -76,3 +76,24 @@ def test_capture_append_200k_is_fast():
     for i in range(200_000):
         c.append(CanFrame(1, i & 0x7FF, b"\x01\x02\x03\x04\x05\x06\x07\x08", timestamp=i / 1e4))
     assert time.perf_counter() - t < 2.0 and c.frame(199_999).data[7] == 8
+
+
+def test_unique_frames_of_one_id_from_the_buffer():
+    """«Данные сообщения» в режиме потока: различные payload ID по буферу, со счётчиком и
+    последним периодом; прочее (другой канал, 29 бит, другой ID) не смешивается."""
+    from app.capture import Capture
+    from app.models import CanFrame
+
+    c = Capture()
+    c.start()
+    for k, (ch, can_id, ext, data) in enumerate([
+        (1, 0x200, False, b"\x01"), (1, 0x200, False, b"\x02"), (1, 0x200, False, b"\x01"),
+        (2, 0x200, False, b"\x01"), (1, 0x200, True, b"\x01"), (1, 0x201, False, b"\x01"),
+    ]):
+        c.append(CanFrame(ch, can_id, data, extended=ext, timestamp=10.0 + k * 0.5))
+    scan = c.unique_frames(1, 0x200, False)
+    c.append(CanFrame(1, 0x200, b"\x03", timestamp=20.0))     # пришло после снимка — не видно
+    rows = {r["data"]: r for r in scan()}
+    assert set(rows) == {"01", "02"}
+    assert rows["01"]["count"] == 2 and rows["01"]["period_ms"] == 1000.0
+    assert rows["02"]["count"] == 1 and rows["02"]["period_ms"] is None

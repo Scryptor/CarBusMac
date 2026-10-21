@@ -1,6 +1,7 @@
 /** «Добавить / Вставить / Отредактировать строку» отладчика (TdlgTracerRow десктопа без
- * DBC и LIN): сообщение (канал, ID, 29 bit, DLC), сырые данные, RTR, паузы перед и
- * после отправки строки (0–1000 мс), «Значение» + «Заполнить». */
+ * DBC и LIN), группы в его порядке: сообщение (канал, ID, 29 bit, DLC), флаги (RTR),
+ * опции — паузы перед и после отправки строки (0–1000 мс), «Значение» + «Заполнить», —
+ * и сырые данные. */
 import { useState } from "preact/hooks";
 import { closeDialog } from "../../app/ui";
 import { cmd } from "../../core/client";
@@ -9,6 +10,7 @@ import type { TracerRowJson } from "../../core/types";
 import { t } from "../../i18n/ru";
 import { Dialog } from "../../ui/Dialog";
 import { ByteCells, Check } from "../../ui/Fields";
+import { placeCursorAfter, type CursorReply } from "./tracerStore";
 
 export interface RowDraftJson {
   ch: number;
@@ -84,11 +86,18 @@ export function RowEditorDialog({ mode, base, onSubmit, onClose = closeDialog }:
     }
     const sent =
       mode === "edit"
-        ? cmd("tracer_row_edit", { pos: base!.pos, row })
+        ? cmd<CursorReply>("tracer_row_edit", { pos: base!.pos, row })
         : mode === "insert" && base
-          ? cmd("tracer_row_add", { row, after: base.pos })
-          : cmd("tracer_row_add", { row });
-    sent.then(onClose).catch((e: Error) => setErr(e.message));
+          ? cmd<CursorReply>("tracer_row_add", { row, after: base.pos })
+          : cmd<CursorReply>("tracer_row_add", { row });
+    sent
+      .then((d) => {
+        onClose();
+        // курсор — на вставленную строку; если она (или правленная) ушла под фильтр ID,
+        // сервер называет соседнюю
+        placeCursorAfter(d?.rev, d?.pos ?? (mode === "edit" ? null : base?.pos));
+      })
+      .catch((e: Error) => setErr(e.message));
   };
 
   return (
@@ -126,20 +135,20 @@ export function RowEditorDialog({ mode, base, onSubmit, onClose = closeDialog }:
               ))}
             </select>
           </label>
-          <Check checked={rtr} onChange={setRtr} label="RTR" />
         </div>
       </div>
-      <div class="group" role="group" aria-labelledby="tr-row-data">
-        <div class="group-title" id="tr-row-data">
-          {t.tracer.rawData}
+      <div class="group" role="group" aria-labelledby="tr-row-flags">
+        <div class="group-title" id="tr-row-flags">
+          {t.tracer.flags}
         </div>
-        <ByteCells count={8} value={bytes} onChange={setBytes} label={t.col.data} active={dlc} />
+        <Check checked={rtr} onChange={setRtr} label="RTR" />
       </div>
       <div class="group" role="group" aria-labelledby="tr-row-opt">
         <div class="group-title" id="tr-row-opt">
           {t.tracer.options}
         </div>
         <div class="inline-row wrap">
+          <span>{t.tracer.pauseMs}</span>
           <label class="field">
             <span>{t.tracer.before}</span>
             <input
@@ -162,7 +171,6 @@ export function RowEditorDialog({ mode, base, onSubmit, onClose = closeDialog }:
               onInput={(e) => setAfter((e.target as HTMLInputElement).value)}
             />
           </label>
-          <span class="muted">{t.common.ms}</span>
           <span class="tool-spacer" />
           <label class="field">
             <span>{t.tx.value}</span>
@@ -179,6 +187,12 @@ export function RowEditorDialog({ mode, base, onSubmit, onClose = closeDialog }:
             {t.tx.fill}
           </button>
         </div>
+      </div>
+      <div class="group" role="group" aria-labelledby="tr-row-data">
+        <div class="group-title" id="tr-row-data">
+          {t.tracer.rawData}
+        </div>
+        <ByteCells count={8} value={bytes} onChange={setBytes} label={t.col.data} active={dlc} />
       </div>
       <div class="err-line" role={err ? "alert" : undefined}>
         {err}

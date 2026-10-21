@@ -1,5 +1,5 @@
-/** Меню кнопки «Пауза между сообщениями» и «Точка назначения передачи»: как pmDelay и
- * pmTransmit окна отладчика десктопа. */
+/** Меню кнопки «Пауза между отправкой сообщений» и «Точка назначения передачи»: как pmDelay
+ * и pmTransmit окна отладчика десктопа. */
 import { openDialog } from "../../app/ui";
 import { cmd } from "../../core/client";
 import { pushToast, store } from "../../core/store";

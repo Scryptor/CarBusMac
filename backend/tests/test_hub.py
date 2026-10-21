@@ -20,8 +20,8 @@ class Env:
         self.sessions: list[FakeSession] = []
         self.calls: list[tuple] = []
 
-        def factory(host=None, port=None):
-            self.calls.append((host, port))
+        def factory(cfg=None, device=None):
+            self.calls.append((cfg["bridge_host"], cfg["bridge_port"], device))
             s = FakeSession(info=INFO, fail_connect=fail_connect, raise_on_frames=raise_on_frames)
             self.sessions.append(s)
             return s
@@ -67,8 +67,12 @@ CONNECT = {"bridge_host": "127.0.0.1", "bridge_port": 7000, "channels": [
      "terminator": False, "auto_open": False}]}
 
 
-def connect(ws):
-    r = call(ws, type="connect", config=CONNECT)
+# канал 1 без «Только слушать» — для проверок передачи
+CONNECT_TX = {**CONNECT, "channels": [{**CONNECT["channels"][0], "listen_only": False}, CONNECT["channels"][1]]}
+
+
+def connect(ws, config=CONNECT):
+    r = call(ws, type="connect", config=config)
     assert r["ok"], r
     return r
 
@@ -111,7 +115,7 @@ def test_connect_opens_channels_terminator_and_reports_status(tmp_path):
         connect(ws)
         st = recv_until(ws, lambda m: m["type"] == "status" and m["state"] == "opened")
         s = env.sessions[-1]
-        assert env.calls[-1] == ("127.0.0.1", 7000)
+        assert env.calls[-1] == ("127.0.0.1", 7000, None)       # без discover прибор не ищется
         assert s.channels == [(1, 500000, True)] and s.terminators == {1: True}
         assert st["channels"]["1"]["open"] and not st["channels"]["2"]["open"]
         assert st["device_info"]["hardware_name"] == "HW_CH32"
@@ -144,7 +148,7 @@ def test_reconnect_receives_hello_with_live_state(tmp_path):
     with TestClient(env.app) as client:
         with client.websocket_connect("/ws") as ws:
             ws.receive_json()
-            connect(ws)
+            connect(ws, CONNECT_TX)
             assert call(ws, type="capture_record", on=True)["ok"]
             assert call(ws, type="tx_upsert", task={"id": "t1", "can_id": 0x7E0, "data": "023e00",
                                                     "period_ms": 20})["ok"]
@@ -178,7 +182,7 @@ def test_tx_frames_enter_capture_as_tx(tmp_path):
     env = Env(tmp_path)
     with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
         ws.receive_json()
-        connect(ws)
+        connect(ws, CONNECT_TX)
         call(ws, type="capture_record", on=True)
         assert call(ws, type="tx_upsert", task={"id": "t", "can_id": 0x7E0, "data": "023e00"})["ok"]
         assert call(ws, type="tx_send", id="t")["ok"]
@@ -205,8 +209,8 @@ def test_capture_save_and_load_trc(tmp_path):
         assert text.startswith("@ TEXT @ 3") and "кнопка" in text
         call(ws, type="capture_clear")
         assert call(ws, type="capture_load", name="drive.trc")["ok"]
-        st = recv_until(ws, lambda m: m["type"] == "capture_state" and m["count"] == 3)
-        assert st["markers"][0]["label"] == "#1"
+        st = recv_until(ws, lambda m: m["type"] == "capture_state" and m.get("loaded") == "drive.trc")
+        assert st["count"] == 3 and st["markers"][0]["label"] == "#1" and st["dirty"] is False
 
 
 def test_capture_to_tracer_and_play_to_monitor(tmp_path):
@@ -249,12 +253,22 @@ def test_settings_persist_to_store(tmp_path):
         assert ws.receive_json()["settings"]["aggregator"] is True
 
 
-@pytest.mark.parametrize("name", ["../x.trc", "a/b.trc", ".hidden.trc", "x.exe"])
+@pytest.mark.parametrize("name", ["../x.trc", "a/b.trc", ".hidden.trc", "..", "a\\b.trc"])
 def test_capture_save_rejects_bad_names(tmp_path, name):
     env = Env(tmp_path)
     with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
         ws.receive_json()
         assert call(ws, type="capture_save", name=name, format="trc")["ok"] is False
+
+
+@pytest.mark.parametrize("name,saved", [("поездка 20.10.2026", "поездка 20.10.2026.trc"),
+                                        ("x.exe", "x.exe.trc"), ("a.jsonl", "a.jsonl")])
+def test_capture_save_adds_extension_to_dotted_names(tmp_path, name, saved):
+    env = Env(tmp_path)
+    with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        r = call(ws, type="capture_save", name=name, format="trc")
+        assert r["ok"] and r["data"]["name"] == saved and (env.traces / saved).exists()
 
 
 def test_desktop_cmt_and_tsk_files_load_and_save(tmp_path):
@@ -324,7 +338,7 @@ def _trace_with_ids(env, ws):
 def test_tracer_id_filter_hides_rows_and_commands_use_positions(tmp_path):
     env = Env(tmp_path)
     with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
-        hello = ws.receive_json()
+        ws.receive_json()
         _trace_with_ids(env, ws)
         st0 = recv_until(ws, lambda m: m["type"] == "tracer_state" and m["count"] == 4)
         assert st0["visible"] == 4 and st0["pos"] is None
@@ -377,7 +391,8 @@ def test_tracer_progress_is_coalesced_per_tick(tmp_path):
     hub = Hub(lambda *a: FakeSession(), JsonStore(tmp_path / "data"), tmp_path / "traces", tmp_path / "data")
     sink = Sink()
     hub.clients.add(sink)
-    progress = lambda: [m for m in sink.msgs if m["type"] == "tracer_progress"]
+    def progress():
+        return [m for m in sink.msgs if m["type"] == "tracer_progress"]
     for i in range(50):
         hub._player_progress(i, "playing")
     assert [m["current"] for m in progress()] == [0]
@@ -476,7 +491,7 @@ def test_log_autostart_toggle_while_connected(tmp_path):
         connect(ws)
         recv_until(ws, lambda m: m["type"] == "status" and m["state"] == "opened")
         assert call(ws, type="settings_set", patch={"log_autostart": True})["ok"]
-        st = recv_until(ws, lambda m: m["type"] == "status" and m.get("log"))
+        assert recv_until(ws, lambda m: m["type"] == "status" and m.get("log"))
         assert call(ws, type="settings_set", patch={"log_autostart": False})["ok"]
         assert recv_until(ws, lambda m: m["type"] == "status" and m["state"] == "opened" and m.get("log") is None)
 
@@ -507,3 +522,44 @@ def test_client_timezone_sets_local_time_for_logs(tmp_path):
         asyncio.run(hub._cmd_client_tz({"tz": "Mars/Olympus"}))
     again = Hub(lambda *a: FakeSession(), JsonStore(tmp_path / "data"), tmp_path / "traces", tmp_path / "data")
     assert again._local_now().utcoffset() == timedelta(hours=10)
+
+
+def test_tx_refused_on_closed_or_listen_only_channel(tmp_path):
+    """Прибор молча выбрасывает такие кадры — нельзя писать их в поток как отправленные."""
+    env = Env(tmp_path)
+    with TestClient(env.app) as client, client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        connect(ws)                                   # канал 1 — «Только слушать», канал 2 закрыт
+        call(ws, type="capture_record", on=True)
+        for ch in (1, 2):
+            assert call(ws, type="tx_upsert", task={"id": f"t{ch}", "channel": ch, "can_id": 0x7E0,
+                                                    "data": "023e00"})["ok"]
+        r1 = call(ws, type="tx_send", id="t1")
+        r2 = call(ws, type="tx_send", id="t2")
+        assert r1["ok"] is False and "Только слушать" in r1["error"]
+        assert r2["ok"] is False and "не открыт" in r2["error"]
+        assert env.sessions[-1].sent == []
+        assert call(ws, type="capture_rows", start=0, count=10)["data"]["rows"] == []
+
+
+def test_tx_and_rx_share_the_host_time_base(tmp_path):
+    """Кадр Tx получает время хоста, Rx — время, которое дала сессия (тоже шкала хоста):
+    ответ ЭБУ, пришедший после запроса, в потоке стоит после него."""
+    from app.hub import Hub
+    from app.store import JsonStore
+    import asyncio
+
+    clock = [1000.0]
+    hub = Hub(lambda *a: FakeSession(), JsonStore(tmp_path / "data"), tmp_path / "traces", tmp_path / "data",
+              clock=lambda: clock[0])
+    hub.session = FakeSession()
+    hub.channels = {1: {"open": True, "listen_only": False}}
+    hub.capture.start()
+
+    async def run():
+        await hub._tx_send(CanFrame(1, 0x7E0, b"\x02\x3e\x00"))
+        clock[0] += 0.004
+        await hub._on_rx(CanFrame(1, 0x7E8, b"\x02\x7e\x00", timestamp=1000.003))
+    asyncio.run(run())
+    rows = hub.capture.rows(0, 10)
+    assert [r["dir"] for r in rows] == ["tx", "rx"] and rows[1]["t"] == pytest.approx(0.003)

@@ -18,6 +18,7 @@ import {
 import { closeDialog, openDialog, ui } from "../../app/ui";
 import type { Action } from "../../core/actions";
 import { cmd } from "../../core/client";
+import { fmtId } from "../../core/format";
 import { pushToast, store } from "../../core/store";
 import { t } from "../../i18n/ru";
 import { confirmDialog } from "../../ui/confirm";
@@ -31,7 +32,9 @@ import { cursorRow, hasCursor, selectionPayload, tracerSel } from "./tracerStore
 const tr = () => store.tracer.value;
 const toastErr = (e: Error) => pushToast("error", e.message);
 
-async function canDiscard(title: string): Promise<boolean> {
+/** Изменённый несохранённый трейс заменяют («Новый», «Открыть», «Открыть в отладчике» из
+ * окна приёма) — сначала спросить. */
+export async function canDiscard(title: string): Promise<boolean> {
   return !tr().modified || confirmDialog(title, t.tracer.discard);
 }
 
@@ -67,6 +70,8 @@ function saveAs(): void {
       title={t.tracer.saveAs}
       defaultName={cur ? cur.replace(/\.(trc|jsonl)$/i, "") : "trace"}
       withFormat
+      // формат — как у открытого файла: .jsonl, сохранённый в .trc, потерял бы Rx/Tx
+      defaultFormat={cur?.toLowerCase().endsWith(".jsonl") ? "jsonl" : "trc"}
       onClose={closeDialog}
       onPick={(name, format) => {
         closeDialog();
@@ -202,7 +207,12 @@ export function tracerActions(): Action[] {
       icon: StepForward,
       scope: "tracer",
       enabled: () => tr().visible > 0 && tr().state !== "playing",
-      run: () => cmd("tracer_step").catch(toastErr),
+      run: () => {
+        // из остановленного состояния шаг, как и запуск, идёт по выделенным строкам; на паузе
+        // продолжает начатый прогон (выделение уже у сервера)
+        const selection = tr().state === "stopped" ? selectionPayload(tracerSel, ui.tracerPlaySelected.value) : null;
+        cmd("tracer_step", selection ? { selection } : {}).catch(toastErr);
+      },
     },
     {
       id: "tracerLoop",
@@ -228,9 +238,12 @@ export function tracerActions(): Action[] {
       icon: ArrowDownToLine,
       scope: "tracer",
       enabled: hasCursor,
+      // док передачи в виде отладчика не виден — без уведомления копирование было бы молчаливым
       run: () =>
         cursorRow()
-          .then((r) => r && copyRowToTx(r))
+          .then(async (r) => {
+            if (r && (await copyRowToTx(r))) pushToast("info", t.tracer.copiedToTx(fmtId(r.id, r.ext, true)));
+          })
           .catch(toastErr),
     },
     {

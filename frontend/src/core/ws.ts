@@ -1,5 +1,7 @@
 /** WebSocket-клиент протокола v2: события по типам, команды с ответом по req_id,
  * очередь отправки до открытия сокета и автопереподключение с нарастающей паузой.
+ * Очередь живёт только пока идёт попытка подключения: команда, о провале которой
+ * пользователю уже сказали (таймаут, обрыв, нет связи), позже на шину не уходит.
  * Сам сокет создаётся фабрикой — в тестах подменяется фейком. */
 import { signal } from "@preact/signals";
 import { t } from "../i18n/ru";
@@ -35,7 +37,8 @@ export class WsClient {
   private ws?: WebSocket;
   private handlers = new Map<string, Set<EventHandler>>();
   private pending = new Map<number, Pending>();
-  private queue: string[] = [];
+  /** ждут открытия сокета (только в фазе connecting); reqId — чтобы снять при отказе */
+  private queue: { reqId?: number; raw: string }[] = [];
   private seq = 0;
   private backoff = BACKOFF_MIN;
   private stopped = false;
@@ -54,7 +57,7 @@ export class WsClient {
     ws.onopen = () => {
       this.state.value = "open";
       this.backoff = BACKOFF_MIN;
-      for (const m of this.queue.splice(0)) ws.send(m);
+      for (const m of this.queue.splice(0)) ws.send(m.raw);
     };
     ws.onmessage = (ev: MessageEvent) => this.onMessage(String(ev.data));
     ws.onclose = () => this.onClose(ws);
@@ -73,22 +76,37 @@ export class WsClient {
     return () => set!.delete(fn);
   }
 
+  /** Без ответа. Пока сокет подключается — в очередь; без связи сообщение отбрасывается. */
   send(cmd: Record<string, unknown>): void {
-    const raw = JSON.stringify(cmd);
-    if (this.ws && this.state.value === "open") this.ws.send(raw);
-    else this.queue.push(raw);
+    this.post(JSON.stringify(cmd));
   }
 
   request<T = unknown>(cmd: Record<string, unknown>, timeoutMs = 10000): Promise<T> {
     const reqId = ++this.seq;
     return new Promise<T>((resolve, reject) => {
+      // связи нет и попытка подключения не идёт — сразу ошибка, без отложенной отправки
+      if (this.state.value === "closed") {
+        reject(new Error(t.status.server.closed));
+        return;
+      }
       const timer = setTimeout(() => {
         this.pending.delete(reqId);
+        this.unqueue(reqId); // ошибку уже показали — после подключения не отправлять
         reject(new Error(t.err.timeout));
       }, timeoutMs);
       this.pending.set(reqId, { resolve: resolve as (d: unknown) => void, reject, timer });
-      this.send({ ...cmd, req_id: reqId });
+      this.post(JSON.stringify({ ...cmd, req_id: reqId }), reqId);
     });
+  }
+
+  private post(raw: string, reqId?: number): void {
+    if (this.ws && this.state.value === "open") this.ws.send(raw);
+    else if (this.state.value === "connecting") this.queue.push({ reqId, raw });
+  }
+
+  private unqueue(reqId: number): void {
+    const i = this.queue.findIndex((m) => m.reqId === reqId);
+    if (i >= 0) this.queue.splice(i, 1);
   }
 
   private onMessage(raw: string): void {
@@ -114,6 +132,7 @@ export class WsClient {
   private onClose(ws: WebSocket): void {
     if (ws !== this.ws) return;
     this.state.value = "closed";
+    this.queue = []; // попытка не удалась: всё, что ждало открытия, отклоняется ниже
     for (const [id, p] of this.pending) {
       clearTimeout(p.timer);
       p.reject(new Error(t.status.server.closed));

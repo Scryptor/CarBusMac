@@ -401,6 +401,33 @@ select.inp {
 }
 
 /* ---------- устройство ---------- */
+/* строка состояния под списком «Прибор»: точка по тону, подсказка может занять две строки */
+.form-grid > .dev-status {
+  grid-column: 2;
+}
+.dev-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  min-height: 18px;
+}
+.dev-status > .dot {
+  margin-top: 5px;
+}
+.dev-more {
+  margin-top: 10px;
+}
+.dev-more > summary {
+  width: max-content;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.dev-more[open] > summary {
+  margin-bottom: 8px;
+}
+.dev-more > p {
+  margin: 8px 0 0;
+}
 .dev-channels {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -409,7 +436,8 @@ select.inp {
 .devinfo {
   margin: 0;
   min-height: 260px;
-  max-height: 60vh;
+  /* окно (кнопки, заголовок, отступы) ≈ 190 px — на 1366×650 тексту остаётся ~460 px */
+  max-height: calc(100vh - 190px);
   overflow: auto;
   padding: 10px 12px;
   background: var(--panel-2);
@@ -418,6 +446,17 @@ select.inp {
   font: 13px/1.5 var(--grid-font);
   white-space: pre;
   user-select: text;
+}
+/* полоса прокрутки видна всегда: на маке она скрыта до прокрутки, и длинный текст выглядел
+   обрезанным на последней строке */
+.devinfo::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.devinfo::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border: 2px solid var(--panel-2);
+  border-radius: 5px;
 }
 .br-layout {
   display: grid;
@@ -524,11 +563,57 @@ select.inp {
   overflow: hidden;
 }
 .statusbar .cell {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  /* строчная раскладка внутри ячейки: не влезает — текст обрезается многоточием */
+  display: block;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: 0 10px;
+  line-height: calc(var(--status-h) - 1px);
   border-right: 1px solid var(--line);
+}
+.statusbar .cell > * + * {
+  margin-left: 6px;
+}
+/* строка прибора (подключённого или найденного) и текст ошибки сжимаются первыми: огромный
+   коэффициент забирает нехватку почти целиком, остальные ячейки ужимаются, только когда эти
+   свёрнуты до нуля */
+.statusbar .cell.soft {
+  flex-shrink: 100000;
+}
+/* ячейка-кнопка (найденный прибор → «Настройки устройства»): без рамки кнопки; многоточие —
+   у внутреннего span, сама кнопка его не рисует */
+.statusbar button.cell {
+  margin: 0;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.statusbar button.cell:hover {
+  background: var(--panel);
+  color: var(--text);
+}
+.statusbar button.cell:focus-visible {
+  outline-offset: -2px;
+}
+.statusbar button.cell > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* состояние связи, скорость приёма, связь с сервером и полоса прогресса отладчика не сжимаются */
+.statusbar .cell.keep,
+.statusbar .cell:has(> .progress) {
+  flex-shrink: 0;
+}
+.statusbar .dot,
+.statusbar .progress {
+  display: inline-block;
+  vertical-align: middle;
 }
 .statusbar .cell:last-child {
   border-right: 0;
@@ -578,6 +663,9 @@ select.inp {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  /* уведомление не мешает нажать то, что под ним (имя трейса, «Все»/«Сброс» таблицы ID), —
+     оно гаснет само */
+  pointer-events: none;
 }
 .toast {
   max-width: 420px;
@@ -632,8 +720,12 @@ select.inp {
   outline: none;
 }
 .grid:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  /* рамку внутри прокручиваемой таблицы перекрывают строки с фоном «зебры» (рвётся через
+     строку) — фокус показывают подчёркнутая шапка и строка в фокусе */
+  outline: none;
+}
+.grid:focus-visible .grid-head {
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 .grid-head {
   position: sticky;
@@ -672,6 +764,9 @@ select.inp {
 .grid-body {
   position: relative;
   min-width: 100%;
+  /* при миллионах строк (масштаб прокрутки) крайняя строка может выступать за тело —
+     выступ всегда вне видимой области и не должен удлинять прокрутку */
+  overflow: hidden;
 }
 .gr {
   position: absolute;
@@ -742,6 +837,14 @@ select.inp {
 }
 
 /* ---------- битовая карта и «Данные сообщения» ---------- */
+.float.resizable {
+  resize: both;
+  overflow: hidden;
+  min-width: 420px;
+  min-height: 220px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
+}
 .bitmap {
   display: flex;
   flex-direction: column;
@@ -789,12 +892,22 @@ select.inp {
   border-color: var(--accent);
 }
 .bm-dec {
-  width: 56px;
+  width: 72px;
   text-align: right;
+}
+.bm-head .bm-dec {
+  line-height: 1.15;                /* «Десятичное число» — в две строки, как в десктопе */
 }
 .bm-none {
   padding: 8px 0;
   font-family: var(--ui-font);
+}
+.bm-where {
+  font-family: var(--ui-font);
+  padding: 8px 12px 0;
+}
+.bm-pick {
+  padding: 12px;
 }
 .bm-comment {
   border-top: 1px solid var(--line);
@@ -1030,6 +1143,12 @@ select.inp {
   padding-left: 44px;
   color: var(--text-2);
 }
+.tree-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .tree-item:hover {
   background: var(--panel-2);
 }
@@ -1107,7 +1226,8 @@ select.inp {
   display: flex;
   flex-direction: column;
 }
-/* текущая строка воспроизведения — зелёная полоса, найденные по ID — янтарный фон */
+/* строка для отладки (где воспроизведение; класс current) — зелёная полоса и стрелка в первой
+   колонке, найденные по ID — янтарный фон */
 .gr.current:not(.sel) {
   background: color-mix(in srgb, var(--ok) 16%, transparent);
 }
@@ -1138,6 +1258,14 @@ select.inp {
   color: var(--err);
   fill: var(--err);
 }
+.play-at {
+  display: inline-flex;
+  color: var(--ok);
+}
+.play-at svg {
+  fill: var(--ok);
+}
+/* список точек останова — таблица с шапкой: №, время, канал, ID, данные */
 .bp-list {
   max-height: 50vh;
   overflow: auto;
@@ -1145,11 +1273,21 @@ select.inp {
   border-radius: 6px;
 }
 .bp-item {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 76px 96px 36px 90px 1fr;
   gap: 12px;
+  align-items: center;
   padding: 5px 10px;
   cursor: default;
+}
+.bp-item.head {
+  position: sticky;
+  top: 0;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--line);
+  color: var(--text-2);
+  font-weight: 600;
+  font-size: 12px;
 }
 .bp-item.sel {
   background: var(--sel);
@@ -1159,12 +1297,21 @@ select.inp {
   opacity: 0.4;
 }
 .bp-n {
-  min-width: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.bp-item.head .bp-n {
+  justify-content: flex-end;
+}
+.bp-r {
   text-align: right;
 }
-.bp-id {
-  min-width: 80px;
-  text-align: right;
+.bp-c {
+  text-align: center;
+}
+.bp-rest {
+  grid-column: 2 / -1;
 }
 .progress {
   display: inline-block;
@@ -1186,7 +1333,8 @@ select.inp {
   display: grid;
   grid-template-columns: 200px 1fr;
   gap: 18px;
-  min-height: 330px;
+  /* по самому высокому разделу («Фоновое логирование»): окно не прыгает при смене раздела */
+  min-height: 405px;
 }
 .settings-tabs {
   display: flex;

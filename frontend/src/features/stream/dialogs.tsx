@@ -1,11 +1,11 @@
-/** Диалоги потока: «Установить точку останова / метку» и «Точки останова / Метки». */
+/** Диалоги потока: «Установить точку останова / метку» и «Список точек останова / меток». */
 import { useState } from "preact/hooks";
 import { closeDialog } from "../../app/ui";
 import { cmd } from "../../core/client";
 import { pushToast, store } from "../../core/store";
 import { t } from "../../i18n/ru";
 import { Dialog } from "../../ui/Dialog";
-import { streamGrid } from "./StreamGrid";
+import { scrollStreamTo } from "./StreamGrid";
 
 export function MarkerDialog() {
   const [label, setLabel] = useState("");
@@ -34,7 +34,7 @@ export function MarkersDialog() {
   const [sel, setSel] = useState<number | null>(markers.length ? 0 : null);
   const go = () => {
     if (sel == null) return;
-    streamGrid.ctl?.scrollToRow(markers[sel].index);
+    scrollStreamTo(markers[sel].index);
     closeDialog();
   };
   return (

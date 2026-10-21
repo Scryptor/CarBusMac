@@ -3,7 +3,7 @@
  * Флажок включает/выключает сразу, двойной щелчок открывает настройку. */
 import { signal } from "@preact/signals";
 import { FilePlus2, FolderOpen, Pencil, Save, Trash2 } from "lucide-preact";
-import { useMemo } from "preact/hooks";
+import { useMemo, useState } from "preact/hooks";
 import { closeDialog, openDialog } from "../../app/ui";
 import { slots as workspaceSlots } from "../../app/Workspace";
 import { cmd } from "../../core/client";
@@ -35,6 +35,7 @@ function HwTab() {
   const f = store.filters.value;
   const simple = store.settings.value.filter_simple_mode;
   const sel = useMemo(() => new Selection(), []);
+  const [focus, setFocus] = useState<number | null>(null); // карандаш доступен, когда выбран слот
   const slots = f.hw;
   const edit = (s: HwSlotJson | undefined) => s && openDialog(<HwFilterDialog slot={s} />);
   const columns: Column<HwSlotJson>[] = [
@@ -62,18 +63,22 @@ function HwTab() {
 
   const saveAs = () =>
     openDialog(
-      <FileDialog mode="save" kind="lists" title={t.filters.save} defaultName="filters" extensions={[".json"]} onClose={closeDialog}
+      <FileDialog mode="save" kind="lists" title={t.filters.saveDialog} defaultName="filters" extensions={[".json"]} onClose={closeDialog}
         onPick={(name) => {
           closeDialog();
-          cmd("hw_save", { name }).catch(toastErr);
+          cmd<{ name?: string }>("hw_save", { name })
+            .then((d) => pushToast("info", t.filters.saved(d?.name ?? name)))
+            .catch(toastErr);
         }} />,
     );
   const load = () =>
     openDialog(
-      <FileDialog mode="open" kind="lists" title={t.filters.open} extensions={[".json"]} onClose={closeDialog}
+      <FileDialog mode="open" kind="lists" title={t.filters.openDialog} extensions={[".json"]} onClose={closeDialog}
         onPick={(name) => {
           closeDialog();
-          cmd("hw_load", { name }).catch(toastErr);
+          cmd("hw_load", { name })
+            .then(() => pushToast("info", t.filters.loaded(name)))
+            .catch(toastErr);
         }} />,
     );
 
@@ -82,7 +87,9 @@ function HwTab() {
       <div class="flt-tools">
         <IconBtn label={t.filters.open} onClick={load}><FolderOpen size={17} /></IconBtn>
         <IconBtn label={t.filters.save} onClick={saveAs}><Save size={17} /></IconBtn>
-        <IconBtn label={t.common.edit} onClick={() => edit(sel.focus != null ? slots[sel.focus] : undefined)}><Pencil size={17} /></IconBtn>
+        <IconBtn label={t.common.edit} disabled={focus == null || !slots[focus]} onClick={() => edit(focus != null ? slots[focus] : undefined)}>
+          <Pencil size={17} />
+        </IconBtn>
         <span class="tool-spacer" />
         <span class="muted">{t.filters.countOf(slots.filter((s) => s.enabled).length, slots.length)}</span>
       </div>
@@ -96,6 +103,7 @@ function HwTab() {
           version={JSON.stringify(slots).length}
           rowClass={(s) => (s.enabled ? "active" : undefined)}
           selection={sel}
+          onSelectionChange={() => setFocus(sel.focus)}
           onActivate={(i) => edit(slots[i])}
           emptyText={t.filters.hwEmpty}
         />
@@ -157,7 +165,7 @@ function RangeTab() {
                 >
                   <input type="checkbox" class="row-check" aria-label={t.filters.enableItem(describeRange(r))} checked={r.enabled}
                     onClick={(e) => e.stopPropagation()} onChange={() => upsert({ ...r, enabled: !r.enabled })} />
-                  <span>{describeRange(r)}</span>
+                  <span class="tree-text" title={describeRange(r)}>{describeRange(r)}</span>
                 </div>
                 {r.exclusions.map((ex, i) => (
                   <div
@@ -169,7 +177,7 @@ function RangeTab() {
                     <input type="checkbox" class="row-check" aria-label={t.filters.enableItem(describeExclusion(ex, simple))} checked={ex.enabled}
                       onClick={(e) => e.stopPropagation()}
                       onChange={() => upsert({ ...r, exclusions: r.exclusions.map((x, k) => (k === i ? { ...x, enabled: !x.enabled } : x)) })} />
-                    <span>{describeExclusion(ex, simple)}</span>
+                    <span class="tree-text" title={describeExclusion(ex, simple)}>{describeExclusion(ex, simple)}</span>
                   </div>
                 ))}
               </>

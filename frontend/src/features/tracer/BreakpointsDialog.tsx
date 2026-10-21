@@ -1,6 +1,7 @@
-/** «Точки останова» (Ctrl+F5): список строк с точками останова — номер, время, канал,
- * ID и данные; «Перейти» ставит курсор на строку, «Удалить» снимает точку, «Удалить
- * все» — все. Строки, скрытые фильтром ID, видны в списке, но перейти к ним нельзя. */
+/** «Точки останова» (Ctrl+F5): таблица строк с точками останова — №, время, канал, ID и
+ * данные под шапкой; «Перейти» (двойной щелчок, Enter) ставит курсор на строку, «Удалить»
+ * снимает точку, «Удалить все» — все; стрелки выбирают строку. Строки, скрытые фильтром
+ * ID, видны в списке, но перейти к ним нельзя. */
 import { useEffect, useState } from "preact/hooks";
 import { closeDialog } from "../../app/ui";
 import { cmd } from "../../core/client";
@@ -74,27 +75,68 @@ export function BreakpointsDialog({ onClose = closeDialog }: { onClose?: () => v
       }
     >
       {bps.length ? (
-        <div class="bp-list" role="listbox" aria-label={t.tracer.bpDialog}>
+        <div
+          class="bp-list"
+          role="grid"
+          aria-label={t.tracer.bpDialog}
+          aria-rowcount={bps.length + 1}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+              const next = sel == null ? 0 : sel + (e.key === "ArrowDown" ? 1 : -1);
+              setSel(Math.min(bps.length - 1, Math.max(0, next)));
+            } else if (e.key === "Enter") go();
+            else return;
+            e.preventDefault();
+          }}
+        >
+          <div class="bp-item head" role="row">
+            <span class="bp-n" role="columnheader">
+              {t.tracer.colNum}
+            </span>
+            <span class="bp-r" role="columnheader">
+              {t.col.time}
+            </span>
+            <span class="bp-c" role="columnheader">
+              {t.col.ch}
+            </span>
+            <span class="bp-r" role="columnheader">
+              {t.col.id}
+            </span>
+            <span role="columnheader">{t.col.data}</span>
+          </div>
           {bps.map((b, k) => {
             const r = rows[b.i];
             return (
               <div
-                role="option"
+                role="row"
                 aria-selected={k === sel}
                 class={"bp-item" + (k === sel ? " sel" : "") + (b.pos == null ? " hidden-row" : "")}
                 onClick={() => setSel(k)}
                 onDblClick={go}
               >
-                <span class="bp-dot" />
-                <span class="mono bp-n">{b.i + 1}</span>
+                <span class="mono bp-n" role="gridcell">
+                  <span class="bp-dot" />
+                  {b.i + 1}
+                </span>
                 {b.pos == null ? (
-                  <span class="muted">{t.tracer.bpHidden}</span>
+                  <span class="muted bp-rest" role="gridcell">
+                    {t.tracer.bpHidden}
+                  </span>
                 ) : r ? (
                   <>
-                    <span class="mono">{fmtTime(r.t)}</span>
-                    <span class={`ch-tag${r.ch === 2 ? " ch2" : ""}`}>{r.ch}</span>
-                    <span class="mono bp-id">{fmtId(r.id, r.ext, true)}</span>
-                    <span class="mono">{fmtData(r.data).join(" ")}</span>
+                    <span class="mono bp-r" role="gridcell">
+                      {fmtTime(r.t)}
+                    </span>
+                    <span class="bp-c" role="gridcell">
+                      <span class={`ch-tag${r.ch === 2 ? " ch2" : ""}`}>{r.ch}</span>
+                    </span>
+                    <span class="mono bp-r" role="gridcell">
+                      {fmtId(r.id, r.ext, true)}
+                    </span>
+                    <span class="mono" role="gridcell">
+                      {fmtData(r.data).join(" ")}
+                    </span>
                   </>
                 ) : null}
               </div>

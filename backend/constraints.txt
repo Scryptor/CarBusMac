@@ -1,0 +1,26 @@
+# Проверенные версии зависимостей бэкенда: образ Docker ставится с ними
+# (pip install -c constraints.txt .), чтобы сборка через месяц не подтянула
+# несовместимый релиз. Обновлять осознанно: поднять версию, прогнать pytest.
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.15.1
+carbus-lib==0.1.9
+click==8.5.0
+fastapi==0.149.0
+h11==0.16.0
+httptools==0.9.0
+idna==3.20
+opentelemetry-api==1.45.1
+pydantic==2.14.1
+pydantic-core==2.50.1
+pyserial==3.5
+pyserial-asyncio==0.6
+python-dotenv==1.2.4
+pyyaml==6.0.3
+starlette==1.9.0
+typing-extensions==4.16.0
+typing-inspection==0.4.4
+uvicorn==0.54.0
+uvloop==0.23.0
+watchfiles==1.3.0
+websockets==17.3

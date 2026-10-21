@@ -1,10 +1,16 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen } from "@testing-library/preact";
-import { afterEach, beforeEach, expect, test } from "vitest";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/preact";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { connectHooks } from "../src/app/shellActions";
+import { client } from "../src/core/client";
 import { StatusBar, channelText } from "../src/app/StatusBar";
 import { applyEvent, resetStore } from "../src/core/store";
+import type { DeviceEntry } from "../src/core/types";
 
-beforeEach(() => resetStore());
+beforeEach(() => {
+  resetStore();
+  client.state.value = "open"; // связь с сервером есть — статусбар показывает прибор
+});
 afterEach(() => cleanup());
 
 const opened = {
@@ -45,4 +51,101 @@ test("status bar shows the background log file while it is written", async () =>
   applyEvent({ type: "status", state: "opened", message: "", device_info: null, channels: {}, log: "2026-10-20_17-30-05.trc" });
   render(<StatusBar />);
   expect(await screen.findByText("Фоновая запись: 2026-10-20_17-30-05.trc")).toBeTruthy();
+});
+
+const HACKER: DeviceEntry = {
+  key: "bridge:/dev/cu.usbmodem00000000001A1",
+  source: "bridge",
+  path: "/dev/cu.usbmodem00000000001A1",
+  kind: "canhacker",
+  title: "CAN-Hacker v3.2",
+  serial: 6950,
+  firmware: "2.2.3.57",
+  manufacturer: "Spectratek",
+  product: "CAN-Hacker v3.2 0000000000001B26 2.2.3.57 A06021201",
+  usb_serial: "00000000001A",
+  vid: 1155,
+  pid: 22336,
+  busy: false,
+  selectable: true,
+};
+const MONITOR: DeviceEntry = { ...HACKER, key: "bridge:/dev/cu.usbmodem506NTBKGE1012", kind: "other", title: "LG Monitor Controls", selectable: false };
+const devices = (list: DeviceEntry[], state = "ok", hint = "") =>
+  applyEvent({
+    type: "devices",
+    devices: list,
+    bridge: { state, address: "host.docker.internal:7000", message: "" },
+    usb: { state: "ok", in_container: true },
+    hint,
+  });
+
+test("while not connected the found CAN-Hacker is shown; a click opens the device settings", () => {
+  const open = vi.fn();
+  connectHooks.openConnectDialog = open;
+  try {
+    devices([HACKER, MONITOR]);
+    render(<StatusBar />);
+    const cell = screen.getByRole("button", { name: "Найден: CAN-Hacker v3.2 · № 6950 · 2.2.3.57" });
+    expect(cell.title).toBe("CAN-Hacker v3.2 · № 6950 · 2.2.3.57 — через мост");
+    fireEvent.click(cell);
+    expect(open).toHaveBeenCalledTimes(1);
+  } finally {
+    connectHooks.openConnectDialog = null;
+  }
+});
+
+test("several found devices are counted, each one in the tooltip", () => {
+  devices([HACKER, { ...HACKER, key: "usb:/dev/ttyACM0", source: "usb", serial: 7001 }]);
+  render(<StatusBar />);
+  const cell = screen.getByRole("button", { name: "Найдено приборов: 2" });
+  expect(cell.title).toBe("CAN-Hacker v3.2 · № 6950 · 2.2.3.57 — через мост\nCAN-Hacker v3.2 · № 7001 · 2.2.3.57 — USB в контейнере");
+});
+
+test("no device: plain text with the server's explanation; nothing before the first scan", () => {
+  render(<StatusBar />);
+  expect(screen.queryByText("Прибор не найден")).toBeNull();
+  const hint = "Мост на маке не запущен (host.docker.internal:7000). Запустите ./run-bridge.sh — прибор появится здесь сам.";
+  act(() => devices([MONITOR], "down", hint));
+  const cell = screen.getByText("Прибор не найден");
+  expect(cell.title).toBe(hint);
+  expect(cell.tagName).toBe("SPAN");
+});
+
+test("the device cell is shown after a connection error and hidden while connecting or connected", () => {
+  devices([HACKER]);
+  applyEvent({ type: "status", state: "error", message: "Мост не отвечает", device_info: null, channels: {}, device: null });
+  render(<StatusBar />);
+  expect(screen.getByRole("button", { name: /^Найден:/ })).toBeTruthy();
+  act(() => applyEvent({ type: "status", state: "opening", message: "", device_info: null, channels: {}, device: null }));
+  expect(screen.queryByRole("button", { name: /^Найден:/ })).toBeNull();
+  act(() => applyEvent({ ...opened, device: HACKER }));
+  expect(screen.queryByRole("button", { name: /^Найден:/ })).toBeNull();
+});
+
+test("the connected device is named like in the device settings; after disconnect only the USB search is shown", async () => {
+  render(<StatusBar />);
+  applyEvent({ ...opened, device: HACKER });
+  const cell = await screen.findByText("CAN-Hacker v3.2 · № 6950 · 2.2.3.57");
+  expect(cell.getAttribute("title")).toBe("HW_CH32 2.2.3.57 №6950 — через мост: /dev/cu.usbmodem00000000001A1");
+  // отключились: сведения прибора остаются в сторе (для «Информации об устройстве»), но в статусе
+  // не висят рядом с «Не подключен» — там только результат поиска по USB
+  act(() => applyEvent({ ...opened, state: "closed", device: null }));
+  expect(screen.queryByText("HW_CH32 2.2.3.57 №6950")).toBeNull();
+  expect(screen.queryByText("CAN-Hacker v3.2 · № 6950 · 2.2.3.57")).toBeNull();
+});
+
+test("without the server only the link state is shown: no stale «Подключено» or frozen RX rate", async () => {
+  render(<StatusBar />);
+  applyEvent({ ...opened, device: HACKER });
+  await screen.findByText("Подключено");
+  act(() => {
+    client.state.value = "closed";
+  });
+  expect(screen.queryByText("Подключено")).toBeNull();
+  expect(screen.queryByText(/^RX /)).toBeNull();
+  expect(screen.getByText("Нет связи с сервером")).toBeTruthy();
+  act(() => {
+    client.state.value = "open";
+  });
+  expect(screen.getByText("Подключено")).toBeTruthy();
 });

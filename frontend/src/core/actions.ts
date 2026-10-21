@@ -66,7 +66,8 @@ export function findByShortcut(key: string, view: View): Action | undefined {
 /** «Подсказка (F3)» для title кнопок. */
 export function hintText(a: Action): string {
   const base = a.hint ?? a.label;
-  return a.shortcut ? `${base} (${shortcutLabel(a.shortcut)})` : base;
+  // подсказки десктопа иногда уже несут хоткей: «…метку (F8 / Автоматическая метка - F9)»
+  return a.shortcut && !base.includes(shortcutLabel(a.shortcut)) ? `${base} (${shortcutLabel(a.shortcut)})` : base;
 }
 
 /** Хоткей для показа человеку: «Ctrl+ArrowDown» → «Ctrl+↓». */

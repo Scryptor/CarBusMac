@@ -25,7 +25,7 @@ export function ToolButton({ action, showLabel, label, class: cls }: BtnProps) {
       type="button"
       class={"toolbtn" + (cls ? ` ${cls}` : "")}
       title={hintText(a)}
-      aria-label={a.label}
+      aria-label={label ?? a.label}
       aria-pressed={checked === undefined ? undefined : checked}
       disabled={!isEnabled(a)}
       onClick={() => runAction(action)}
@@ -37,6 +37,7 @@ export function ToolButton({ action, showLabel, label, class: cls }: BtnProps) {
 }
 
 export function ToolSplit({ action, items, showLabel }: { action: string; items: () => MenuItem[]; showLabel?: boolean }) {
+  actionsVersion.value; // действие могли зарегистрировать после первой отрисовки — подпись стрелки по нему
   const a = getAction(action);
   return (
     <span class="tool-split">
@@ -45,10 +46,15 @@ export function ToolSplit({ action, items, showLabel }: { action: string; items:
         type="button"
         class="toolbtn arrow"
         aria-label={t.ui.menuOf(a?.label ?? "")}
+        aria-haspopup="menu"
         data-menu-owner={`split:${action}`}
         onMouseDown={(e) => {
           e.preventDefault();
           openMenuBelow(e.currentTarget as HTMLElement, items(), `split:${action}`);
+        }}
+        onClick={(e) => {
+          // Enter/пробел с клавиатуры (мышь открывает по mousedown)
+          if (e.detail === 0) openMenuBelow(e.currentTarget as HTMLElement, items(), `split:${action}`);
         }}
       >
         <ChevronDown size={14} />

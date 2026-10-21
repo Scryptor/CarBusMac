@@ -87,7 +87,9 @@ class MonitorState:
         ts = frame.timestamp
         e = self._entries.get(key)
         if e is None:
-            e = _Entry(extended=frame.extended, first_ts=ts)
+            # точка отсчёта подсветки — первое значение: новое сообщение (и всё после Ctrl+N)
+            # не горит целиком, подсвечивается только то, что поменялось после появления
+            e = _Entry(extended=frame.extended, first_ts=ts, baseline=frame.data)
             self._entries[key] = e
         if e._has_ts:
             e.period_ms = (ts - e.last_ts) * 1000.0

@@ -90,7 +90,8 @@ export function parseTaskForm(f: TaskForm, base: TxTaskJson): TxTaskJson {
   const can_id = wrap("id", () => parseHexId(f.id, f.ext));
   const dlc = wrap("dlc", () => parseIntRange(f.dlc, 0, 8, "DLC"));
   const period = wrap("period", () => parseIntRange(f.period, 1, 10000, t.tx.fieldPeriod));
-  const data = f.data.slice(0, dlc).map((b) => b ?? 0);
+  // у RTR данных нет, а DLC есть: храним DLC нулевых байт (как кадры RTR на сервере)
+  const data = f.rtr ? Array<number>(dlc).fill(0) : f.data.slice(0, dlc).map((b) => b ?? 0);
   let trigger: TriggerJson = { ...base.trigger, action: "none" };
   if (f.trigAction !== "none") {
     const t_id = wrap("trigId", () => parseHexId(f.trigId, Number.parseInt(f.trigId || "0", 16) > 0x7ff));
@@ -103,7 +104,8 @@ export function parseTaskForm(f: TaskForm, base: TxTaskJson): TxTaskJson {
       can_id: t_id,
       ext: t_id > 0x7ff,
       dlc: t_dlc,
-      data: f.trigData.slice(0, 8).map((b) => (b == null ? null : b)),
+      // байт за DLC триггера в кадре нет — условие на него никогда бы не выполнилось
+      data: f.trigData.slice(0, 8).map((b, i) => (b == null || (t_dlc != null && i >= t_dlc) ? null : b)),
     };
   }
   return {
@@ -127,11 +129,13 @@ export function fillData(value: string, dlc: number): number[] {
 
 /** «Копировать в TX-List»: задача из принятого сообщения (монитор, поток, трейс). */
 export function taskFromRow(
-  row: { ch: number; id: number; ext: boolean; rtr: boolean; data: string },
+  row: { ch: number; id: number; ext: boolean; rtr: boolean; data: string; dlc?: number },
   id: string,
   comment = "",
 ): TxTaskJson {
-  return { ...newTask(id), channel: row.ch, can_id: row.id, ext: row.ext, rtr: row.rtr, data: row.data, comment };
+  // данные RTR поток присылает пустыми, а DLC — отдельно: задаче нужны DLC нулевых байт
+  const data = row.rtr ? "00".repeat(row.dlc ?? row.data.length / 2) : row.data;
+  return { ...newTask(id), channel: row.ch, can_id: row.id, ext: row.ext, rtr: row.rtr, data, comment };
 }
 
 export { EMPTY8 };

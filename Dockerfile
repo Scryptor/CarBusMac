@@ -9,7 +9,8 @@ RUN npm run build
 FROM python:3.12-slim
 WORKDIR /app/backend
 COPY backend/ /app/backend/
-RUN pip install --no-cache-dir .
+# версии зависимостей закреплены (backend/constraints.txt) — сборка воспроизводима
+RUN pip install --no-cache-dir -c constraints.txt .
 COPY --from=frontend /fe/dist /app/frontend/dist
 EXPOSE 8000
 # `python -m` кладёт cwd (/app/backend) в sys.path → импортируется локальный пакет app,

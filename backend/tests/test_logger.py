@@ -43,3 +43,42 @@ def test_logger_name_is_safe_and_unique(tmp_path):
 def test_trc_meta_maps_settings_keys():
     meta = trc_meta({"transport": "Легковой", "brand": "Lada", "model": "", "body": "Седан", "year": "2024"})
     assert meta == {"TransportType": "Легковой", "TransportBrand": "Lada", "TransportBody": "Седан", "TransportYear": "2024"}
+
+
+def test_logger_time_never_goes_back(tmp_path):
+    """Кадр с меткой чуть раньше предыдущего не должен давать +60 с при чтении."""
+    from app.tracefmt import read_trace
+    lg = StreamLogger(tmp_path, SETTINGS, now=lambda: CLOCK)
+    path = lg.start({})
+    for ts in (10.0, 10.005, 10.004, 10.1):
+        lg.write(CanFrame(1, 0x100, b"\x01", timestamp=ts))
+    lg.stop()
+    times = [round(f.timestamp, 6) for f in read_trace(path).frames]   # .trc хранит время от первого кадра
+    assert times == [0.0, 0.005, 0.005, 0.1]
+
+
+def test_recover_parts_builds_trc_and_drops_torn_line(tmp_path):
+    from app.logger import recover_parts
+    from app.tracefmt import read_trace
+    lg = StreamLogger(tmp_path, SETTINGS, now=lambda: CLOCK)
+    path = lg.start({})
+    for k in range(3):
+        lg.write(CanFrame(1, 0x100 + k, b"\x01\x02", timestamp=5.0 + k))
+    lg._fh.write("09,000000\t1\t00000004\t1")      # строка, оборванная сбоем
+    lg._fh.close()                                  # «упал», не собрав файл
+    lg._fh = None
+    part = path.with_suffix(".trc.part")
+    assert part.exists() and not path.exists()
+    assert recover_parts(tmp_path, now=None) == [path]
+    doc = read_trace(path)
+    assert [f.can_id for f in doc.frames] == [0x100, 0x101, 0x102] and not part.exists()
+    head = path.read_text(encoding="utf-8").splitlines()[0]
+    assert "@ 3 @ 2000 @" in head
+
+
+def test_recover_parts_skips_fresh_part(tmp_path):
+    import time as _t
+    from app.logger import recover_parts
+    (tmp_path / "live.trc.part").write_text("00,000000\t1\t00000004\t100\t1\t01                     \t00000000\t        \t\r\n")
+    assert recover_parts(tmp_path, now=_t.time()) == []
+    assert (tmp_path / "live.trc.part").exists()

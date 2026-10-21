@@ -27,7 +27,7 @@ def parse_cmt(text: str) -> dict[str, str]:
         raw = int(key, 16)
         can_id = raw & 0x1FFFFFFF
         ext = raw > 0x7FF
-        value = value.strip()
+        value = re.sub(r"[\t\r\n\v\f]+", " ", value).strip()
         if value:
             out[f"{can_id}:{1 if ext else 0}"] = value
     return out
@@ -93,7 +93,8 @@ def _task_from_block(d: dict[str, str], n: int) -> dict[str, Any] | None:
             "delay_ms": min(max(t_delay, 0), 10000),
             "channel": t_ch,
             "can_id": code_id if mask_id else None,
-            "ext": code_id > 0x7FF,
+            # 29-битный ID может быть и ≤ 7FF: признак — маска шире 11 бит
+            "ext": mask_id > 0x7FF or code_id > 0x7FF,
             "dlc": t_dlc,
             "data": t_data,
         },

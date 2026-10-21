@@ -9,12 +9,19 @@ from app.tracer import PlayerConfig, TracePlayer, TracerDoc, TraceRow
 
 
 class FakeSleep:
+    """Сон с виртуальными часами: проигрыватель считает паузы по расписанию от `clock`."""
+
     def __init__(self):
         self.calls = []
+        self.t = 0.0
 
     async def __call__(self, d):
         self.calls.append(round(d, 6))
+        self.t += d
         await asyncio.sleep(0)
+
+    def clock(self):
+        return self.t
 
 
 async def _drain(n=40):
@@ -36,7 +43,7 @@ def _player(doc, **cfg):
     async def send(frame, target):
         sent.append((frame, target))
 
-    p = TracePlayer(doc, send=send, sleep=sleep)
+    p = TracePlayer(doc, send=send, sleep=sleep, clock=sleep.clock)
     p.config = PlayerConfig(**cfg)
     return p, sent, sleep
 
@@ -277,3 +284,95 @@ def test_tracer_keeps_trace_meta_for_saving():
     d = TracerDoc()
     d.load(TraceDoc(frames=[CanFrame(1, 1, b"\x01", timestamp=0.0)], meta=meta), "t.trc")
     assert d.to_trace_doc().meta == meta
+
+
+async def test_schedule_does_not_drift_when_sending_takes_time():
+    """Пауза между строками — по расписанию: время самой отправки её не растягивает."""
+    doc = _doc(*[(k * 0.01, k) for k in range(5)])
+    sleep = FakeSleep()
+
+    async def slow_send(frame, target):
+        sleep.t += 0.003                           # отправка занимает 3 мс
+
+    p = TracePlayer(doc, send=slow_send, sleep=sleep, clock=sleep.clock)
+    await p.play()
+    await _drain()
+    assert sleep.calls == [0.007, 0.007, 0.007, 0.007]
+    assert sleep.t == pytest.approx(0.04 + 0.003)
+
+
+async def test_loop_with_nothing_playable_stops():
+    doc = _doc((0, 1), (0, 2))
+    p, sent, _ = _player(doc, loop=True, only_channel=2)
+    await p.play()
+    await _drain()
+    assert sent == [] and p.state == "stopped"
+
+
+async def test_rows_removed_under_a_running_player_do_not_crash_it():
+    errors = []
+    doc = _doc(*[(k, k) for k in range(6)])
+    p, sent, _ = _player(doc)
+    p._on_error = errors.append
+    await p.play()
+    await asyncio.sleep(0)
+    doc.delete([3, 4, 5])                          # хаб так не делает (останавливает), но и тут — без зависания
+    await _drain()
+    assert p.state == "stopped"
+
+
+async def test_step_from_stop_walks_the_selection():
+    p, sent, _ = _player(_doc((0, 1), (1, 2), (2, 3), (3, 4)))
+    await p.step([1, 3])
+    await p.step()
+    assert [f.can_id for f, _ in sent] == [2, 4]
+
+
+def test_markers_are_not_shared_with_the_source():
+    m = Marker(1, "a", "")
+    d = TracerDoc()
+    d.load(TraceDoc(frames=[CanFrame(1, 1, b"", timestamp=0), CanFrame(1, 2, b"", timestamp=1)], markers=[m]), None)
+    d.add(TraceRow(CanFrame(1, 9, b"")), 0)
+    assert m.index == 1 and d.markers[0].index == 2
+
+
+def test_pauses_roundtrip_through_trace_doc():
+    d = _doc((0, 1), (1, 2))
+    d.rows[1].before_ms, d.rows[1].after_ms = 500, 250
+    again = TracerDoc.from_doc(d.to_trace_doc(), "x.jsonl")
+    assert (again.rows[1].before_ms, again.rows[1].after_ms) == (500, 250)
+
+
+async def test_loop_resumed_after_pause_at_the_last_row_starts_a_new_round():
+    p, sent, _ = _player(_doc((0, 1), (0, 2)), loop=True)
+    p.state, p.cursor = "paused", 2                   # пауза пришлась на «после» последней строки
+    await p.play()
+    await _drain()
+    assert p.state == "playing" and len(sent) >= 2
+    p.stop()
+
+
+async def test_automatic_pause_says_why():
+    """Пауза «сама» — с причиной: точка останова или приём данных (кадр запомнен); пауза
+    пользователем, шаг, запуск и стоп причину снимают."""
+    doc = _doc((0, 1), (1, 2), (2, 3), (3, 4))
+    doc.set_bp(3, True)
+    p, sent, _ = _player(doc, stop_on_rx=True)
+    rx = CanFrame(2, 0x7E8, b"\x02", timestamp=5.0)
+
+    async def send(frame, target):
+        sent.append((frame, target))
+        if len(sent) == 1:
+            p.notify_rx(rx)                    # шина ответила сразу после первого кадра
+
+    p._send = send
+    await p.play()
+    await _drain()
+    assert p.state == "paused" and p.reason == "rx" and p.reason_frame is rx
+    await p.play()
+    await _drain()
+    assert p.state == "paused" and p.reason == "bp" and p.reason_frame is None and p.current == 3
+    await p.step()
+    assert p.reason is None
+    p.stop()
+    assert p.reason is None

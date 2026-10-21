@@ -74,30 +74,48 @@ interface PopupProps {
   items: MenuItem[];
   onDone: () => void;
   depth?: number;
+  /** подменю: закрыть только его (ArrowLeft) */
+  onBack?: () => void;
+  /** открыто с клавиатуры: взять фокус и выделить первый пункт */
+  keyboard?: boolean;
 }
 
-export function PopupMenu({ x, y, items, onDone, depth = 0 }: PopupProps) {
+export function PopupMenu({ x, y, items, onDone, depth = 0, onBack, keyboard }: PopupProps) {
   actionsVersion.value; // перерисовка при смене реестра
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ x, y });
   const [active, setActive] = useState(-1);
-  const [sub, setSub] = useState<{ index: number; x: number; y: number } | null>(null);
+  const [sub, setSub] = useState<{ index: number; x: number; y: number; keyboard: boolean } | null>(null);
   const resolved = compactItems(items);
+  const usable = (r: Resolved | undefined) => Boolean(r && r.kind !== "sep" && !r.disabled);
+
+  // корневое меню возвращает фокус туда, где он был до открытия (Escape, выбор пункта),
+  // если фокус оставался в меню, — как меню настольных программ
+  useLayoutEffect(() => {
+    if (depth > 0) return;
+    const prev = document.activeElement;
+    return () => {
+      const a = document.activeElement;
+      const inMenu = a == null || a === document.body || Boolean(a.closest(".popup"));
+      if (inMenu && prev instanceof HTMLElement && prev !== document.body && prev.isConnected) prev.focus();
+    };
+  }, []);
 
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
     setPos(clampToViewport(x, y, r.width, r.height));
-    if (depth === 0) el.focus();
-  }, [x, y, items.length]);
+    if (depth === 0 || keyboard) el.focus();
+    if (keyboard && active < 0) setActive(resolved.findIndex(usable));
+  }, [x, y, items.length, keyboard]);
 
-  const select = (i: number, el?: HTMLElement) => {
+  const select = (i: number, el?: HTMLElement | null, fromKeyboard = false) => {
     const r = resolved[i];
     if (!r || r.kind === "sep" || r.disabled) return;
     if (r.kind === "sub") {
       const rect = el?.getBoundingClientRect();
-      if (rect) setSub({ index: i, x: rect.right - 2, y: rect.top - 4 });
+      if (rect) setSub({ index: i, x: rect.right - 2, y: rect.top - 4, keyboard: fromKeyboard });
       return;
     }
     onDone();
@@ -107,9 +125,9 @@ export function PopupMenu({ x, y, items, onDone, depth = 0 }: PopupProps) {
   const move = (dir: 1 | -1) => {
     for (let k = 1; k <= resolved.length; k++) {
       const i = (active + dir * k + resolved.length) % resolved.length;
-      const r = resolved[i];
-      if (r && r.kind !== "sep" && !r.disabled) {
+      if (usable(resolved[i])) {
         setActive(i);
+        if (sub && sub.index !== i) setSub(null); // подменю, открытое наведением, — закрыть
         return;
       }
     }
@@ -118,10 +136,11 @@ export function PopupMenu({ x, y, items, onDone, depth = 0 }: PopupProps) {
   const onKey = (e: KeyboardEvent) => {
     if (e.key === "ArrowDown") move(1);
     else if (e.key === "ArrowUp") move(-1);
-    else if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight") {
-      const el = ref.current?.querySelectorAll<HTMLElement>("[data-i]")[active];
-      if (active >= 0) select(active, el);
-    } else if (e.key === "Escape" || (e.key === "ArrowLeft" && depth > 0)) onDone();
+    else if (e.key === "Enter" || e.key === " " || (e.key === "ArrowRight" && resolved[active]?.kind === "sub")) {
+      // пункт ищем по data-i: у разделителей его нет, индекс в списке узлов не совпадает
+      if (active >= 0) select(active, ref.current?.querySelector<HTMLElement>(`[data-i="${active}"]`), true);
+    } else if (e.key === "ArrowLeft" && depth > 0) (onBack ?? onDone)();
+    else if (e.key === "Escape") onDone();
     else return;
     e.preventDefault();
     e.stopPropagation();
@@ -145,13 +164,19 @@ export function PopupMenu({ x, y, items, onDone, depth = 0 }: PopupProps) {
           return (
             <div
               data-i={i}
-              role="menuitem"
+              // пункт с галочкой (режим вкл/выкл) — для экранного диктора menuitemcheckbox
+              role={r.kind === "item" && r.checked !== undefined ? "menuitemcheckbox" : "menuitem"}
+              aria-checked={r.kind === "item" && r.checked !== undefined ? r.checked : undefined}
               aria-disabled={r.disabled ? "true" : undefined}
               class={"menu-item" + (i === active ? " active" : "")}
               onMouseEnter={(e) => {
                 setActive(i);
                 if (r.kind === "sub" && !r.disabled) select(i, e.currentTarget as HTMLElement);
-                else setSub(null);
+                else if (sub) {
+                  setSub(null);
+                  // фокус был в подменю (открыто с клавиатуры) — вернуть его этому меню
+                  if (!ref.current?.contains(document.activeElement)) ref.current?.focus();
+                }
               }}
               onClick={(e) => select(i, e.currentTarget as HTMLElement)}
             >
@@ -165,7 +190,21 @@ export function PopupMenu({ x, y, items, onDone, depth = 0 }: PopupProps) {
           );
         })}
       </div>
-      {sub && subItems ? <PopupMenu x={sub.x} y={sub.y} items={subItems} onDone={onDone} depth={depth + 1} /> : null}
+      {sub && subItems ? (
+        <PopupMenu
+          key={sub.index}
+          x={sub.x}
+          y={sub.y}
+          items={subItems}
+          onDone={onDone}
+          depth={depth + 1}
+          keyboard={sub.keyboard}
+          onBack={() => {
+            setSub(null);
+            ref.current?.focus();
+          }}
+        />
+      ) : null}
     </>
   );
 }

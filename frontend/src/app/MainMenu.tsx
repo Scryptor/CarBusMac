@@ -1,15 +1,14 @@
 /** Главное меню как в десктопе: Файл · Подключиться · Поток · Отладчик · Настройки · ?
  * В виде отладчика вместо «Файл» и «Поток» — меню отладчика «Трейс» и «Комментарий». */
-import { store } from "../core/store";
 import { t } from "../i18n/ru";
 import { MenuBar, type TopMenu } from "../ui/MenuBar";
+import { connectLabel } from "./shellActions";
 import { ui } from "./ui";
 
 /** Меню вида отладчика («Трейс», «Комментарий») — их строит features/tracer. */
 export const menuHooks: { tracer: () => TopMenu[] } = { tracer: () => [] };
 
 export function MainMenu() {
-  const connected = store.status.value.state === "opened";
   const tracerView = ui.view.value === "tracer";
   const viewMenus: TopMenu[] = tracerView
     ? menuHooks.tracer()
@@ -32,7 +31,7 @@ export function MainMenu() {
   ];
   const menus: TopMenu[] = [
     ...viewMenus,
-    { label: connected ? t.menu.disconnect : t.menu.connect, action: "connect" },
+    { label: connectLabel(), action: "connect" },
     ...(tracerView
       ? []
       : [{ label: ui.receiveMode.value === "stream" ? t.receive.menuMonitor : t.menu.stream, action: "streamSwitch" }]),

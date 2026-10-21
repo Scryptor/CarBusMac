@@ -11,9 +11,10 @@ from __future__ import annotations
 
 import asyncio
 import os
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Callable, Iterable
+from typing import Awaitable, Callable, Iterable
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
@@ -22,7 +23,9 @@ from fastapi.staticfiles import StaticFiles
 
 from app.can_session import CanSession
 from app.hub import CommandError, Hub, safe_name
+from app.logger import recover_parts
 from app.store import JsonStore
+from app.tracefmt import write_bytes_atomic
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FRONTEND_DIST = REPO_ROOT / "frontend" / "dist"
@@ -81,13 +84,16 @@ def create_app(
     data_dir: Path | None = None,
     traces_dir: Path | None = None,
     allowed_hosts: Iterable[str] = DEFAULT_ALLOWED_HOSTS,
+    discover: Callable[[dict], Awaitable[dict]] | None = None,
 ) -> FastAPI:
     data_dir = Path(data_dir or os.environ.get("CARBUS_DATA") or REPO_ROOT / "data")
     traces_dir = Path(traces_dir or os.environ.get("CARBUS_TRACES") or REPO_ROOT / "traces")
-    hub = Hub(session_factory, JsonStore(data_dir), traces_dir=traces_dir, data_dir=data_dir)
+    hub = Hub(session_factory, JsonStore(data_dir), traces_dir=traces_dir, data_dir=data_dir, discover=discover)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
+        # фоновый лог, брошенный при сбое прошлого запуска (.trc.part), собрать в .trc
+        await asyncio.to_thread(recover_parts, traces_dir, time.time())
         yield
         await hub.shutdown()
 
@@ -127,7 +133,14 @@ def create_app(
         await hub.attach(client)
         try:
             while True:
-                await hub.handle(client, await ws.receive_text())
+                msg = await ws.receive()
+                if msg["type"] == "websocket.disconnect":
+                    break
+                text = msg.get("text")
+                if text is None:                  # бинарный кадр — протокол только текстовый
+                    client.send({"type": "error", "message": "ожидается текстовое сообщение JSON"})
+                    continue
+                await hub.handle(client, text)
         except WebSocketDisconnect:
             pass
         finally:
@@ -157,8 +170,8 @@ def create_app(
         body = await request.body()
         if len(body) > MAX_UPLOAD_BYTES:
             raise HTTPException(413, "file too large")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(body)
+        # во временный файл и замена: оборванная загрузка не портит старый файл
+        await asyncio.to_thread(write_bytes_atomic, path, body)
         return JSONResponse({"name": path.name})
 
     if FRONTEND_DIST.exists():
@@ -167,18 +180,35 @@ def create_app(
     return app
 
 
-def default_session_factory(host: str | None = None, port: int | None = None) -> CanSession:
-    """Боевая фабрика для uvicorn: CarbusSession к мосту. Хост/порт берутся из команды
-    connect (диалог подключения в UI), иначе — из env CARBUS_BRIDGE
-    (по умолчанию host.docker.internal:7000). carbus-lib импортируется лениво."""
+def default_session_factory(cfg: dict | None = None, device: dict | None = None) -> CanSession:
+    """Боевая фабрика для uvicorn: CarbusSession к прибору, выбранному в app/devices.py —
+    напрямую в USB-порт (виден бэкенду) или через мост по адресу из «Настроек устройства»
+    (по умолчанию — env CARBUS_BRIDGE, host.docker.internal:7000). carbus-lib импортируется
+    лениво."""
     from app.carbus_session import CarbusSession
 
-    if host and port:
-        return CarbusSession(str(host), int(port))
-    target = os.environ.get("CARBUS_BRIDGE", "host.docker.internal:7000")
-    h, _, p = target.partition(":")
-    return CarbusSession(h, int(p or "7000"))
+    if device and device.get("source") == "usb":
+        return CarbusSession.usb(device["path"])
+    if cfg:
+        host, port = str(cfg["bridge_host"]), int(cfg["bridge_port"])
+    else:
+        host, _, p = os.environ.get("CARBUS_BRIDGE", "host.docker.internal:7000").partition(":")
+        port = int(p or "7000")
+    return CarbusSession(host, port, (device or {}).get("path", ""))
 
 
-# Точка входа для uvicorn: `uvicorn app.server:app`
-app = create_app(default_session_factory)
+async def default_discover(cfg: dict) -> dict:
+    from app.devices import discover
+
+    return await discover(cfg)
+
+
+def __getattr__(name: str):
+    """Точка входа uvicorn: `uvicorn app.server:app`. Приложение создаётся при первом
+    обращении к `app`, а не при импорте модуля: импорт (тесты, `python -m app.demo
+    --data …`) не должен читать и переписывать настоящую папку ./data."""
+    if name == "app":
+        application = create_app(default_session_factory, discover=default_discover)
+        globals()["app"] = application
+        return application
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

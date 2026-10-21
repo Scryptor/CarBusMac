@@ -16,7 +16,7 @@ export function CommentDialog({ id, ext }: { id: number; ext: boolean }) {
       .catch((e: Error) => setErr(e.message));
   };
   return (
-    <Dialog title={t.comment.dialog(fmtId(id, ext, true))} onClose={closeDialog} onOk={save} width={480}>
+    <Dialog title={t.comment.dialog(fmtId(id, ext, store.settings.value.monitor_hex_ids))} onClose={closeDialog} onOk={save} okLabel={t.common.set} width={480}>
       <label class="field stack">
         <span>{t.comment.label}</span>
         <input
@@ -46,7 +46,7 @@ export function RarePeriodDialog() {
     }
   };
   return (
-    <Dialog title={t.rare.dialog} onClose={closeDialog} onOk={save} width={420}>
+    <Dialog title={t.rare.dialog} onClose={closeDialog} onOk={save} okLabel={t.common.set} width={420}>
       <label class="field">
         <span>{t.rare.label}</span>
         <input

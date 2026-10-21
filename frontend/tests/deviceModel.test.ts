@@ -1,12 +1,21 @@
 import { expect, test } from "vitest";
-import type { ChannelConfig, CustomBitrate, DeviceInfo } from "../src/core/types";
+import type { ChannelConfig, CustomBitrate, DeviceEntry, DeviceInfo, DevicesState } from "../src/core/types";
 import {
   applyChoice,
+  asDevicesState,
   bitrateOptions,
+  bridgeUnreachable,
   choiceOf,
   deviceInfoLines,
+  deviceLabel,
+  deviceOption,
+  deviceStatus,
+  deviceToSave,
+  deviceVia,
   kbpsLabel,
   parseBridge,
+  pickDevice,
+  selectableDevices,
 } from "../src/features/device/deviceModel";
 
 const custom: CustomBitrate = {
@@ -115,4 +124,140 @@ test("deviceInfoLines shows the live channel state when connected", () => {
   const ch1 = lines.indexOf("  Канал 1: CAN, 120 МГц, 14 фильтров");
   expect(lines[ch1 + 1]).toBe("    Состояние: открыт, 500 Кбит/с, только прослушивание, терминатор включён");
   expect(lines).toContain("    Состояние: закрыт");
+});
+
+const HACKER: DeviceEntry = {
+  key: "bridge:/dev/cu.usbmodem00000000001A1",
+  source: "bridge",
+  path: "/dev/cu.usbmodem00000000001A1",
+  kind: "canhacker",
+  title: "CAN-Hacker v3.2",
+  serial: 6950,
+  firmware: "2.2.3.57",
+  manufacturer: "Spectratek",
+  product: "CAN-Hacker v3.2 0000000000001B26 2.2.3.57 A06021201",
+  usb_serial: "00000000001A",
+  vid: 1155,
+  pid: 22336,
+  busy: false,
+  selectable: true,
+};
+const HACKER2: DeviceEntry = { ...HACKER, key: "bridge:/dev/cu.usbmodem00000000002B1", path: "/dev/cu.usbmodem00000000002B1", serial: 7001 };
+const COMPAT: DeviceEntry = { ...HACKER, key: "usb:/dev/ttyACM0", source: "usb", path: "/dev/ttyACM0", kind: "compatible", title: "STM32 Virtual ComPort", serial: null, firmware: null };
+const MONITOR: DeviceEntry = {
+  ...HACKER,
+  key: "bridge:/dev/cu.usbmodem506NTBKGE1012",
+  path: "/dev/cu.usbmodem506NTBKGE1012",
+  kind: "other",
+  title: "LG Monitor Controls",
+  serial: null,
+  firmware: null,
+  selectable: false,
+};
+const snap = (devices: DeviceEntry[], over: Partial<DevicesState> = {}): DevicesState => ({
+  devices,
+  bridge: { state: "ok", address: "host.docker.internal:7000", message: "" },
+  usb: { state: "ok", in_container: true },
+  hint: "",
+  ...over,
+});
+const down = { state: "down" as const, address: "host.docker.internal:7000", message: "Connection refused" };
+
+test("deviceLabel: model, serial and firmware; a foreign port by its node name", () => {
+  expect(deviceLabel(HACKER)).toBe("CAN-Hacker v3.2 · № 6950 · 2.2.3.57");
+  expect(deviceLabel({ ...HACKER, serial: null })).toBe("CAN-Hacker v3.2 · 2.2.3.57");
+  expect(deviceLabel(COMPAT)).toBe("STM32 Virtual ComPort");
+  expect(deviceLabel({ ...COMPAT, title: "" })).toBe("ttyACM0");
+  expect(deviceLabel(MONITOR)).toBe("LG Monitor Controls (cu.usbmodem506NTBKGE1012)");
+});
+
+test("deviceVia names the way the backend sees the port", () => {
+  expect(deviceVia(HACKER, true)).toBe("через мост");
+  expect(deviceVia(COMPAT, true)).toBe("USB в контейнере");
+  expect(deviceVia(COMPAT, false)).toBe("USB");
+  expect(deviceVia({ ...HACKER, key: "demo:CAN-Hacker", source: "demo" }, false)).toBe("демо");
+});
+
+test("deviceOption marks a compatible port and a port busy with someone else's connection", () => {
+  expect(deviceOption(HACKER, true, "")).toBe("CAN-Hacker v3.2 · № 6950 · 2.2.3.57 — через мост");
+  expect(deviceOption(COMPAT, false, "")).toBe("STM32 Virtual ComPort (возможно, CAN-Hacker) — USB");
+  expect(deviceOption({ ...HACKER, busy: true }, true, "")).toBe("CAN-Hacker v3.2 · № 6950 · 2.2.3.57 — через мост — занят");
+  expect(deviceOption({ ...HACKER, busy: true }, true, HACKER.key)).toBe("CAN-Hacker v3.2 · № 6950 · 2.2.3.57 — через мост");
+});
+
+test("selectableDevices keeps the server order and drops foreign ports", () => {
+  expect(selectableDevices(snap([HACKER2, COMPAT, MONITOR, HACKER]))).toEqual([HACKER2, COMPAT, HACKER]);
+});
+
+test("pickDevice: the user's choice, then the saved one, then the only one found", () => {
+  const two = [HACKER, HACKER2];
+  expect(pickDevice(HACKER2.key, HACKER.key, two)).toBe(HACKER2.key);
+  expect(pickDevice("", HACKER2.key, two)).toBe(HACKER2.key);
+  expect(pickDevice("", "", two)).toBe("");
+  expect(pickDevice("", "", [HACKER])).toBe(HACKER.key);
+  // выбранного и сохранённого уже нет — единственный найденный
+  expect(pickDevice(HACKER2.key, HACKER2.key, [HACKER])).toBe(HACKER.key);
+  expect(pickDevice(HACKER2.key, "", [HACKER, COMPAT])).toBe("");
+  expect(pickDevice("", "usb:/dev/ttyACM0", [])).toBe("");
+});
+
+test("deviceToSave: the only device is saved as automatic, nothing found keeps the old value", () => {
+  expect(deviceToSave(HACKER.key, "", [HACKER])).toBe("");
+  expect(deviceToSave(HACKER.key, HACKER.key, [HACKER])).toBe("");
+  expect(deviceToSave(HACKER2.key, "", [HACKER, HACKER2])).toBe(HACKER2.key);
+  expect(deviceToSave("", HACKER2.key, [])).toBe(HACKER2.key);
+  expect(deviceToSave("", "", [])).toBe("");
+});
+
+test("deviceStatus: searching, not found, found, connected", () => {
+  expect(deviceStatus(snap([], { bridge: { state: "unknown", address: "", message: "" } }), "", "", "")).toEqual({
+    tone: "idle",
+    text: "Поиск прибора…",
+  });
+  const hint = "Мост на маке не запущен (host.docker.internal:7000). Запустите ./run-bridge.sh — прибор появится здесь сам.";
+  expect(deviceStatus(snap([], { bridge: down, hint }), "", "", "")).toEqual({ tone: "err", text: hint });
+  expect(deviceStatus(snap([MONITOR]), "", "", "")).toEqual({ tone: "err", text: "CAN-Hacker не найден" });
+  expect(deviceStatus(snap([HACKER, MONITOR]), "", HACKER.key, "")).toEqual({ tone: "ok", text: "Найден прибор" });
+  expect(deviceStatus(snap([HACKER]), "", HACKER.key, HACKER.key)).toEqual({ tone: "ok", text: "Подключён" });
+});
+
+test("deviceStatus: several devices ask for a choice, with the right word forms", () => {
+  expect(deviceStatus(snap([HACKER, HACKER2]), "", "", "")).toEqual({ tone: "warn", text: "Найдено 2 прибора — выберите нужный" });
+  expect(deviceStatus(snap([HACKER, HACKER2]), "", HACKER.key, "")).toEqual({ tone: "ok", text: "Найдено 2 прибора" });
+  const many = (n: number) => Array.from({ length: n }, (_, i) => ({ ...HACKER, key: `usb:/dev/ttyACM${i}` }));
+  expect(deviceStatus(snap(many(5)), "", "", "").text).toBe("Найдено 5 приборов — выберите нужный");
+  expect(deviceStatus(snap(many(21)), "", "", "").text).toBe("Найден 21 прибор — выберите нужный");
+});
+
+test("deviceStatus: the device the user picked has gone", () => {
+  expect(deviceStatus(snap([HACKER]), HACKER2.key, HACKER.key, "")).toEqual({ tone: "warn", text: "Выбранный прибор отключён" });
+  expect(deviceStatus(snap([], { bridge: down }), HACKER2.key, "", "")).toEqual({ tone: "warn", text: "Выбранный прибор отключён" });
+});
+
+test("bridgeUnreachable: the bridge is down or foreign and no device is found", () => {
+  expect(bridgeUnreachable(snap([], { bridge: down }))).toBe(true);
+  expect(bridgeUnreachable(snap([MONITOR], { bridge: { ...down, state: "foreign" } }))).toBe(true);
+  expect(bridgeUnreachable(snap([COMPAT], { bridge: down }))).toBe(false); // USB в контейнере работает и без моста
+  expect(bridgeUnreachable(snap([]))).toBe(false);
+});
+
+test("asDevicesState accepts only a snapshot with a device list", () => {
+  expect(asDevicesState({})).toBeNull();
+  expect(asDevicesState(null)).toBeNull();
+  expect(asDevicesState("devices")).toBeNull();
+  expect(asDevicesState(snap([HACKER]))).toEqual(snap([HACKER]));
+  // чего нет в ответе — из пустого снимка
+  expect(asDevicesState({ devices: [] })).toEqual({
+    devices: [],
+    bridge: { state: "unknown", address: "", message: "" },
+    usb: { state: "ok", in_container: false },
+    hint: "",
+  });
+});
+
+test("pickDevice: the device of the open connection beats a second one plugged in later", () => {
+  const two = [HACKER, HACKER2];
+  expect(pickDevice("", "", two, HACKER2.key)).toBe(HACKER2.key);
+  expect(pickDevice("", HACKER.key, two, HACKER2.key)).toBe(HACKER.key);    // сохранённый выбор главнее
+  expect(pickDevice("", "", two, "bridge:/dev/gone")).toBe("");
 });

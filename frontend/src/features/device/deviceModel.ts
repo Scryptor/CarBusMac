@@ -1,8 +1,21 @@
-/** Модель диалогов устройства: выбор скорости канала (стандартная, своя из списка или
- * своя «осиротевшая»), адрес моста и текст «Информации об устройстве». */
-import type { ChannelConfig, ChannelState, CustomBitrate, DeviceInfo, Timing } from "../../core/types";
+/** Модель диалогов устройства: найденные по USB приборы (подпись, выбор, что сохранить,
+ * строка состояния), выбор скорости канала (стандартная, своя из списка или своя
+ * «осиротевшая»), адрес моста и текст «Информации об устройстве». */
+import { selectableDevices } from "../../core/devices";
+import { EMPTY_DEVICES } from "../../core/store";
+import type {
+  ChannelConfig,
+  ChannelState,
+  CustomBitrate,
+  DeviceEntry,
+  DeviceInfo,
+  DevicesState,
+  Timing,
+} from "../../core/types";
 import { t } from "../../i18n/ru";
 import { PRESET_BITRATES } from "../../lib/timing";
+
+export { deviceLabel, deviceOption, deviceVia, selectableDevices } from "../../core/devices";
 
 /** "p:<бит/с>" — стандартная, "c:<индекс>" — своя из списка, "cur" — своя, которой нет в списке. */
 export type BitrateChoice = string;
@@ -54,6 +67,53 @@ export function parseBridge(host: string, port: string): { bridge_host: string; 
   const p = Number(port.trim());
   if (!/^\d+$/.test(port.trim()) || p < 1 || p > 65535) throw new Error(t.device.errBridgePort);
   return { bridge_host: h, bridge_port: p };
+}
+
+/** Что выбрано в списке: явный выбор пользователя, пока прибор в списке; иначе сохранённый в
+ * конфиге; иначе прибор открытого подключения (connected — его ключ; подключились «авто», а
+ * потом воткнули второй прибор); иначе единственный найденный; иначе "" — выбрать должен
+ * пользователь. */
+export function pickDevice(choice: string, saved: string, list: DeviceEntry[], connected = ""): string {
+  const listed = (key: string) => key !== "" && list.some((d) => d.key === key);
+  if (listed(choice)) return choice;
+  if (listed(saved)) return saved;
+  if (listed(connected)) return connected;
+  return list.length === 1 ? list[0].key : "";
+}
+
+/** Что записать в config.device. Найден один и выбран он — "" (авто: так конфиг переживёт
+ * смену пути порта); не найдено ни одного — прежнее значение; иначе ключ выбранного. */
+export function deviceToSave(picked: string, saved: string, list: DeviceEntry[]): string {
+  if (!list.length) return saved;
+  return list.length === 1 && list[0].key === picked ? "" : picked;
+}
+
+export interface DeviceStatus {
+  tone: "ok" | "warn" | "err" | "idle";
+  text: string;
+}
+
+/** Строка состояния под списком «Прибор». choice — явный выбор пользователя ("" — не
+ * выбирал), picked — что выбрано в списке, connected — ключ прибора открытого подключения. */
+export function deviceStatus(snap: DevicesState, choice: string, picked: string, connected: string): DeviceStatus {
+  const d = t.device;
+  const list = selectableDevices(snap);
+  if (snap.bridge.state === "unknown" && !snap.devices.length) return { tone: "idle", text: d.searching };
+  if (choice && !list.some((x) => x.key === choice)) return { tone: "warn", text: d.pickedGone };
+  if (!list.length) return { tone: "err", text: snap.hint || d.notFound };
+  if (list.length === 1) return { tone: "ok", text: list[0].key === connected ? d.foundConnected : d.foundOne };
+  return picked ? { tone: "ok", text: d.foundMany(list.length) } : { tone: "warn", text: d.foundPick(list.length) };
+}
+
+/** Мост не отвечает (или по адресу отвечает не он), а приборов нет — адрес мог быть неверным. */
+export function bridgeUnreachable(snap: DevicesState): boolean {
+  return (snap.bridge.state === "down" || snap.bridge.state === "foreign") && !selectableDevices(snap).length;
+}
+
+/** Ответ `devices_scan`: снимок, если в нём есть список приборов; иначе null. */
+export function asDevicesState(x: unknown): DevicesState | null {
+  if (typeof x !== "object" || x === null || !Array.isArray((x as DevicesState).devices)) return null;
+  return { ...EMPTY_DEVICES, ...(x as DevicesState) };
 }
 
 /** Порядок особенностей канала — как в ресурсах десктопа (rsCIFeature*). */

@@ -1,6 +1,8 @@
 /** Правка трейса — контекстное меню таблицы (pmTrace десктопа) и его хоткеи:
  * Ins / Ctrl+Ins / Ctrl+Enter / Ctrl+Del, копирование строк Ctrl+C, запрет и разрешение
- * строк, начало и конец воспроизведения, список (Ctrl+F5) и сброс (Shift+F5) точек. */
+ * строк, начало и конец воспроизведения, список (Ctrl+F5) и сброс (Shift+F5) точек,
+ * комментарий строки. После удаления курсор встаёт на следующую строку — Ctrl+Del можно
+ * нажимать подряд. */
 import { ListOrdered } from "lucide-preact";
 import { openDialog } from "../../app/ui";
 import type { Action } from "../../core/actions";
@@ -12,8 +14,18 @@ import { confirmDialog } from "../../ui/confirm";
 import type { MenuItem } from "../../ui/Menu";
 import { BreakpointsDialog } from "./BreakpointsDialog";
 import { copyRows, TRACE_COPY_COLUMNS } from "./copyRows";
+import { RowCommentDialog } from "./RowCommentDialog";
 import { RowEditorDialog } from "./RowEditorDialog";
-import { cursorRow, focusedRow, hasCursor, tracerCache, tracerSel, tracerSelVersion } from "./tracerStore";
+import {
+  cursorRow,
+  focusedRow,
+  hasCursor,
+  placeCursorAfter,
+  tracerCache,
+  tracerSel,
+  tracerSelVersion,
+  type CursorReply,
+} from "./tracerStore";
 
 const toastErr = (e: Error) => pushToast("error", e.message);
 const PAGE = 2000;
@@ -68,6 +80,11 @@ const editRow = (mode: "add" | "insert" | "edit") =>
     })
     .catch(toastErr);
 
+const deleteRows = (positions: number[]) =>
+  cmd<CursorReply>("tracer_rows_delete", { positions })
+    .then((d) => placeCursorAfter(d?.rev, d?.pos))
+    .catch(toastErr);
+
 const enablePositions = (positions: number[], enabled: boolean) =>
   void cmd("tracer_rows_enable", { positions, enabled }).catch(toastErr);
 
@@ -94,7 +111,7 @@ export function editActions(): Action[] {
       enabled: hasCursor,
       run: () => {
         const pos = cursorPos();
-        if (pos != null) cmd("tracer_rows_delete", { positions: [pos] }).catch(toastErr);
+        if (pos != null) void deleteRows([pos]);
       },
     },
     {
@@ -105,8 +122,18 @@ export function editActions(): Action[] {
       run: async () => {
         const positions = selectedPositions();
         if (positions.length > 1 && !(await confirmDialog(t.tracer.rowsDelete, t.tracer.rowsDeleteAsk(positions.length)))) return;
-        cmd("tracer_rows_delete", { positions }).catch(toastErr);
+        void deleteRows(positions);
       },
+    },
+    {
+      id: "tracerRowComment",
+      label: t.tracer.rowComment,
+      scope: "tracer",
+      enabled: hasCursor,
+      run: () =>
+        cursorRow()
+          .then((r) => r && openDialog(<RowCommentDialog row={r} />))
+          .catch(toastErr),
     },
     {
       id: "tracerRowsCopy",

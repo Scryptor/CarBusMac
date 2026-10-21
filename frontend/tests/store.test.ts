@@ -49,6 +49,42 @@ test("tracer_progress updates current row and state", () => {
   expect(store.tracer.value.state).toBe("playing");
 });
 
+test("connection event replaces the stored device config", () => {
+  applyEvent(hello);
+  const cfg = {
+    bridge_host: "10.0.0.5",
+    bridge_port: 7001,
+    channels: [
+      { channel: 1, alias: "Кузов", bitrate: 500_000, timing: null, listen_only: true, terminator: false, auto_open: true },
+    ],
+  };
+  applyEvent({ type: "connection", connection: cfg });
+  expect(store.connection.value).toEqual(cfg);
+});
+
+test("hello brings the devices snapshot, a devices event replaces it, reset clears it", () => {
+  const snap = {
+    devices: [{ key: "demo:CAN-Hacker", source: "demo", path: "CAN-Hacker", kind: "canhacker", selectable: true }],
+    bridge: { state: "off", address: "", message: "" },
+    usb: { state: "ok", in_container: false },
+    hint: "",
+  };
+  applyEvent({ ...hello, devices: snap });
+  expect(store.devices.value).toEqual(snap);
+  const none = { ...snap, devices: [], bridge: { state: "down", address: "host.docker.internal:7000", message: "" }, hint: "Мост на маке не запущен" };
+  applyEvent({ type: "devices", ...none });
+  expect(store.devices.value).toEqual(none); // без поля type
+  resetStore();
+  expect(store.devices.value.bridge.state).toBe("unknown");
+  expect(store.devices.value.devices).toEqual([]);
+});
+
+test("hello without devices (an older server) resets the snapshot to «not searched yet»", () => {
+  applyEvent({ type: "devices", devices: [], bridge: { state: "ok", address: "", message: "" }, usb: { state: "ok", in_container: false }, hint: "" });
+  applyEvent(hello);
+  expect(store.devices.value.bridge.state).toBe("unknown");
+});
+
 test("stats and toast are stored", () => {
   applyEvent({ type: "stats", rx_per_s: 512, tx_per_s: 3 });
   applyEvent({ type: "toast", level: "info", message: "Поток данных сохранён!" });

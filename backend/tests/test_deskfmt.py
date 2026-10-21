@@ -92,3 +92,14 @@ def test_format_tsk_roundtrip():
 def test_parse_tsk_rejects_garbage():
     with pytest.raises(ValueError):
         parse_tsk("Task.Begin\rTask.Message.MsgID=zz\rTask.End\r")
+
+
+def test_tsk_trigger_with_29_bit_mask_and_small_id_stays_29_bit():
+    text = ("Task.Begin\rTask.Message.Proto=CAN\rTask.Message.Channel=1\rTask.Message.ExtMsgID=false\r"
+            "Task.Message.MsgID=100\rTask.Message.DLC=1\rTask.Message.Data=01\rTask.Delay=10\r"
+            "Task.Trigger.Trigger=Single\rTask.Trigger.Delay=0\rTask.Trigger.Channel=0\r"
+            "Task.Trigger.CodeMsgID=123\rTask.Trigger.MaskMsgID=1FFFFFFF\rTask.Trigger.DLC=\r"
+            "Task.Trigger.CodeData=0000000000000000\rTask.Trigger.MaskData=0000000000000000\rTask.End\r")
+    t = parse_tsk(text)[0]
+    assert t["trigger"]["can_id"] == 0x123 and t["trigger"]["ext"] is True
+    task_from_dict(t)

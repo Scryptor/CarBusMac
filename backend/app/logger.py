@@ -4,7 +4,8 @@
 `<маска>.trc` в папке трейсов. Формат — тот же `.trc` v3, что у «Сохранить поток»;
 число кадров и длительность в заголовке известны только в конце, поэтому строки идут во
 временный `.part`, а при остановке собирается итоговый файл: заголовок, `# $LocalTime`,
-метаинформация (`# TransportBrand=…`) и строки."""
+метаинформация (`# TransportBrand=…`) и строки. Если бэкенд упал, не закрыв лог,
+`recover_parts` при следующем запуске собирает `.trc` из оставшегося `.part`."""
 from __future__ import annotations
 
 import re
@@ -13,7 +14,10 @@ from pathlib import Path
 from typing import Any, Callable
 
 from app.models import CanFrame
-from app.tracefmt import EOL, trc_frame_line, trc_header
+from app.tracefmt import EOL, _parse_time_us, atomic_text, trc_frame_line, trc_header
+
+_MINUTE_US = 60_000_000
+PART_STALE_S = 60.0       # .part, который не менялся столько, — брошенный (его не пишут)
 
 DEFAULT_MASK = "%Y-%m-%d_%H-%M-%S"
 
@@ -88,11 +92,14 @@ class StreamLogger:
             return
         if f.direction == "tx" and not self.settings.get("log_record_tx", True):
             return
+        ts = f.timestamp
         if self._t_first is None:
-            self._t_first = f.timestamp
+            self._t_first = self._t_last = ts
             self._local_time = self.now()
-        self._t_last = f.timestamp
-        self._fh.write(trc_frame_line(f, self._t_first) + EOL)
+        elif ts < self._t_last:
+            ts = self._t_last        # в .trc время не может идти назад (при чтении это +60 с)
+        self._t_last = ts
+        self._fh.write(trc_frame_line(f, self._t_first, ts=ts) + EOL)
         self._count += 1
 
     def stop(self) -> Path | None:
@@ -114,3 +121,70 @@ class StreamLogger:
                 out.write(chunk)
         part.unlink(missing_ok=True)
         return path
+
+
+def _scan_part(part: Path) -> tuple[int, int, int]:
+    """Кадров, длительность (мс) и сколько байт от начала — целые строки. Строка,
+    оборванная сбоем, и всё после неё отбрасываются."""
+    count = good = 0
+    prev: int | None = None
+    offset = 0
+    first = last = 0
+    pos = 0
+    with part.open("rb") as fh:
+        for raw in fh:
+            nxt = pos + len(raw)
+            if not raw.endswith(b"\n"):
+                break
+            line = raw.decode("utf-8", "replace").rstrip("\r\n")
+            if line:
+                fields = line.split("\t")
+                if len(fields) < 8:
+                    break
+                try:
+                    t = _parse_time_us(fields[0])
+                except ValueError:
+                    break
+                if prev is not None and t < prev:
+                    offset += _MINUTE_US
+                prev = t
+                if count == 0:
+                    first = offset + t
+                last = offset + t
+                count += 1
+            good = pos = nxt
+    return count, round((last - first) / 1000), good
+
+
+def recover_parts(traces_dir: Path, now: float | None = None) -> list[Path]:
+    """Собрать `.trc` из брошенных `.trc.part` (бэкенд упал или его убили, не закрыв лог).
+    Время начала записи не сохранилось — `# $LocalTime` в таком файле нет."""
+    out: list[Path] = []
+    d = Path(traces_dir)
+    if not d.is_dir():
+        return out
+    for part in sorted(d.glob("*.trc.part")):
+        try:
+            if now is not None and now - part.stat().st_mtime < PART_STALE_S:
+                continue                              # может ещё писаться
+            count, dur_ms, good = _scan_part(part)
+            if count == 0:
+                part.unlink(missing_ok=True)
+                continue
+            target = part.with_name(part.name[: -len(".part")])
+            n = 2
+            while target.exists():
+                target = part.with_name(f"{part.name[: -len('.trc.part')]}_{n}.trc")
+                n += 1
+            # во временный файл и замена: убитый посреди сборки процесс не оставит обрезанный .trc
+            with atomic_text(target, binary=True) as dst, part.open("rb") as src:
+                dst.write((EOL.join(trc_header(count, dur_ms, None, {})) + EOL).encode("utf-8"))
+                left = good
+                while left > 0 and (chunk := src.read(min(left, 1 << 20))):
+                    dst.write(chunk)
+                    left -= len(chunk)
+            part.unlink(missing_ok=True)
+            out.append(target)
+        except OSError:
+            continue
+    return out

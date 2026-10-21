@@ -6,7 +6,7 @@ from app.carbus_session import CarbusSession
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("CARBUS_BRIDGE"),
-    reason="set CARBUS_BRIDGE=host:port (running carbus tcp_bridge) to run",
+    reason="set CARBUS_BRIDGE=host:port (running ./run-bridge.sh) to run",
 )
 
 

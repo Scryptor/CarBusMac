@@ -168,7 +168,18 @@ export function SettingsDialog({ onClose = closeDialog, initialTab = "theme" }: 
             </div>
             <span class="inline-row">
               <label for="st-hold">{S.clearAfter}</label>
-              <input id="st-hold" class="inp mono" style={{ width: "80px" }} inputMode="numeric" value={hold} onInput={(e) => setHold((e.target as HTMLInputElement).value)} />
+              <input
+                id="st-hold"
+                class={"inp mono" + (err ? " invalid" : "")}
+                style={{ width: "80px" }}
+                inputMode="numeric"
+                aria-invalid={err ? true : undefined}
+                value={hold}
+                onInput={(e) => {
+                  setHold((e.target as HTMLInputElement).value);
+                  setErr("");
+                }}
+              />
               <span class="muted">{t.common.ms}</span>
             </span>
             <Check checked={d.aggregator} onChange={(v) => set("aggregator", v)} label={S.aggregator} />

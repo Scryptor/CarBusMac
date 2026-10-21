@@ -4,8 +4,8 @@ import { effect } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import { registerActions } from "../core/actions";
 import { installHotkeys } from "../core/hotkeys";
-import { store } from "../core/store";
-import { applyTheme } from "../core/theme";
+import { DEFAULT_SETTINGS, store } from "../core/store";
+import { applyTheme, cachedTheme, rememberTheme } from "../core/theme";
 import { ContextMenuLayer } from "../ui/ContextMenu";
 import { modalCount } from "../ui/Dialog";
 import { MainMenu } from "./MainMenu";
@@ -15,7 +15,17 @@ import { StatusBar } from "./StatusBar";
 import { dialog, floats, ui } from "./ui";
 import { Workspace } from "./Workspace";
 
-effect(() => applyTheme(store.settings.value));
+// до первого hello настроек сервера нет (стоят значения по умолчанию): держим оформление
+// из кэша браузера — его же применил index.html, иначе мелькнула бы тема «как в ОС»
+effect(() => {
+  const s = store.settings.value;
+  if (store.helloSeq.value === 0) {
+    applyTheme({ ...DEFAULT_SETTINGS, ...cachedTheme() });
+    return;
+  }
+  applyTheme(s);
+  rememberTheme(s);
+});
 
 function Toasts() {
   return (

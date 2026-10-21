@@ -12,6 +12,11 @@ export class StreamCache<R extends { i: number } = FrameRowJson> {
     return this.rows.get(i);
   }
 
+  /** Сколько строк в кэше. */
+  get size(): number {
+    return this.rows.size;
+  }
+
   private complete(page: number, total?: number): boolean {
     const start = page * this.pageSize;
     const end = Math.min((page + 1) * this.pageSize, total ?? (page + 1) * this.pageSize);
@@ -50,6 +55,14 @@ export class StreamCache<R extends { i: number } = FrameRowJson> {
   trim(keepFrom: number, keepTo: number, max = 20000): void {
     if (this.rows.size <= max) return;
     for (const i of this.rows.keys()) if (i < keepFrom || i >= keepTo) this.rows.delete(i);
+  }
+
+  /** Зовётся при каждой подгрузке видимых строк [first, last): разросшийся кэш (хвост записи,
+   * прокрутка или воспроизведение длинного трейса) сжимается до них и десяти страниц с
+   * каждой стороны — остальное снова подгрузится с бэкенда, если понадобится. */
+  trimAround(first: number, last: number): void {
+    const margin = this.pageSize * 10;
+    this.trim(first - margin, last + margin);
   }
 
   reset(): void {

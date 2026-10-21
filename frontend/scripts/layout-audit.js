@@ -1,6 +1,7 @@
 // Аудит раскладки для проверки юзабилити (вставляется в Playwright browser_evaluate).
-// Возвращает: переполнение страницы, элементы, обрезанные или вылезшие за вьюпорт,
-// и видимый текст мельче 12px. Пустые списки + нули = раскладка в порядке.
+// Возвращает: переполнение страницы, элементы, обрезанные или вылезшие за вьюпорт (и
+// ячейки статусбара с обрезанным текстом), и видимый текст мельче 12px. Пустые списки +
+// нули = раскладка в порядке.
 () => {
   const vw = innerWidth;
   const vh = innerHeight;
@@ -34,6 +35,19 @@
       scrollParent = scrollParent.parentElement;
     }
     if ((out && !inScroller) || overflow) clipped.push(describe(el));
+  }
+  // ячейки статусбара (span'ы, в список выше не попадают): текст, обрезанный многоточием
+  // («Передача в ка…»), или ячейка, вытесненная за край статусбара, — дефект. Кроме soft:
+  // они по замыслу уступают место первыми, полный текст у них в подсказке.
+  const bar = document.querySelector(".statusbar");
+  const barRight = bar ? bar.getBoundingClientRect().right : vw;
+  for (const cell of document.querySelectorAll(".statusbar .cell:not(.grow)")) {
+    if (!visible(cell) || cell.classList.contains("soft")) continue;
+    const cut = [cell, ...cell.querySelectorAll("*")].some(
+      (el) => el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflow !== "visible",
+    );
+    const pushedOut = cell.getBoundingClientRect().right > barRight + 1;
+    if (cut || pushedOut) clipped.push(`statusbar${pushedOut ? " (за краем)" : ""}: ${describe(cell)}`);
   }
   const smallText = [];
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);

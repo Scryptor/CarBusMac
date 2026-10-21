@@ -2,7 +2,10 @@
  * пункты строки меню. Закрывается кликом мимо, Escape, прокруткой и потерей фокуса окна. */
 import { signal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
+import { isOwnScroll } from "./grid/VirtualGrid";
 import { PopupMenu, type MenuItem } from "./Menu";
+
+const inMenu = (target: EventTarget | null) => target instanceof Element && Boolean(target.closest(".popup"));
 
 interface PopupState {
   x: number;
@@ -41,12 +44,27 @@ export function ContextMenuLayer() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeContextMenu();
     };
+    // прокрутка любого элемента (scroll не всплывает — ловим в фазе перехвата), кроме самого
+    // меню и прокрутки, которую грид выставил сам: автоследование идущей записи и переход
+    // к строке закрывали бы меню сразу после открытия
+    const onScroll = (e: Event) => {
+      const target = e.target;
+      if (inMenu(target) || (target instanceof Element && isOwnScroll(target))) return;
+      closeContextMenu();
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (!inMenu(e.target)) closeContextMenu();
+    };
     document.addEventListener("mousedown", onDown, true);
+    document.addEventListener("scroll", onScroll, true);
+    document.addEventListener("wheel", onWheel, { capture: true, passive: true });
     window.addEventListener("blur", onBlur);
     window.addEventListener("resize", onBlur);
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("mousedown", onDown, true);
+      document.removeEventListener("scroll", onScroll, true);
+      document.removeEventListener("wheel", onWheel, true);
       window.removeEventListener("blur", onBlur);
       window.removeEventListener("resize", onBlur);
       document.removeEventListener("keydown", onKey);

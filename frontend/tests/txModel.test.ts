@@ -58,3 +58,19 @@ test("taskFromRow copies a received message", () => {
   const t = taskFromRow({ ch: 2, id: 0x18daf110, ext: true, rtr: false, data: "027e00" }, "t3", "ответ");
   expect(t).toMatchObject({ id: "t3", channel: 2, can_id: 0x18daf110, ext: true, data: "027e00", comment: "ответ" });
 });
+
+test("an RTR task keeps its DLC but no data", () => {
+  const t = parseTaskForm(form({ rtr: true, dlc: "3", data: [1, 2, 3, 4, 5, 6, 7, 8] }), base);
+  expect(t).toMatchObject({ rtr: true, data: "000000" });
+});
+
+test("trigger bytes beyond the trigger DLC are don't-care", () => {
+  const t = parseTaskForm(form({ trigAction: "single", trigId: "7E8", trigDlc: "2", trigData: [1, 2, 3, null, 5, null, null, 8] }), base);
+  expect(t.trigger.data).toEqual([1, 2, null, null, null, null, null, null]);
+});
+
+test("taskFromRow keeps the DLC of an RTR row whose data came empty (stream)", () => {
+  const t = taskFromRow({ ch: 1, id: 0x7e0, ext: false, rtr: true, data: "", dlc: 3 }, "t1");
+  expect(t).toMatchObject({ rtr: true, data: "000000" });
+  expect(taskFromRow({ ch: 1, id: 0x7e0, ext: false, rtr: true, data: "0102" }, "t2").data).toBe("0000");
+});

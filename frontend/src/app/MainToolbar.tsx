@@ -1,10 +1,10 @@
 /** Тулбар главного окна: общая часть (подключение, опции каналов, виды, панели) и
  * кнопки активного вида — приёма (монитор/поток) или отладчика. */
 import type { ComponentChildren } from "preact";
-import { store } from "../core/store";
 import { t } from "../i18n/ru";
 import type { MenuItem } from "../ui/Menu";
 import { ToolButton, ToolSep, ToolSplit } from "../ui/Toolbar";
+import { connectLabel } from "./shellActions";
 import { ui } from "./ui";
 
 /** Кнопки вида, который сейчас открыт (регистрируют фичи: монитор/поток, отладчик). */
@@ -17,12 +17,11 @@ export const viewToolbars: { main: (() => ComponentChildren) | null; tracer: (()
 export const toolbarHooks: { channelMenu: () => MenuItem[] } = { channelMenu: () => [] };
 
 export function MainToolbar() {
-  const connected = store.status.value.state === "opened";
   const view = ui.view.value;
   const viewBar = view === "tracer" ? viewToolbars.tracer?.() : viewToolbars.main?.();
   const common = (
     <>
-      <ToolButton action="connect" showLabel label={connected ? t.menu.disconnect : t.menu.connect} />
+      <ToolButton action="connect" showLabel label={connectLabel()} />
       <ToolSplit action="channelOptions" items={() => toolbarHooks.channelMenu()} />
       <ToolSep />
     </>

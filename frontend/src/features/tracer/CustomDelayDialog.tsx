@@ -12,7 +12,8 @@ export function CustomDelayDialog() {
   const [err, setErr] = useState("");
   const save = () => {
     try {
-      const ms = parseIntRange(value, 10, 9999, t.tracer.customLabel);
+      // подпись поля уже несёт диапазон («Пауза (10 - 9999)») — в ошибке он был бы дважды
+      const ms = parseIntRange(value, 10, 9999, t.tracer.customWhat);
       cmd("tracer_config", { patch: { delay_mode: "fixed", fixed_ms: ms } })
         .then(closeDialog)
         .catch((e: Error) => setErr(e.message));

@@ -20,15 +20,21 @@ const has = () => selectedTask() != null;
 const any = () => store.tasks.value.length > 0;
 
 /** Создать задачу из принятого сообщения, выделить её и показать док передачи. */
-export function copyRowToTx(row: { ch: number; id: number; ext: boolean; rtr: boolean; data: string }): void {
+/** Задача передачи из строки монитора/потока/отладчика. Промис — удалось ли (ошибку уже
+ * показали): вызывающий может подтвердить копирование только после успеха. */
+export function copyRowToTx(row: { ch: number; id: number; ext: boolean; rtr: boolean; data: string; dlc?: number }): Promise<boolean> {
   const id = nextTaskId(store.tasks.value);
   const task = taskFromRow(row, id, store.comments.value[commentKey(row.id, row.ext)] ?? "");
-  cmd("tx_upsert", { task })
+  return cmd("tx_upsert", { task })
     .then(() => {
       txSelected.value = id;
       ui.dockOpen.value = true;
+      return true;
     })
-    .catch(toastErr);
+    .catch((e: Error) => {
+      toastErr(e);
+      return false;
+    });
 }
 
 function stampName(prefix: string): string {
@@ -49,7 +55,7 @@ export function transmitActions(): Action[] {
       enabled: () => (ui.receiveMode.value === "stream" ? streamSelection.value : monitorSelection.value) != null,
       run: () => {
         const r = ui.receiveMode.value === "stream" ? streamSelection.value : monitorSelection.value;
-        if (r) copyRowToTx({ ch: r.ch, id: r.id, ext: r.ext, rtr: r.rtr, data: r.data });
+        if (r) void copyRowToTx({ ch: r.ch, id: r.id, ext: r.ext, rtr: r.rtr, data: r.data, dlc: r.dlc });
       },
     },
     {
@@ -59,7 +65,7 @@ export function transmitActions(): Action[] {
       enabled: () => streamSelection.value != null,
       run: () => {
         const r = streamSelection.value;
-        if (r) copyRowToTx({ ch: r.ch, id: r.id, ext: r.ext, rtr: r.rtr, data: r.data });
+        if (r) void copyRowToTx({ ch: r.ch, id: r.id, ext: r.ext, rtr: r.rtr, data: r.data, dlc: r.dlc });
       },
     },
     {
@@ -69,7 +75,7 @@ export function transmitActions(): Action[] {
       enabled: () => framesPick.current != null,
       run: () => {
         const p = framesPick.current;
-        if (p) copyRowToTx({ ch: p.ch, id: p.id, ext: p.ext, rtr: false, data: p.data });
+        if (p) void copyRowToTx({ ch: p.ch, id: p.id, ext: p.ext, rtr: false, data: p.data });
       },
     },
     { id: "txAdd", label: t.tx.add, scope: "main", run: () => txApi.add?.() },
@@ -141,7 +147,9 @@ export function transmitActions(): Action[] {
             onClose={closeDialog}
             onPick={(name, format) => {
               closeDialog();
-              cmd("tx_save", { name, format }).catch(toastErr);
+              cmd<{ name: string }>("tx_save", { name, format })
+                .then((d) => pushToast("info", t.tx.saved(d?.name ?? name)))
+                .catch(toastErr);
             }}
           />,
         ),

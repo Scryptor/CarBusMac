@@ -34,3 +34,17 @@ export function applyChanges(
 export function isLit(start: number, now: number, holdMs: number): boolean {
   return now - start < holdMs;
 }
+
+/** ref горящей ячейки (у неё `data-st` — момент начала подсветки). Фаза «послесвечения»
+ * задаётся один раз, когда элемент создан: отрицательная animation-delay на время, прошедшее
+ * с начала подсветки (ячейка могла появиться позже — прокрутка, новое окно). Переписывать её
+ * при перерисовках (25 раз в секунду) нельзя: к ходу уже идущей анимации прибавлялось бы
+ * прошедшее время, и подсветка гасла бы вдвое быстрее «Сбросить после». Функция общая для
+ * всех ячеек (стабильная ссылка — Preact зовёт её только при создании и удалении элемента)
+ * и ничего не возвращает (вернувшееся Preact хранит как очистку ref). */
+export function phaseRef(el: HTMLElement | null): void {
+  if (!el || el.dataset.phased) return;
+  el.dataset.phased = "1";
+  const st = Number(el.dataset.st);
+  if (Number.isFinite(st)) el.style.animationDelay = `-${Math.max(0, Math.round(performance.now() - st))}ms`;
+}

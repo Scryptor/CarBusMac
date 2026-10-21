@@ -8,6 +8,7 @@ import { pushToast, store } from "../../core/store";
 import { t } from "../../i18n/ru";
 import { confirmDialog } from "../../ui/confirm";
 import { FileDialog } from "../files/FileDialog";
+import { canDiscard } from "../tracer/actions";
 import { MarkerDialog, MarkersDialog } from "./dialogs";
 
 const toastErr = (e: Error) => pushToast("error", e.message);
@@ -122,10 +123,13 @@ export function streamActions(): Action[] {
       icon: ArrowRightToLine,
       scope: "main",
       enabled: () => cap().count > 0,
-      run: () =>
+      run: async () => {
+        // поток заменит трейс в отладчике — изменённый несохранённый не теряем молча
+        if (!(await canDiscard(t.hint.toTracer))) return;
         cmd("capture_to_tracer")
           .then(() => (ui.view.value = "tracer"))
-          .catch(toastErr),
+          .catch(toastErr);
+      },
     },
     {
       id: "commentsLoad",

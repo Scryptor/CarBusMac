@@ -39,7 +39,8 @@
 ## Окно «карта бит» — `frmDetails` (TFRMDETAILS) ← сердце «смотреть, что меняется»
 
 - Группа **« Bytes bit map »**, `pbData: TPaintBox` — рисует каждый байт как
-  8 бит, колонки **x80 x40 x20 x10 x08 x04 x02 x01** + столбец «Dec byte».
+  8 бит, колонки **x80 x40 x20 x10 x08 x04 x02 x01** + столбец «Dec byte» («Десятичное
+  число» в русской локализации).
 - Группа **« Comment »** — `edComment` (комментарий к сообщению).
 - Кнопка «always-on-top» (`bbAOT`).
 - Для порта: по выбранному ID показывать матрицу бит с подсветкой изменившихся,
@@ -94,10 +95,10 @@
 | `TFRMFILTER` / `TFRAMEHARDWAREFILTER` / `TDLGHWFILTEREDIT` | сделано | набор фильтров сохраняется в наш `.json` (формат `.flt` десктопа не восстановлен) |
 | `TFRAMERANGEFILTER` / `TDLGRANGEFILTEREDIT` / `TDLGRANGEFILTEREXEDIT` | сделано | |
 | `TFRAMEGATEWAYDEVICE` / `TDLGGATEWAYEDIT` | нет | шлюз CAN1⇔CAN2 |
-| `TDLGDEVICECONFIGURE` / `TFRAMEDEVICECHANNEL` | сделано | вместо типа устройства и COM-порта — адрес моста; каналы рядом, а не вкладками |
+| `TDLGDEVICECONFIGURE` / `TFRAMEDEVICECHANNEL` | сделано | «Источник» — список найденных CAN-Hacker (как `cbSourceList` с таймером `tmrSourceUpdate` десктопа: обновляется сам; прибор распознаётся по USB-описателям), путь к прибору (мост / USB в контейнере) и строка состояния; адрес моста — в «Дополнительно». Нет типа устройства, режима устройства и скорости порта (у USB CDC она ни на что не влияет); каналы рядом, а не вкладками |
 | `TDLGBITRATE` | сделано | только свои скорости, стандартные — из таблицы прибора |
 | `TDLGDEVICEINFO` | сделано | текст как memo + «Копировать» |
-| `TDLGDEVCHANSPEEDINFO`, `TFRMDEVICESTAT`, `TFRMDEVICELIST` | нет | автоопределение скорости, статистика загрузки, список устройств |
+| `TDLGDEVCHANSPEEDINFO`, `TFRMDEVICESTAT`, `TFRMDEVICELIST` | нет | автоопределение скорости шины, статистика загрузки, работа с несколькими приборами одновременно (`TFRMDEVICELIST`; выбрать один из нескольких найденных можно в «Настройках устройства») |
 | `TFRMTRACER` / `TDLGTRACERROW` / `TDLGTRACERDELAY` | сделано | вид F12 вместо отдельного окна; нет режимов отображения времени (метка/линейное/локальное) |
 | `TFRAMETRACERSIGNAL*`, `TFRMDBC*`, `TDLGNEWSIGNAL` | нет | DBC |
 | `TDLGAPPSETTINGS` | сделано | без опций «в отдельном окне», «поверх окон», «Символ завершения строки», вкладки «Обновления» |

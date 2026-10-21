@@ -7,11 +7,16 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "demos": "vite-node scripts/record-demos.ts"
   },
   "devDependencies": {
     "@testing-library/preact": "^3.2.4",
+    "@types/node": "^26.6.5",
+    "gifenc": "^1.0.3",
     "happy-dom": "^21.0.3",
+    "playwright-core": "^1.64.1",
+    "pngjs": "^7.0.0",
     "typescript": "^5.7.0",
     "vite": "^6.0.0",
     "vitest": "^3.0.0"

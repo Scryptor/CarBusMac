@@ -5,7 +5,9 @@ import { signal } from "@preact/signals";
 import type {
   CaptureState,
   ConnectionConfig,
+  ConnectionEvent,
   CustomBitrate,
+  DevicesState,
   FiltersState,
   Settings,
   StatusState,
@@ -40,9 +42,25 @@ export const DEFAULT_SETTINGS: Settings = {
   log_meta: { transport: "", brand: "", model: "", body: "", year: "" },
 };
 
-const EMPTY_STATUS: StatusState = { state: "closed", message: "", device_info: null, channels: {} };
-const EMPTY_CAPTURE: CaptureState = { recording: false, count: 0, duration_s: 0, full: false, rev: 0, markers: [] };
+const EMPTY_STATUS: StatusState = { state: "closed", message: "", device_info: null, channels: {}, device: null };
+const EMPTY_CAPTURE: CaptureState = {
+  recording: false,
+  count: 0,
+  duration_s: 0,
+  full: false,
+  rev: 0,
+  markers: [],
+  loaded: null,
+  dirty: false,
+};
 const EMPTY_FILTERS: FiltersState = { hw: [], hw_layout: {}, ranges: [] };
+/** Приборов ещё не искали (до hello и до первого опроса сервера). */
+export const EMPTY_DEVICES: DevicesState = {
+  devices: [],
+  bridge: { state: "unknown", address: "", message: "" },
+  usb: { state: "ok", in_container: false },
+  hint: "",
+};
 const EMPTY_TRACER: TracerState = {
   name: null,
   modified: false,
@@ -78,6 +96,8 @@ export const store = {
   settings: signal<Settings>(DEFAULT_SETTINGS),
   comments: signal<Record<string, string>>({}),
   connection: signal<ConnectionConfig | null>(null),
+  /** найденные по USB приборы (сервер опрашивает порты, пока открыт хоть один клиент) */
+  devices: signal<DevicesState>(EMPTY_DEVICES),
   bitrates: signal<CustomBitrate[]>([]),
   capture: signal<CaptureState>(EMPTY_CAPTURE),
   tasks: signal<TxTaskJson[]>([]),
@@ -103,6 +123,7 @@ export function resetStore(): void {
   store.settings.value = DEFAULT_SETTINGS;
   store.comments.value = {};
   store.connection.value = null;
+  store.devices.value = EMPTY_DEVICES;
   store.bitrates.value = [];
   store.capture.value = EMPTY_CAPTURE;
   store.tasks.value = [];
@@ -125,6 +146,7 @@ export function applyEvent(e: Record<string, unknown>): void {
       store.settings.value = { ...DEFAULT_SETTINGS, ...(h.settings as unknown as Settings) };
       store.comments.value = h.comments as Record<string, string>;
       store.connection.value = h.connection as unknown as ConnectionConfig;
+      store.devices.value = h.devices ? stripType<DevicesState>(h.devices) : EMPTY_DEVICES;
       store.bitrates.value = (e.bitrates as CustomBitrate[]) ?? [];
       applyEvent(h.capture);
       store.tasks.value = (h.tx.tasks as TxTaskJson[]) ?? [];
@@ -141,6 +163,13 @@ export function applyEvent(e: Record<string, unknown>): void {
       break;
     case "comments":
       store.comments.value = e.comments as Record<string, string>;
+      break;
+    case "connection":
+      // конфиг после «Принять» — иначе «Настройки устройства» показывали бы снимок из hello
+      store.connection.value = (e as unknown as ConnectionEvent).connection;
+      break;
+    case "devices":
+      store.devices.value = stripType<DevicesState>(e);
       break;
     case "bitrates":
       store.bitrates.value = e.bitrates as CustomBitrate[];

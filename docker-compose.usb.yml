@@ -1,0 +1,15 @@
+# Linux-хост: CAN-Hacker по USB прямо в контейнер — мост (./run-bridge.sh) не нужен.
+#   docker compose -f docker-compose.yml -f docker-compose.usb.yml up -d --build
+# Узел порта — CARBUS_USB (по умолчанию /dev/ttyACM0; какой у прибора — ls -l /dev/serial/by-id/):
+#   CARBUS_USB=/dev/ttyACM1 docker compose -f docker-compose.yml -f docker-compose.usb.yml up -d
+# Имя внутри контейнера — то же, что на хосте: по нему бэкенд находит USB-описатели в /sys.
+# Порт пробрасывается при старте контейнера: прибор, подключённый позже или переподключённый
+# с другим именем узла, увидит только перезапущенный контейнер (docker compose … restart).
+# В «Настройках устройства» такой прибор помечен «USB в контейнере».
+#
+# На macOS это не работает: Docker Desktop не пробрасывает USB в контейнер (Linux-VM без
+# доступа к USB хоста) — там прибор подключается через ./run-bridge.sh.
+services:
+  backend:
+    devices:
+      - "${CARBUS_USB:-/dev/ttyACM0}:${CARBUS_USB:-/dev/ttyACM0}"

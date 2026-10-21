@@ -107,3 +107,11 @@ test("switching the view closes an open context menu", async () => {
   expect(popup.value).toBeNull();
   ui.view.value = "main";
 });
+
+test("an on/off menu item is announced as a checkbox with its state", async () => {
+  registerActions([{ id: "rare", label: "Подсветка редких данных", checked: () => true, run: () => {} }]);
+  render(<ContextMenuLayer />);
+  openContextMenu(10, 10, [{ action: "rare" }]);
+  const item = await screen.findByRole("menuitemcheckbox", { name: "Подсветка редких данных" });
+  expect(item.getAttribute("aria-checked")).toBe("true");
+});

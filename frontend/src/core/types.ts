@@ -87,8 +87,59 @@ export interface StatusState {
   message: string;
   device_info: DeviceInfo | null;
   channels: Record<string, ChannelState>;
+  /** прибор текущего подключения (null, пока не подключены) */
+  device: DeviceEntry | null;
   /** файл фоновой записи потока, пока она идёт */
   log?: string | null;
+}
+
+/** USB-порт из списка «Настроек устройства». Бэкенд видит прибор через нативный мост на
+ * маке (bridge), сам (usb: Docker на Linux с пробросом USB или бэкенд без Docker) или это
+ * демо-сервер (demo). */
+export interface DeviceEntry {
+  /** "bridge:/dev/cu.usbmodem00000000001A1" | "usb:/dev/ttyACM0" | "demo:CAN-Hacker" */
+  key: string;
+  source: "bridge" | "usb" | "demo";
+  /** узел порта: "/dev/cu.usbmodem00000000001A1" */
+  path: string;
+  /** canhacker — USB-строки CAN-Hacker; compatible — VID:PID 0483:5740 без имени (возможно,
+   * CAN-Hacker с другой прошивкой); other — чужой порт (монитор, плата), подключаться нельзя */
+  kind: "canhacker" | "compatible" | "other";
+  /** "CAN-Hacker v3.2" | строка product | описание порта */
+  title: string;
+  /** серийный номер из USB-строки — тот же, что «Серийный номер» в информации об устройстве */
+  serial: number | null;
+  firmware: string | null;
+  manufacturer: string | null;
+  /** сырая USB-строка product */
+  product: string | null;
+  usb_serial: string | null;
+  vid: number | null;
+  pid: number | null;
+  /** порт сейчас открыт мостом (если это мы — он же в status.device) */
+  busy: boolean;
+  /** можно выбрать и подключиться: не «other» или порт задан мосту через CARBUS_SERIAL */
+  selectable: boolean;
+}
+
+export interface BridgeInfo {
+  /** unknown — ещё не опрашивали; down — по адресу никто не слушает; foreign — отвечает не
+   * мост CarBUS (старый мост, «Приёмник AirPlay» на порту 7000); off — мост не используется */
+  state: "unknown" | "ok" | "down" | "foreign" | "off";
+  /** "host.docker.internal:7000" */
+  address: string;
+  /** подробность ошибки, может быть "" */
+  message: string;
+}
+
+/** Снимок найденных приборов: событие `devices`, `hello.devices` и ответ `devices_scan`. */
+export interface DevicesState {
+  /** сначала выбираемые (canhacker, потом compatible), потом остальные */
+  devices: DeviceEntry[];
+  bridge: BridgeInfo;
+  usb: { state: "ok" | "unavailable"; in_container: boolean };
+  /** выбираемых нет — готовое объяснение почему (мост не запущен, прибор не подключён…); иначе "" */
+  hint: string;
 }
 
 export interface ChannelConfig {
@@ -104,7 +155,16 @@ export interface ChannelConfig {
 export interface ConnectionConfig {
   bridge_host: string;
   bridge_port: number;
+  /** ключ выбранного прибора (DeviceEntry.key) или "" — единственный найденный CAN-Hacker */
+  device: string;
   channels: ChannelConfig[];
+}
+
+/** Событие `connection`: сервер рассылает его после каждой команды `connect` (удачной и
+ * нет) — нормализованный конфиг той же формы, что `hello.connection`. */
+export interface ConnectionEvent {
+  type: "connection";
+  connection: ConnectionConfig;
 }
 
 export interface CustomBitrate {
@@ -150,6 +210,10 @@ export interface CaptureState {
   full: boolean;
   rev: number;
   markers: Marker[];
+  /** из какого файла буфер (null — записан здесь): F5 после загрузки начинает новую запись */
+  loaded?: string | null;
+  /** есть несохранённое — записанные кадры или метки: очистку спрашиваем */
+  dirty?: boolean;
 }
 
 export interface TriggerJson {
@@ -183,6 +247,8 @@ export interface HwSlotJson {
   can_id: number;
   mask: number;
   ext: boolean;
+  /** тип слота у прибора: только 11-битные ID, только 29-битные или любые */
+  kind?: "std" | "ext" | "any";
 }
 
 export interface RangeExclusionJson {

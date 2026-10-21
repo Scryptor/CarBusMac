@@ -7,9 +7,11 @@ import { fmtAscii, fmtData, fmtFlags, fmtId, fmtPeriod } from "../../core/format
 import { commentKey, pushToast, store } from "../../core/store";
 import type { MonitorRowJson, Settings } from "../../core/types";
 import { t } from "../../i18n/ru";
-import { openBitmap } from "./BitmapWindow";
+import { confirmDialog } from "../../ui/confirm";
+import { streamSelection } from "../stream/StreamGrid";
+import { openBitmap, openStreamBitmap } from "./BitmapWindow";
 import { CommentDialog, RarePeriodDialog } from "./dialogs";
-import { openFrames } from "./FramesWindow";
+import { focusedFramesMessage, openFrames } from "./FramesWindow";
 import { monitorSelection, monitorStore } from "./MonitorGrid";
 
 const toastErr = (e: Error) => pushToast("error", e.message);
@@ -19,11 +21,12 @@ function setSetting(patch: Partial<Settings>): void {
 }
 
 /** Снимок таблицы монитора в текст (TAB-разделитель) — «Сохранить RX-List». */
-export function rxListText(rows: MonitorRowJson[], hex: boolean, comments: Record<string, string>): string {
-  const head = [t.col.ch, t.col.flags, t.col.id, t.col.dlc, t.col.data, t.col.period, t.col.count, t.col.ascii, t.col.comment];
+export function rxListText(rows: MonitorRowJson[], hex: boolean, comments: Record<string, string>, aggregator = false): string {
+  const fc = aggregator ? [t.col.fc] : [];
+  const head = [t.col.ch, t.col.flags, t.col.id, t.col.dlc, t.col.data, t.col.period, t.col.count, ...fc, t.col.ascii, t.col.comment];
   const lines = rows.map((r) =>
     [r.ch, fmtFlags(r), fmtId(r.id, r.ext, hex), r.dlc, fmtData(r.data).join(" "), fmtPeriod(r.period_ms), r.count,
-      fmtAscii(r.data), comments[commentKey(r.id, r.ext)] ?? ""].join("\t"),
+      ...(aggregator ? [r.fc] : []), fmtAscii(r.data), comments[commentKey(r.id, r.ext)] ?? ""].join("\t"),
   );
   return [head.join("\t"), ...lines].join("\n") + "\n";
 }
@@ -44,7 +47,10 @@ function stamp(): string {
 }
 
 export function monitorActions(): Action[] {
-  const sel = () => monitorSelection.value;
+  /** Сообщение для F3 / Ctrl+F3 / F4 и «Добавить ID в фильтр»: в режиме «Поток» — выделенная
+   * строка потока (как у Ctrl+↓), а не невидимое там выделение монитора. */
+  const sel = (): { ch: number; id: number; ext: boolean } | null =>
+    ui.receiveMode.value === "stream" ? streamSelection.value : monitorSelection.value;
   const s = () => store.settings.value;
   return [
     {
@@ -53,7 +59,13 @@ export function monitorActions(): Action[] {
       shortcut: "Ctrl+N",
       icon: Eraser,
       scope: "main",
-      run: () => cmd(ui.receiveMode.value === "stream" ? "capture_clear" : "monitor_clear").catch(toastErr),
+      run: async () => {
+        if (ui.receiveMode.value !== "stream") return void cmd("monitor_clear").catch(toastErr);
+        // несохранённый поток (с метками) стирается безвозвратно — спросить, как отладчик
+        const c = store.capture.value;
+        if (c.dirty && c.count > 0 && !(await confirmDialog(t.hint.clear, t.stream.clearAsk(c.count, c.markers.length)))) return;
+        cmd("capture_clear").catch(toastErr);
+      },
     },
     {
       id: "bitmap",
@@ -64,6 +76,7 @@ export function monitorActions(): Action[] {
       scope: "main",
       enabled: () => sel() != null,
       run: () => {
+        if (ui.receiveMode.value === "stream") return openStreamBitmap();     // идёт за выделением потока
         const r = sel();
         if (r) openBitmap(r.ch, r.id, r.ext);
       },
@@ -78,7 +91,7 @@ export function monitorActions(): Action[] {
       enabled: () => sel() != null,
       run: () => {
         const r = sel();
-        if (r) openFrames(r.ch, r.id, r.ext);
+        if (r) openFrames(r.ch, r.id, r.ext, ui.receiveMode.value === "stream" ? "stream" : "monitor");
       },
     },
     {
@@ -88,9 +101,10 @@ export function monitorActions(): Action[] {
       shortcut: "F4",
       icon: MessageSquare,
       scope: "main",
-      enabled: () => sel() != null,
+      // F4 в окне «Данные сообщения» — комментарий его сообщения (как у десктопа)
+      enabled: () => focusedFramesMessage() != null || sel() != null,
       run: () => {
-        const r = sel();
+        const r = focusedFramesMessage() ?? sel();
         if (r) openDialog(<CommentDialog id={r.id} ext={r.ext} />);
       },
     },
@@ -131,7 +145,7 @@ export function monitorActions(): Action[] {
       scope: "main",
       enabled: () => monitorStore.size > 0,
       run: () =>
-        downloadText(`rx-list_${stamp()}.txt`, rxListText(monitorStore.all(), s().monitor_hex_ids, store.comments.value)),
+        downloadText(`rx-list_${stamp()}.txt`, rxListText(monitorStore.all(), s().monitor_hex_ids, store.comments.value, s().aggregator)),
     },
     {
       id: "addIdToFilter",
@@ -142,7 +156,7 @@ export function monitorActions(): Action[] {
         const r = sel();
         if (!r) return;
         cmd("filters_add_id", { channel: r.ch, id: r.id, ext: r.ext })
-          .then(() => pushToast("info", t.filters.idAdded(fmtId(r.id, r.ext, true), r.ch)))
+          .then(() => pushToast("info", t.filters.idAdded(fmtId(r.id, r.ext, s().monitor_hex_ids), r.ch)))
           .catch(toastErr);
       },
     },
@@ -158,7 +172,16 @@ export function monitorActions(): Action[] {
         ui.split.value = !ui.split.value;
       },
     },
-    { id: "commentsClear", label: t.comment.clear, scope: "main", run: () => cmd("comments_clear").catch(toastErr) },
+    {
+      id: "commentsClear",
+      label: t.comment.clear,
+      scope: "main",
+      enabled: () => Object.keys(store.comments.value).length > 0,
+      run: async () => {
+        const n = Object.keys(store.comments.value).length;
+        if (n && (await confirmDialog(t.comment.clear, t.comment.clearAsk(n)))) cmd("comments_clear").catch(toastErr);
+      },
+    },
   ];
 }
 

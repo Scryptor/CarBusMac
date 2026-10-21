@@ -56,6 +56,10 @@ function draftLabel(d: Draft): string {
   return d.caption ? `${d.caption} — ${rate}` : rate;
 }
 
+/** Тайминг дальше этого от заданной скорости — почти наверняка ошибка ввода (допуск CAN
+ * по скорости — доли процента): «Принять» сначала предупреждает. */
+const MAX_OFF_PCT = 1;
+
 function fmtAccuracy(pct: number): string {
   if (Math.abs(pct) < 0.0005) return "0,000";
   return `${pct > 0 ? "+" : "−"}${Math.abs(pct).toFixed(3).replace(".", ",")}`;
@@ -73,6 +77,8 @@ export function BitrateManager({ clockHz, clockKnown = true, onClose, onSaved }:
   const [sel, setSel] = useState<number | null>(drafts.length ? 0 : null);
   const [lastAdded, setLastAdded] = useState<Draft | null>(null);
   const [saveErr, setSaveErr] = useState("");
+  // скорость, про чей неточный тайминг уже предупредили: второе «Принять» сохраняет как есть
+  const [warned, setWarned] = useState<Draft | null>(null);
   const cur = sel != null ? drafts[sel] : null;
   const L = NOMINAL_LIMITS;
 
@@ -134,6 +140,13 @@ export function BitrateManager({ clockHz, clockKnown = true, onClose, onSaved }:
       setSaveErr(draftError(drafts[bad]) ?? "");
       return;
     }
+    const off = drafts.findIndex((d) => offTarget(d) != null && d !== warned);
+    if (off >= 0) {
+      setSel(off);
+      setWarned(drafts[off]);
+      setSaveErr(offWarning(drafts[off]) + " " + t.bitrate.offAgain);
+      return;
+    }
     const list: CustomBitrate[] = drafts.map((d) => ({
       caption: d.caption.trim(),
       bitrate: bpsOf(d),
@@ -149,6 +162,18 @@ export function BitrateManager({ clockHz, clockKnown = true, onClose, onSaved }:
         onClose();
       })
       .catch((e: Error) => setSaveErr(e.message));
+  };
+
+  /** Тайминг заметно не даёт заданную скорость: что получится на самом деле. */
+  function offTarget(d: Draft): { bitrate: number; accuracyPct: number } | null {
+    const tm = timingOf(d);
+    if (timingError(tm) || !bpsOf(d)) return null;
+    const i = timingInfo(tm, d.clock_hz || clockHz, bpsOf(d));
+    return Math.abs(i.accuracyPct) > MAX_OFF_PCT ? i : null;
+  }
+  const offWarning = (d: Draft) => {
+    const i = offTarget(d)!;
+    return t.bitrate.offTarget(dec(i.bitrate / 1000, 3), fmtAccuracy(i.accuracyPct), dec(bpsOf(d) / 1000, 3));
   };
 
   const err = cur ? draftError(cur) : null;
@@ -244,7 +269,7 @@ export function BitrateManager({ clockHz, clockKnown = true, onClose, onSaved }:
         </div>
       </div>
       <div class="err-line" role={err || saveErr ? "alert" : undefined}>
-        {err ?? saveErr}
+        {err ?? (saveErr || (cur && offTarget(cur) ? offWarning(cur) : ""))}
       </div>
     </Dialog>
   );

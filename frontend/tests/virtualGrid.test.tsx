@@ -76,3 +76,41 @@ test("column widths grow with the table font so data is not cut", async () => {
     gridScale.value = 1;
   }
 });
+
+test("on a Mac Ctrl+click is a secondary click: rows are toggled with Cmd, Ctrl+click picks the row for its menu", async () => {
+  const { fireEvent } = await import("@testing-library/preact");
+  const { Selection } = await import("../src/ui/grid/selection");
+  const heightSpy = vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(400);
+  const platformSpy = vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
+  try {
+    const sel = new Selection();
+    const menus: (number | null)[] = [];
+    const { container } = render(
+      <VirtualGrid<{ n: number }>
+        gridId="mac"
+        ariaLabel="t"
+        columns={cols}
+        rowCount={10}
+        getRow={(i) => ({ n: i })}
+        selection={sel}
+        multi
+        onContextMenu={(_e, i) => menus.push(i)}
+      />,
+    );
+    const rows = container.querySelectorAll<HTMLElement>(".gr");
+    fireEvent.mouseDown(rows[1]);
+    expect(fireEvent.mouseDown(rows[3], { metaKey: true })).toBe(false); // Cmd — добавить строку
+    expect(sel.selected()).toEqual([1, 3]);
+    // Ctrl+клик по выделенной строке: macOS откроет меню, выделение не меняется
+    fireEvent.mouseDown(rows[3], { ctrlKey: true });
+    fireEvent.contextMenu(rows[3], { ctrlKey: true });
+    expect(sel.selected()).toEqual([1, 3]);
+    expect(menus).toEqual([3]);
+    // Ctrl+клик по невыделенной — как правый клик: меню относится к ней, а не переключает её
+    fireEvent.mouseDown(rows[5], { ctrlKey: true });
+    expect(sel.selected()).toEqual([5]);
+  } finally {
+    platformSpy.mockRestore();
+    heightSpy.mockRestore();
+  }
+});

@@ -6,10 +6,21 @@ import type { Action } from "../core/actions";
 import { cmd } from "../core/client";
 import { pushToast, store } from "../core/store";
 import { t } from "../i18n/ru";
+import { openMenuBelow } from "../ui/ContextMenu";
 import { Dialog } from "../ui/Dialog";
+import { toolbarHooks } from "./MainToolbar";
 import { closeDialog, openDialog, ui } from "./ui";
 
 export const isConnected = () => store.status.value.state === "opened";
+
+/** Подпись кнопки и пункта меню подключения — по тому, что сделает клик: при открытом
+ * соединении — отключиться, во время соединения — прервать его. */
+export function connectLabel(): string {
+  const state = store.status.value.state;
+  if (state === "opened") return t.menu.disconnect;
+  if (state === "opening") return t.ui.cancelConnect;
+  return t.menu.connect;
+}
 
 /** «Подключиться» открывает «Настройки устройства» (features/device); без него — по сохранённой конфигурации. */
 export const connectHooks: { openConnectDialog: (() => void) | null } = { openConnectDialog: null };
@@ -29,7 +40,15 @@ export async function toggleConnect(): Promise<void> {
 }
 
 function AboutDialog() {
-  return h(Dialog, { title: t.about.title, onClose: closeDialog, width: 420, children: h("p", { style: { margin: 0 } }, t.about.text) });
+  return h(Dialog, {
+    title: t.about.title,
+    onClose: closeDialog,
+    width: 440,
+    children: [
+      h("p", { style: { margin: "0 0 8px" } }, t.about.text),
+      h("p", { class: "muted", style: { margin: 0 } }, t.about.version(__APP_VERSION__)),
+    ],
+  });
 }
 
 export function shellActions(): Action[] {
@@ -58,8 +77,12 @@ export function shellActions(): Action[] {
     },
     {
       id: "tracer",
-      label: t.menu.tracer,
-      hint: t.hint.tracer,
+      get label() {
+        return ui.view.value === "tracer" ? t.menu.closeTracer : t.menu.tracer;
+      },
+      get hint() {
+        return ui.view.value === "tracer" ? t.menu.closeTracer : t.hint.tracer;
+      },
       shortcut: "F12",
       icon: Bug,
       scope: "global",
@@ -99,7 +122,11 @@ export function shellActions(): Action[] {
       scope: "global",
       enabled: isConnected,
       run: () => {
-        /* меню кнопки строит MainToolbar */
+        // основная часть сплит-кнопки открывает то же меню, что и стрелка (строит features/device)
+        const owner = "split:channelOptions";
+        const arrow = document.querySelector<HTMLElement>(`[data-menu-owner="${owner}"]`);
+        const anchor = arrow?.closest<HTMLElement>(".tool-split") ?? arrow;
+        if (anchor) openMenuBelow(anchor, toolbarHooks.channelMenu(), owner);
       },
     },
     {

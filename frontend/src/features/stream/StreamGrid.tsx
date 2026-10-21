@@ -3,7 +3,8 @@
  * видимые страницы, а пока пользователь внизу — следует за новыми кадрами. */
 import { signal } from "@preact/signals";
 import { Flag } from "lucide-preact";
-import { useMemo } from "preact/hooks";
+import { useEffect, useMemo } from "preact/hooks";
+import { ui } from "../../app/ui";
 import { runAction } from "../../core/actions";
 import { client, cmd } from "../../core/client";
 import { fmtAscii, fmtData, fmtFlags, fmtId, fmtTime } from "../../core/format";
@@ -18,20 +19,46 @@ import { StreamCache } from "./streamCache";
 
 export const streamCache = new StreamCache<FrameRowJson>(200);
 export const streamVersion = signal(0);
+/** Выделение таблицы потока — на уровне модуля, чтобы сбросить его вместе со строками. */
+export const streamSel = new Selection();
 export const streamSelection = signal<FrameRowJson | null>(null);
 export const streamGrid: { ctl: GridController | null } = { ctl: null };
 let rev = -1;
+/** Сколько таблиц потока на экране. Без них хвост из capture_tail не копим: строки живут на
+ * бэкенде, открывшаяся таблица подгрузит видимые сама (иначе фоновая запись в режиме
+ * «Монитор» за час набивала бы кэш миллионами строк). */
+let mounted = 0;
+/** Видимые строки, которые таблица просила последними, — вокруг них и держим кэш. */
+const view = { first: 0, last: 0 };
+/** Строка, к которой прокрутить, когда таблица потока появится на экране. */
+let scrollOnMount: number | null = null;
+/** Прыжок к строке; таблица сразу снимает «следование за концом» (VirtualGrid.scrollToRow
+ * пересчитывает его по целевой позиции), поэтому новые кадры записи её обратно не утягивают. */
+function jumpTo(i: number): void {
+  streamGrid.ctl?.scrollToRow(i);
+}
+
+/** Строк под этими номерами больше нет (очистка, загрузка файла, переподключение) — выделение
+ * снимаем, иначе Ctrl+↓ скопировал бы в TX-List исчезнувшую строку. */
+function dropSelection(): void {
+  streamSel.clear();
+  streamSelection.value = null;
+}
 
 function syncRev(r: number): void {
   if (r !== rev) {
     rev = r;
     streamCache.reset();
+    dropSelection();
   }
 }
 
 client.on("capture_tail", (e) => {
   syncRev(Number(e.rev));
-  streamCache.applyTail(Number(e.start), e.rows as FrameRowJson[]);
+  if (mounted > 0) {
+    streamCache.applyTail(Number(e.start), e.rows as FrameRowJson[]);
+    streamCache.trimAround(view.first, view.last);
+  }
   streamVersion.value++;
 });
 client.on("capture_state", (e) => {
@@ -43,11 +70,28 @@ client.on("hello", (e) => {
   // пока не придёт capture_state (без записи — не придёт)
   rev = Number((e.capture as { rev?: number } | undefined)?.rev ?? -1);
   streamCache.reset();
+  dropSelection();
   streamVersion.value++;
 });
 
+/** «Перейти к метке»: прокрутить поток к строке. Список меток открывается и в режиме «Монитор»
+ * (во время записи) — тогда сначала переключаемся на поток, а прокручивает только что
+ * смонтированная таблица. */
+export function scrollStreamTo(i: number): void {
+  if (mounted > 0 && streamGrid.ctl) {
+    jumpTo(i);
+    return;
+  }
+  scrollOnMount = i;
+  ui.view.value = "main";
+  ui.receiveMode.value = "stream";
+}
+
 export function fetchRange(first: number, last: number): void {
   const total = store.capture.value.count;
+  view.first = first;
+  view.last = last;
+  streamCache.trimAround(first, last);
   for (const p of streamCache.missingPages(first, Math.min(last, total), total)) {
     streamCache.markPending(p);
     const askedRev = rev;
@@ -73,7 +117,7 @@ export function streamMenu(): MenuItem[] {
     { action: "saveStream" },
     { action: "toTracer" },
     { separator: true },
-    { action: "copyStreamToTx" },
+    { action: "copyToTx", label: t.rxMenu.copyToTx },
     { action: "clear", label: t.stream.clearStream },
   ];
 }
@@ -84,7 +128,19 @@ export function StreamPanel() {
   const hex = store.settings.value.monitor_hex_ids;
   const comments = store.comments.value;
   streamVersion.value;
-  const sel = useMemo(() => new Selection(), []);
+  const sel = streamSel;
+  useEffect(() => {
+    mounted++;
+    // эффекты таблицы уже отработали (дочерние — раньше), её контроллер в streamGrid свежий
+    if (scrollOnMount != null) {
+      const i = scrollOnMount;
+      scrollOnMount = null;
+      jumpTo(i);
+    }
+    return () => {
+      mounted--;
+    };
+  }, []);
 
   const columns: Column<FrameRowJson>[] = useMemo(
     () => [

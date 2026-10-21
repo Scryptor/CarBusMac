@@ -48,6 +48,24 @@ def _max_id(ext: bool) -> int:
     return 0x1FFFFFFF if ext else 0x7FF
 
 
+def layout_kinds(info: dict[str, Any]) -> dict[int, list[str]]:
+    """Тип каждого слота по каналам, в порядке записей `filters_info`: "std" — только
+    11-битные ID, "ext" — только 29-битные, "any" — оба или прибор не сказал. У части
+    приборов банки раздельные (по README carbus-lib: 11 бит — 0..27, 29 бит — 28..35)."""
+    kinds: dict[int, list[str]] = {}
+    for f in info.get("filters_info") or []:
+        try:
+            ch, size = int(f["channel"]), int(f["size"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if ch <= 0 or size <= 0:
+            continue
+        has11, has29 = f.get("has_11bit"), f.get("has_29bit")
+        kind = "std" if has11 and not has29 else "ext" if has29 and not has11 else "any"
+        kinds.setdefault(ch, []).extend([kind] * size)
+    return kinds
+
+
 def layout_from_device(info: dict[str, Any]) -> dict[int, int]:
     layout: dict[int, int] = {}
     for f in info.get("filters_info") or []:
@@ -76,14 +94,17 @@ def range_from_dict(d: dict[str, Any]) -> RangeFilter:
     if start < 0 or end > 0x1FFFFFFF:
         raise ValueError("диапазон вне 0..1FFFFFFF")
     excl = [RangeExclusion(bool(e.get("enabled", True)), int(e.get("can_id", 0)), int(e.get("mask", 0x7FF)))
-            for e in d.get("exclusions") or []]
-    return RangeFilter(str(d.get("id") or ""), int(d.get("channel", 1)), bool(d.get("enabled", True)),
-                       start, end, excl)
+            for e in d.get("exclusions") or [] if isinstance(e, dict)]
+    channel = int(d.get("channel", 1))
+    if channel not in (1, 2):
+        raise ValueError("канал диапазона — 1 или 2")
+    return RangeFilter(str(d.get("id") or ""), channel, bool(d.get("enabled", True)), start, end, excl)
 
 
 class HwFilters:
-    def __init__(self, layout: dict[int, int]) -> None:
+    def __init__(self, layout: dict[int, int], kinds: dict[int, list[str]] | None = None) -> None:
         self.layout = dict(layout)
+        self.kinds = {ch: list(v) for ch, v in (kinds or {}).items()}
         self.slots = [HwSlot(ch, i) for ch in sorted(layout) for i in range(layout[ch])]
 
     def _find(self, channel: int, index: int) -> int:
@@ -92,20 +113,51 @@ class HwFilters:
                 return k
         raise ValueError(f"нет фильтра {index} на канале {channel}")
 
+    def kind(self, channel: int, index: int) -> str:
+        k = self.kinds.get(channel) or []
+        return k[index] if 0 <= index < len(k) else "any"
+
+    def check(self, slot: HwSlot) -> None:
+        """Слот есть у прибора и подходит по типу ID (у раздельных банков 11/29 бит)."""
+        self._find(slot.channel, slot.index)
+        kind = self.kind(slot.channel, slot.index)
+        if kind == "std" and slot.ext:
+            raise ValueError(f"Фильтр {slot.index} канала {slot.channel} — только для 11-битных ID")
+        if kind == "ext" and not slot.ext:
+            raise ValueError(f"Фильтр {slot.index} канала {slot.channel} — только для 29-битных ID")
+
     def set(self, slot: HwSlot) -> None:
+        self.check(slot)
         self.slots[self._find(slot.channel, slot.index)] = slot
+
+    def _fits(self, s: HwSlot, ext: bool) -> bool:
+        kind = self.kind(s.channel, s.index)
+        return kind == "any" or kind == ("ext" if ext else "std")
+
+    def slot_for_id(self, channel: int, can_id: int, ext: bool) -> HwSlot | None:
+        """Слот для «Добавить ID в фильтр»: тот, где ровно этот ID (полная маска) уже стоит,
+        иначе первый нетронутый. Фильтр с другой маской или выключенный пользователем — чужая
+        настройка, её не трогаем."""
+        mine = [s for s in self.slots if s.channel == channel and self._fits(s, ext)]
+        same = next((s for s in mine if s.can_id == can_id and s.ext == ext and s.mask == _max_id(ext)), None)
+        if same is not None:
+            return same
+        return next((s for s in mine if not s.enabled and s.can_id == 0 and not s.ext
+                     and s.mask in (0x7FF, 0x1FFFFFFF)), None)
 
     def first_free(self, channel: int) -> HwSlot | None:
         return next((s for s in self.slots if s.channel == channel and not s.enabled), None)
 
     def to_list(self) -> list[dict[str, Any]]:
-        return [dict(s.__dict__) for s in self.slots]
+        return [{**s.__dict__, "kind": self.kind(s.channel, s.index)} for s in self.slots]
 
     def load_list(self, items: list[dict[str, Any]]) -> None:
         for d in items:
+            if not isinstance(d, dict):
+                continue
             try:
                 self.set(slot_from_dict(d))
-            except (KeyError, ValueError):
+            except (KeyError, TypeError, ValueError):
                 continue   # слот другого прибора — пропускаем
 
 
@@ -140,7 +192,9 @@ class SoftFilters:
     def load_list(self, items: list[dict[str, Any]]) -> None:
         self.ranges = []
         for d in items:
+            if not isinstance(d, dict):
+                continue
             try:
                 self.upsert(range_from_dict(d))
-            except (TypeError, ValueError):
+            except (AttributeError, KeyError, TypeError, ValueError):
                 continue

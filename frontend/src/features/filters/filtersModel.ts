@@ -24,11 +24,16 @@ export function parseExcludeList(s: string): number[] {
   });
 }
 
+/** Маска исключения точного ID. У исключения нет флага 11/29 бит, а сравнивается
+ * `(ID кадра & маска) == (ID & маска)`: с маской 7FF исключение «110» выбрасывало бы и
+ * 29-битный 18DAF110 (младшие 11 бит совпали), поэтому — все 29 бит. */
+export const EXACT_ID_MASK = 0x1fffffff;
+
 /** Новый список исключений из строки ID: у оставшихся сохраняем маску и флажок. */
 export function rangeWithExcludeList(r: RangeFilterJson, ids: number[]): RangeFilterJson {
   const old = new Map(r.exclusions.map((e) => [e.can_id, e]));
   return {
     ...r,
-    exclusions: ids.map((id) => old.get(id) ?? { enabled: true, can_id: id, mask: id > 0x7ff ? 0x1fffffff : 0x7ff }),
+    exclusions: ids.map((id) => old.get(id) ?? { enabled: true, can_id: id, mask: EXACT_ID_MASK }),
   };
 }

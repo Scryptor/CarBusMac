@@ -47,6 +47,12 @@ export function MenuBar({ menus, right }: { menus: TopMenu[]; right?: ComponentC
               if (isOpen) popup.value = null;
               else openMenuBelow(e.currentTarget as HTMLElement, m.items, owner);
             }}
+            onClick={(e) => {
+              // Enter/пробел с клавиатуры (мышь открывает по mousedown)
+              if (e.detail !== 0) return;
+              if (isOpen) popup.value = null;
+              else openMenuBelow(e.currentTarget as HTMLElement, m.items, owner);
+            }}
             onMouseEnter={(e) => {
               if (openOwner?.startsWith("menubar:") && !isOpen) openMenuBelow(e.currentTarget as HTMLElement, m.items, owner);
             }}

@@ -1,8 +1,9 @@
 /** Таблица трейса: видимые строки (без неотмеченных в таблице ID) с номером в трейсе,
  * временем, каналом, ID, данными, паузами и комментарием. Точка останова — красная
- * метка в первой колонке, текущая строка воспроизведения подсвечена, запрещённые
- * строки приглушены. Shift — диапазон, Ctrl/Cmd — отдельные строки. */
-import { Flag, Play, Square } from "lucide-preact";
+ * метка в первой колонке; строка для отладки (где воспроизведение, rsTraceNextRow
+ * десктопа) — зелёная полоса и стрелка, в отличие от курсора («Текущая строка»,
+ * выделение); запрещённые строки приглушены. Shift — диапазон, Ctrl/Cmd — отдельные строки. */
+import { ArrowBigRight, Flag, Play, Square } from "lucide-preact";
 import { useMemo } from "preact/hooks";
 import { runAction } from "../../core/actions";
 import { fmtAscii, fmtData, fmtFlags, fmtId, fmtTime } from "../../core/format";
@@ -11,13 +12,14 @@ import type { TracerRowJson } from "../../core/types";
 import { t } from "../../i18n/ru";
 import { openContextMenu } from "../../ui/ContextMenu";
 import type { MenuItem } from "../../ui/Menu";
-import { VirtualGrid, type Column } from "../../ui/grid/VirtualGrid";
+import { VirtualGrid, type Column, type GridController } from "../../ui/grid/VirtualGrid";
 import {
   fetchTracerRange,
   idKey,
   tracerCache,
   tracerFound,
   tracerGrid,
+  tracerScrollTo,
   tracerSel,
   tracerSelVersion,
   tracerVersion,
@@ -33,27 +35,50 @@ export function tracerMenu(): MenuItem[] {
     { action: "tracerBp" },
     { action: "tracerCopyTx" },
     { action: "tracerComment", label: t.tracer.commentHint },
+    { action: "tracerRowComment" },
   ];
 }
 
 const delays = (r: TracerRowJson) => (r.before_ms || r.after_ms ? `${r.before_ms} / ${r.after_ms}` : "");
+
+/** Контроллер свежей отрисовки таблицы: заказанную прокрутку (курсор после правки, возврат
+ * в отладчик) выполнить им — он уже знает новое число строк. Раньше нельзя: эффекты
+ * родителя могут сработать, пока у грида ещё контроллер прошлой отрисовки (или прошлого
+ * монтирования, уже без элемента). */
+function takeController(c: GridController): void {
+  tracerGrid.ctl = c;
+  const req = tracerScrollTo.peek();
+  if (!req) return;
+  tracerScrollTo.value = null;
+  c.scrollToRow(req.pos);
+}
 
 export function TracerGrid() {
   const st = store.tracer.value;
   const comments = store.comments.value;
   const found = tracerFound.value;
   const current = st.current;
+  // выделение меняют и не из таблицы («Снять выделение», «Выделить сообщения» в таблице ID) —
+  // перерисоваться, чтобы подсвечено было ровно то, к чему применятся действия
+  tracerSelVersion.value;
+  // заказ прокрутки перерисовывает таблицу — выполнит его контроллер этой отрисовки
+  tracerScrollTo.value;
 
   const columns: Column<TracerRowJson>[] = useMemo(
     () => [
       {
         key: "bp",
         title: "",
-        width: 34,
+        width: 46,
         align: "center",
         render: (r) => (
           <span class="gutter">
             {r.bp ? <span class="bp-dot" title={t.tracer.bpTitle} aria-label={t.tracer.bpTitle} /> : null}
+            {r.i === current ? (
+              <span class="play-at" title={t.tracer.nextRowMark}>
+                <ArrowBigRight size={13} aria-label={t.tracer.nextRowMark} />
+              </span>
+            ) : null}
             {r.start ? <Play class="bound start" size={11} aria-label={t.tracer.startTitle} /> : null}
             {r.finish ? <Square class="bound finish" size={10} aria-label={t.tracer.finishTitle} /> : null}
           </span>
@@ -97,7 +122,7 @@ export function TracerGrid() {
           ),
       },
     ],
-    [comments],
+    [comments, current],
   );
 
   const rowClass = (r: TracerRowJson) =>
@@ -125,7 +150,7 @@ export function TracerGrid() {
       onRange={fetchTracerRange}
       onContextMenu={(e) => openContextMenu(e.clientX, e.clientY, tracerMenu())}
       onActivate={() => runAction("tracerRowEdit")}
-      controller={(c) => (tracerGrid.ctl = c)}
+      controller={takeController}
       emptyText={st.count > 0 ? t.tracer.allHidden : t.tracer.empty}
     />
   );

@@ -3,7 +3,7 @@ import asyncio
 import pytest
 
 from app.models import CanFrame
-from app.transmit import TransmitManager, TriggerSpec, TxTask, task_from_dict, task_to_dict
+from app.transmit import TransmitManager, TriggerSpec, TxTask, skipped_text, task_from_dict, task_to_dict
 
 
 def _collect(sent):
@@ -18,12 +18,17 @@ class FakeSleep:
     def __init__(self, limit=None):
         self.calls = []
         self.limit = limit
+        self.t = 0.0
 
     async def __call__(self, d):
         self.calls.append(d)
+        self.t += d
         if self.limit is not None and len(self.calls) >= self.limit:
             raise asyncio.CancelledError
         await asyncio.sleep(0)
+
+    def clock(self):
+        return self.t
 
 
 async def _drain():
@@ -50,7 +55,7 @@ async def test_shot_sends_frame_without_task():
 async def test_periodic_loop_uses_period_and_pause_stops():
     sent = []
     sleep = FakeSleep()
-    tm = TransmitManager(send=_collect(sent), sleep=sleep)
+    tm = TransmitManager(send=_collect(sent), sleep=sleep, clock=sleep.clock)
     tm.upsert(TxTask(id="t", can_id=0x100, data=b"\x00", period_ms=10))
     tm.start("t")
     await _drain()
@@ -208,3 +213,103 @@ async def test_deleting_a_running_task_is_not_an_error():
     tm.delete("t1")
     await _drain()
     assert errors == []
+
+
+async def test_period_is_kept_when_sending_takes_time():
+    sleep = FakeSleep()
+
+    async def slow_send(f):
+        sleep.t += 0.004                          # отправка занимает 4 мс
+
+    tm = TransmitManager(send=slow_send, sleep=sleep, clock=sleep.clock)
+    tm.upsert(TxTask(id="t", can_id=0x100, data=b"\x00", period_ms=10))
+    tm.start("t")
+    await _drain()
+    tm.pause("t")
+    assert sleep.calls[:3] == [pytest.approx(0.006)] * 3
+
+
+async def test_stop_trigger_on_stopped_task_does_not_spam_changes():
+    changes = []
+    tm = TransmitManager(send=_collect([]), on_change=lambda: changes.append(1))
+    tm.upsert(TxTask(id="t", can_id=0x100, trigger=TriggerSpec(action="stop", can_id=0x200)))
+    changes.clear()
+    for _ in range(50):
+        await tm.on_frame(CanFrame(1, 0x200, b"\x01"))
+    await _drain()
+    assert changes == []
+
+
+async def test_failed_trigger_send_is_reported():
+    errors = []
+
+    async def fail(f):
+        raise RuntimeError("Канал 2 не открыт")
+
+    tm = TransmitManager(send=fail, on_error=errors.append)
+    tm.upsert(TxTask(id="t", channel=2, can_id=0x100, trigger=TriggerSpec(action="single", can_id=0x200)))
+    await tm.on_frame(CanFrame(1, 0x200, b"\x01"))
+    await _drain()
+    assert errors == ["Канал 2 не открыт"]
+
+
+async def test_pause_all_cancels_delayed_trigger():
+    sent = []
+    tm = TransmitManager(send=_collect(sent))
+    tm.upsert(TxTask(id="t", can_id=0x100, trigger=TriggerSpec(action="single", delay_ms=50, can_id=0x200)))
+    await tm.on_frame(CanFrame(1, 0x200, b"\x01"))
+    tm.pause_all()                                # отключение прибора
+    await asyncio.sleep(0.08)
+    assert sent == []
+
+
+def test_load_list_notifies_once():
+    changes = []
+    tm = TransmitManager(send=_collect([]), on_change=lambda: changes.append(len(tm.tasks)))
+    tm.load_list([{"id": "a", "can_id": 1}, {"id": "b", "can_id": 2}])
+    assert changes == [2]
+
+
+def test_rtr_task_keeps_dlc_but_no_data():
+    """У RTR данных нет, а DLC есть: задача хранит DLC нулевых байт, что бы ни пришло."""
+    t = task_from_dict({"id": "t", "can_id": 0x100, "rtr": True, "data": "0102"})
+    assert t.rtr and t.data == b"\x00\x00"
+    assert task_from_dict({"id": "t", "can_id": 0x100, "data": "0102"}).data == b"\x01\x02"
+
+
+def test_trigger_bytes_beyond_trigger_dlc_are_dont_care():
+    t = task_from_dict({"id": "t", "trigger": {"action": "single", "can_id": 0x120, "dlc": 2,
+                                               "data": [1, 2, 3, None, 5, None, None, 8]}})
+    assert t.trigger.data == [1, 2] + [None] * 6
+
+
+def test_skipped_text_names_tasks_by_reason():
+    closed, listen = "Канал 2 не открыт", "Канал 1 открыт в режиме «Только слушать» — передача невозможна"
+    text = skipped_text([(TxTask(id="a", channel=2, can_id=0x7E0), closed),
+                         (TxTask(id="b", channel=1, can_id=0x100), listen),
+                         (TxTask(id="c", channel=2, can_id=0x18DAF110, ext=True), closed)])
+    assert text == f"Не запущены задачи: 7E0, 18DAF110 ({closed}); 100 ({listen})"
+    many = skipped_text([(TxTask(id=str(k), channel=2, can_id=k), closed) for k in range(13)], limit=10)
+    assert many.endswith(f"009 и ещё 3 ({closed})")
+
+
+def test_start_all_names_the_tasks_it_skipped(tmp_path):
+    """«Запустить все» запускает задачи открытых каналов и перечисляет пропущенные."""
+    from app.can_session import FakeSession
+    from tests.test_hub_data import _hub
+
+    hub, sink = _hub(tmp_path)
+    hub.session = FakeSession()
+    hub.channels = {1: {"open": True, "listen_only": False}, 2: {"open": False}}
+    running = []
+
+    async def run():
+        for tid, ch, can_id in (("t1", 1, 0x100), ("t2", 2, 0x7E0), ("t3", 2, 0x7DF)):
+            await hub._cmd_tx_upsert({"task": {"id": tid, "channel": ch, "can_id": can_id}})
+        await hub._cmd_tx_start_all({})
+        running.extend(t.running for t in hub.tx.tasks)
+        hub.tx.shutdown()
+    asyncio.run(run())
+    assert running == [True, False, False]
+    warnings = [m["message"] for m in sink.of("toast") if m["level"] == "warning"]
+    assert warnings == ["Не запущены задачи: 7E0, 7DF (Канал 2 не открыт)"]

@@ -7,6 +7,7 @@ import { statusHooks } from "../../app/StatusBar";
 import { slots } from "../../app/Workspace";
 import { ui } from "../../app/ui";
 import { registerActions } from "../../core/actions";
+import { fmtId } from "../../core/format";
 import { store } from "../../core/store";
 import { t } from "../../i18n/ru";
 import type { TopMenu } from "../../ui/MenuBar";
@@ -21,9 +22,11 @@ import {
   destText,
   focusedRow,
   selectionPayload,
+  tracerPause,
   tracerSel,
   tracerSelVersion,
   tracerVersion,
+  type TracerPause,
 } from "./tracerStore";
 
 function TracerToolbar() {
@@ -54,16 +57,25 @@ function TracerToolbar() {
   );
 }
 
+function pauseTitle(p: TracerPause | null): string | undefined {
+  if (!p) return undefined;
+  return p.reason === "rx" && p.rx ? t.tracer.pausedOnRx(p.rx.ch, fmtId(p.rx.id, p.rx.ext, true)) : t.tracer.pausedOnBp;
+}
+
+/** Статус отладчика как sbStatus десктопа: прогресс и строка для отладки (где
+ * воспроизведение), текущая строка (курсор) и число выделенных, точка назначения, пауза.
+ * Прогресс и точка назначения (куда уйдёт трейс) — keep: не сжимаются никогда; остальное
+ * ужимается вместе с ячейками каналов (правила — в app/StatusBar.tsx). */
 function TracerStatus() {
   const st = store.tracer.value;
   tracerSelVersion.value;
   tracerVersion.value; // номер строки под курсором известен, когда её данные загружены
   const row = focusedRow();
-  const picked = tracerSel.size > 1 ? tracerSel.size : 0;
   const pct = st.pos != null && st.visible > 0 ? ((st.pos + 1) / st.visible) * 100 : 0;
+  const debugRow = st.state !== "stopped" ? st.current : null;
   return (
     <>
-      <span class="cell">
+      <span class="cell keep" title={pauseTitle(tracerPause.value)}>
         <span
           class="progress"
           role="progressbar"
@@ -74,9 +86,10 @@ function TracerStatus() {
         >
           <span style={{ width: `${pct}%` }} />
         </span>
+        {debugRow != null ? <span>{t.tracer.nextRow(debugRow + 1)}</span> : null}
       </span>
-      <span class="cell">{t.tracer.current(row ? row.i + 1 : 0, picked)}</span>
-      <span class="cell">{destText(st.config)}</span>
+      <span class="cell">{t.tracer.current(row ? row.i + 1 : null, tracerSel.size)}</span>
+      <span class="cell keep">{destText(st.config)}</span>
       <span class="cell">{t.tracer.pauseStatus(delayText(st.config))}</span>
     </>
   );

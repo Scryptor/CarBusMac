@@ -12,7 +12,7 @@ import { openContextMenu } from "../../ui/ContextMenu";
 import type { MenuItem } from "../../ui/Menu";
 import { Selection } from "../../ui/grid/selection";
 import { VirtualGrid, type Column } from "../../ui/grid/VirtualGrid";
-import { isLit } from "./highlight";
+import { isLit, phaseRef } from "./highlight";
 import { MonitorStore, rowKey } from "./monitorModel";
 
 export const monitorStore = new MonitorStore();
@@ -47,12 +47,13 @@ function DataCells({ row }: { row: MonitorRowJson }) {
       {fmtData(row.data).map((b, i) => {
         const st = marks[i] ?? -Infinity;
         const lit = isLit(st, now, hold);
-        return (
-          <span
-            key={lit ? `${i}-${st}` : String(i)}
-            class={lit ? "byte chg" : "byte"}
-            style={lit ? { animationDelay: `-${Math.round(now - st)}ms` } : undefined}
-          >
+        // новая подсветка — новый элемент (ключ с моментом начала); фазу ставит phaseRef
+        return lit ? (
+          <span key={`${i}-${st}`} class="byte chg" data-st={st} ref={phaseRef}>
+            {b}
+          </span>
+        ) : (
+          <span key={String(i)} class="byte">
             {b}
           </span>
         );
@@ -77,29 +78,41 @@ export function monitorColumns(
       render: (r) => <span class={`ch-tag${r.ch === 2 ? " ch2" : ""}`}>{r.ch}</span>,
     });
   }
+  // таблица канала в раздельном приёме — половина окна (683 px на 1366): колонки уже, но с
+  // заголовком и 29-битным ID; ужимается только комментарий (он растягивается на свободное место)
+  const split = !withCh;
   cols.push(
-    { key: "flags", title: t.col.flags, width: withCh ? 72 : 64, render: (r) => fmtFlags(r) },
-    { key: "id", title: t.col.id, width: withCh ? 96 : 88, align: "right", render: (r) => fmtId(r.id, r.ext, hex) },
-    { key: "dlc", title: t.col.dlc, width: 48, align: "center", render: (r) => r.dlc },
-    { key: "data", title: t.col.data, width: 222, render: (r) => <DataCells row={r} /> },
-    { key: "period", title: t.col.period, width: withCh ? 92 : 82, align: "right", render: (r) => fmtPeriod(r.period_ms) },
-    { key: "count", title: t.col.count, width: withCh ? 88 : 76, align: "right", render: (r) => r.count },
+    { key: "flags", title: t.col.flags, width: split ? 58 : 72, render: (r) => fmtFlags(r) },
+    { key: "id", title: t.col.id, width: split ? 86 : 96, align: "right", render: (r) => fmtId(r.id, r.ext, hex) },
+    { key: "dlc", title: t.col.dlc, width: split ? 44 : 48, align: "center", render: (r) => r.dlc },
+    { key: "data", title: t.col.data, width: split ? 204 : 222, render: (r) => <DataCells row={r} /> },
+    { key: "period", title: t.col.period, width: split ? 80 : 92, align: "right", render: (r) => fmtPeriod(r.period_ms) },
+    { key: "count", title: t.col.count, width: split ? 74 : 88, align: "right", render: (r) => r.count },
   );
-  if (aggregator) cols.push({ key: "fc", title: t.col.fc, width: 56, align: "right", render: (r) => r.fc });
+  if (aggregator) cols.push({ key: "fc", title: t.col.fc, width: split ? 44 : 56, align: "right", render: (r) => r.fc });
   cols.push(
-    { key: "ascii", title: t.col.ascii, width: 92, render: (r) => fmtAscii(r.data) },
-    { key: "comment", title: t.col.comment, width: 160, fill: true, render: (r) => comments[commentKey(r.id, r.ext)] ?? "" },
+    { key: "ascii", title: t.col.ascii, width: split ? 74 : 92, render: (r) => fmtAscii(r.data) },
+    { key: "comment", title: t.col.comment, width: split ? 56 : 160, fill: true, render: (r) => comments[commentKey(r.id, r.ext)] ?? "" },
   );
   return cols;
 }
 
-export function monitorMenu(): MenuItem[] {
+/** Контекстное меню приёма — пункты и подписи десктопа: общий монитор (TframeReceive) и
+ * таблица канала раздельного приёма (TframeReceiveChannel — без файлов потока и группировки). */
+export function monitorMenu(split = false): MenuItem[] {
+  const files: MenuItem[] = split
+    ? [{ action: "saveRxList", label: t.rxMenu.saveRxList }]
+    : [
+        { action: "saveRxList", label: t.rxMenu.saveRxList },
+        { action: "loadStream", label: t.rxMenu.loadStream },
+        { action: "saveStream", label: t.rxMenu.saveStream },
+        { action: "toTracer", label: t.rxMenu.toTracer },
+      ];
   return [
-    { action: "saveRxList", label: t.rxMenu.saveRxList },
-    { action: "loadStream", label: t.rxMenu.loadStream },
+    ...files,
     { action: "clear", label: t.rxMenu.clear },
     { separator: true },
-    { action: "bitmap", label: t.rxMenu.bitmap },
+    { action: "bitmap", label: split ? t.rxMenu.bitmap : t.rxMenu.bitmapShort },
     { action: "frames", label: t.rxMenu.frames },
     { action: "comment", label: t.rxMenu.comment },
     { separator: true },
@@ -108,7 +121,7 @@ export function monitorMenu(): MenuItem[] {
     { separator: true },
     { action: "hexIds", label: t.rxMenu.hexIds },
     { action: "sort", label: t.rxMenu.sort },
-    { action: "groupByChannel", label: t.rxMenu.group },
+    ...(split ? [] : [{ action: "groupByChannel", label: t.rxMenu.group }]),
   ];
 }
 
@@ -146,7 +159,7 @@ export function MonitorPanel({ channel }: { channel?: number }) {
         monitorSelection.value = k ? monitorStore.get(k) ?? null : null;
       }}
       onActivate={() => runAction("bitmap")}
-      onContextMenu={(e) => openContextMenu(e.clientX, e.clientY, monitorMenu())}
+      onContextMenu={(e) => openContextMenu(e.clientX, e.clientY, monitorMenu(channel != null))}
       emptyText={store.status.value.state === "opened" ? t.receive.waiting : t.receive.connectFirst}
     />
   );

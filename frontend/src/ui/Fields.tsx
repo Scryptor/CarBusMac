@@ -1,7 +1,7 @@
 /** Поля ввода: флажок, выпадающий список, поле с подписью и строка ячеек-байтов
  * (как 8 полей «Данные» в окне передачи десктопа). */
 import type { ComponentChildren } from "preact";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useLayoutEffect, useRef, useState } from "preact/hooks";
 
 export function Check({ checked, onChange, label, disabled, title }: {
   checked: boolean;
@@ -113,9 +113,22 @@ export function ByteCells({ count, value, onChange, allowEmpty, label, disabled,
 }) {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   const [texts, setTexts] = useState<string[]>(() => Array.from({ length: count }, (_, i) => hex2(value[i] ?? null)));
-  useEffect(() => {
-    setTexts(Array.from({ length: count }, (_, i) => hex2(value[i] ?? null)));
-  }, [value.join(","), count]);
+  // ячейка потеряла фокус — пересинхронизировать её текст со значением
+  const [resync, setResync] = useState(0);
+  // layout-эффект: сразу после отрисовки, до следующего нажатия. Обычный эффект Preact
+  // выполняет перед следующей отрисовкой — уже после второй цифры, со старым значением
+  useLayoutEffect(() => {
+    // Ячейку, в которой сейчас печатают, не трогаем: родитель возвращает значение после
+    // каждой цифры, и «A» превращалось бы в «0A» — поле с maxLength=2 заполнено, вторая
+    // цифра отбрасывается («A5» давало 0x0A). Остальные ячейки показывают значение
+    // (внешние изменения, «A» → «0A» после ухода из ячейки).
+    const focused = document.activeElement;
+    setTexts((old) =>
+      Array.from({ length: count }, (_, i) =>
+        refs.current[i] != null && refs.current[i] === focused ? old[i] ?? "" : hex2(value[i] ?? null),
+      ),
+    );
+  }, [value.join(","), count, resync]);
 
   const emit = (next: (number | null)[]) => onChange(next.slice(0, count));
 
@@ -152,12 +165,16 @@ export function ByteCells({ count, value, onChange, allowEmpty, label, disabled,
               if (e.key === "ArrowLeft" && el.selectionStart === 0) refs.current[i - 1]?.focus();
             }}
             onFocus={(e) => (e.target as HTMLInputElement).select()}
+            onBlur={() => setResync((n) => n + 1)}
             onPaste={(e) => {
               const text = e.clipboardData?.getData("text") ?? "";
               let bytes: number[];
               try {
                 bytes = splitPastedBytes(text);
               } catch {
+                // не hex («hello world»): иначе браузер вставит текст, а фильтр ввода
+                // оставит из него hex-буквы («e» → 0E) — байт меняться не должен
+                e.preventDefault();
                 return;
               }
               if (bytes.length < 2) return;
@@ -167,6 +184,8 @@ export function ByteCells({ count, value, onChange, allowEmpty, label, disabled,
                 if (i + k < count) next[i + k] = b;
               });
               emit(next);
+              // ячейка в фокусе эффектом не обновляется — вставленное показываем сразу
+              setTexts((old) => old.map((txt, k) => (k >= i && k < i + bytes.length ? hex2(next[k] ?? null) : txt)));
             }}
           />
         );

@@ -1,12 +1,22 @@
 /** Плавающее окно внутри страницы (битовая карта, «Данные сообщения»): тянется за
  * заголовок, остаётся в пределах экрана, помнит позицию, по клику выходит наверх. */
+import { signal } from "@preact/signals";
 import { X } from "lucide-preact";
 import type { ComponentChildren } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { t } from "../i18n/ru";
 import { clampToViewport } from "./Menu";
 
-let zTop = 500;
+/** Порядок плавающих окон снизу вверх; z-index = 500 + место в нём — окна всегда под
+ * модальной подложкой (900) и меню (1000), сколько по ним ни щёлкай. */
+const order = signal<object[]>([]);
+const Z_BASE = 500;
+
+function raise(win: object): void {
+  const cur = order.value;
+  if (cur[cur.length - 1] === win) return; // уже сверху
+  order.value = [...cur.filter((w) => w !== win), win];
+}
 
 function loadPos(id: string): { x: number; y: number } | null {
   try {
@@ -30,16 +40,19 @@ interface Props {
   title: string;
   width: number;
   height?: number;
+  /** окно тянется за правый нижний угол (таблицы) */
+  resizable?: boolean;
   initial: { x: number; y: number };
   onClose: () => void;
   headExtra?: ComponentChildren;
   children: ComponentChildren;
 }
 
-export function FloatingWindow({ id, title, width, height, initial, onClose, headExtra, children }: Props) {
+export function FloatingWindow({ id, title, width, height, resizable, initial, onClose, headExtra, children }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState(() => loadPos(id) ?? initial);
-  const [z, setZ] = useState(() => ++zTop);
+  const self = useRef({}).current;
+  const z = Z_BASE + Math.max(0, order.value.indexOf(self));
   const drag = useRef<{ dx: number; dy: number } | null>(null);
 
   const clamp = (p: { x: number; y: number }) => {
@@ -52,6 +65,14 @@ export function FloatingWindow({ id, title, width, height, initial, onClose, hea
     const onResize = () => setPos((p) => clamp(p));
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // новое окно — сверху; закрытое уходит из порядка
+  useEffect(() => {
+    raise(self);
+    return () => {
+      order.value = order.value.filter((w) => w !== self);
+    };
   }, []);
 
   const onDown = (e: PointerEvent) => {
@@ -72,11 +93,11 @@ export function FloatingWindow({ id, title, width, height, initial, onClose, hea
   return (
     <div
       ref={ref}
-      class="float"
+      class={resizable ? "float resizable" : "float"}
       role="dialog"
       aria-label={title}
       style={{ left: `${pos.x}px`, top: `${pos.y}px`, width: `${width}px`, height: height ? `${height}px` : undefined, zIndex: z }}
-      onMouseDown={() => setZ(++zTop)}
+      onMouseDown={() => raise(self)}
     >
       <div class="float-head" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp}>
         <span class="title">{title}</span>
