@@ -18,5 +18,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
+    // Node 25+ объявляет свой глобальный localStorage (без --localstorage-file он undefined),
+    // и vitest 3 не подменяет его хранилищем happy-dom: ключ уже есть в global. Выключаем.
+    poolOptions: { forks: { execArgv: ["--no-experimental-webstorage"] } },
   },
 });
