@@ -308,33 +308,35 @@ export function ConnectDialog({ onClose = closeDialog }: { onClose?: () => void 
             {`${t.device.connectedDevice}: ${deviceText(st.device_info)}`}
           </div>
         ) : null}
-        <details class="dev-more" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)}>
-          <summary>{t.device.more}</summary>
-          <div class="form-grid">
-            <label for="dev-host">{t.device.bridge}</label>
-            <span class="inline-row">
-              <input
-                id="dev-host"
-                class="inp mono"
-                style={{ width: "260px" }}
-                aria-label={t.device.bridgeHost}
-                value={host}
-                spellcheck={false}
-                onInput={(e) => setHost((e.target as HTMLInputElement).value)}
-              />
-              <span>:</span>
-              <input
-                class="inp mono"
-                style={{ width: "76px" }}
-                aria-label={t.device.bridgePort}
-                value={port}
-                inputMode="numeric"
-                onInput={(e) => setPort((e.target as HTMLInputElement).value)}
-              />
-            </span>
-          </div>
-          <p class="muted">{t.device.bridgeAbout}</p>
-        </details>
+        {snap.bridge.state === "off" ? null : (
+          <details class="dev-more" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)}>
+            <summary>{t.device.more}</summary>
+            <div class="form-grid">
+              <label for="dev-host">{t.device.bridge}</label>
+              <span class="inline-row">
+                <input
+                  id="dev-host"
+                  class="inp mono"
+                  style={{ width: "260px" }}
+                  aria-label={t.device.bridgeHost}
+                  value={host}
+                  spellcheck={false}
+                  onInput={(e) => setHost((e.target as HTMLInputElement).value)}
+                />
+                <span>:</span>
+                <input
+                  class="inp mono"
+                  style={{ width: "76px" }}
+                  aria-label={t.device.bridgePort}
+                  value={port}
+                  inputMode="numeric"
+                  onInput={(e) => setPort((e.target as HTMLInputElement).value)}
+                />
+              </span>
+            </div>
+            <p class="muted">{t.device.bridgeAbout}</p>
+          </details>
+        )}
       </div>
       <div class="dev-channels">
         {chans.map((c) => (

@@ -279,6 +279,22 @@ test("a container started without the project folder: the command fetches the pr
   expect(help().getByText(/скачает проект с GitHub/)).toBeTruthy();
 });
 
+test("the Mac app has no bridge: no «Дополнительно», no bridge address, only «plug it into USB»", () => {
+  const hint = "CAN-Hacker не найден. Подключите его к USB — он появится здесь сам.";
+  store.devices.value = snapshot([], {
+    bridge: { state: "off", address: "host.docker.internal:7700", message: "" },
+    usb: { state: "ok", in_container: false },
+    hint,
+  });
+  render(<ConnectDialog onClose={vi.fn()} />);
+  expect(screen.queryByText("Дополнительно")).toBeNull();
+  expect(screen.queryByLabelText("Адрес моста")).toBeNull();
+  expect(help().getByText(/Подключите CAN-Hacker к USB/)).toBeTruthy();
+  expect(screen.getByRole("status").textContent).toBe("CAN-Hacker не найден");
+  const text = document.body.textContent ?? "";
+  for (const word of ["Мост", "мост", "Docker", "run-bridge"]) expect(text).not.toContain(word);
+});
+
 test("the bridge works but CAN-Hacker is not on USB: the dialog asks to plug it in", () => {
   store.devices.value = snapshot([MONITOR]);
   render(<ConnectDialog onClose={vi.fn()} />);

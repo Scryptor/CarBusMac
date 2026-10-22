@@ -255,6 +255,22 @@ test("setupHelp: Docker without the bridge — start it with the server's comman
   expect(setupHelp(snap([MONITOR]))).toEqual({ kind: "plug" });
 });
 
+const off = { state: "off" as const, address: "host.docker.internal:7700", message: "" };
+const APP = { bridge: off, usb: { state: "ok" as const, in_container: false } };
+const USB_HACKER: DeviceEntry = { ...HACKER, key: "usb:/dev/cu.usbmodem00000000001A1", source: "usb" };
+const APP_HINT = "CAN-Hacker не найден. Подключите его к USB — он появится здесь сам.";
+
+test("setupHelp in the Mac app (no bridge): without a device — plug it into USB; with one — silent", () => {
+  expect(setupHelp(snap([], APP))).toEqual({ kind: "plug" });
+  expect(setupHelp(snap([MONITOR], APP))).toEqual({ kind: "plug" });
+  expect(setupHelp(snap([USB_HACKER], APP))).toBeNull();
+});
+
+test("deviceStatus in the Mac app: the help below says to plug in USB, the line only names the reason", () => {
+  expect(deviceStatus(snap([], { ...APP, hint: APP_HINT }), "", "", "")).toEqual({ tone: "err", text: "CAN-Hacker не найден" });
+  expect(deviceStatus(snap([USB_HACKER], APP), "", "", "")).toEqual({ tone: "ok", text: "Найден прибор" });
+});
+
 test("deviceStatus: with the bridge help below, the line only names the reason instead of repeating the server's hint", () => {
   const hint = "Мост не запущен (host.docker.internal:7700). Запустите на маке ./run-bridge.sh — прибор появится здесь сам.";
   expect(deviceStatus(snap([], { bridge: noBridge, hint }), "", "", "")).toEqual({ tone: "err", text: "Мост не запущен" });

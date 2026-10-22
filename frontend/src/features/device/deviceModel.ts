@@ -102,7 +102,8 @@ export function deviceStatus(snap: DevicesState, choice: string, picked: string,
   if (choice && !list.some((x) => x.key === choice)) return { tone: "warn", text: d.pickedGone };
   // под строкой — «Что сделать» с командой запуска моста: строка только называет причину
   if (setupHelp(snap)?.kind === "bridge") return { tone: "err", text: snap.bridge.state === "foreign" ? d.bridgeForeign : d.bridgeDown };
-  if (!list.length) return { tone: "err", text: snap.hint || d.notFound };
+  // в программе для мака моста нет: под строкой — «Подключите CAN-Hacker к USB», строка только называет причину
+  if (!list.length) return { tone: "err", text: snap.bridge.state === "off" ? d.notFound : snap.hint || d.notFound };
   if (list.length === 1) return { tone: "ok", text: list[0].key === connected ? d.foundConnected : d.foundOne };
   return picked ? { tone: "ok", text: d.foundMany(list.length) } : { tone: "warn", text: d.foundPick(list.length) };
 }
@@ -116,15 +117,15 @@ export type SetupHelp = { kind: "bridge"; command: string; fromGitHub: boolean }
 
 /** Блок «Что сделать», когда прибора нет: в Docker без моста — запустить мост командой от
  * сервера (fromGitHub — папка проекта неизвестна, команда скачает его); мост отвечает, а
- * прибора нет — вставить его в USB. null — подсказывать нечего: прибор найден, идёт поиск
- * или бэкенд без Docker видит USB сам. */
+ * прибора нет, или моста нет вовсе (программа для мака) — вставить прибор в USB. null —
+ * подсказывать нечего: прибор найден, идёт поиск или бэкенд без Docker видит USB сам. */
 export function setupHelp(snap: DevicesState): SetupHelp | null {
   if (selectableDevices(snap).length) return null;
   const { state, command, project_dir } = snap.bridge;
   if (state === "down" || state === "foreign") {
     return snap.usb.in_container && command ? { kind: "bridge", command, fromGitHub: !project_dir } : null;
   }
-  return state === "ok" ? { kind: "plug" } : null;
+  return state === "ok" || state === "off" ? { kind: "plug" } : null;
 }
 
 /** Ответ `devices_scan`: снимок, если в нём есть список приборов; иначе null. */
