@@ -12,3 +12,7 @@ build/
 *.log
 *.egg-info/
 /data/
+
+# сборка программы для мака (macos/build-app.sh)
+macos/build/
+macos/work/

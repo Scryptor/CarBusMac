@@ -83,9 +83,9 @@ def desktop_cmd(port: int, tmp_path: Path, *extra: str) -> list[str]:
 
 def test_desktop_exits_when_parent_dies(tmp_path):
     port = free_port()
-    # посредник вместо окна: запускает бэкенд и ждёт; его убиваем — бэкенд должен уйти сам
+    # посредник вместо окна: запускает бэкенд со своим PID и ждёт; его убиваем — бэкенд уходит сам
     middle = subprocess.Popen(
-        [sys.executable, "-c", "import subprocess, sys, time; p = subprocess.Popen(sys.argv[1:]); "
+        [sys.executable, "-c", "import os, subprocess, sys, time; p = subprocess.Popen(sys.argv[1:] + [str(os.getpid())]); "
          "print(p.pid, flush=True); time.sleep(600)", *desktop_cmd(port, tmp_path, "--exit-with-parent")],
         cwd=BACKEND, env=ENV, stdout=subprocess.PIPE, text=True)
     child = int(middle.stdout.readline())
@@ -100,6 +100,18 @@ def test_desktop_exits_when_parent_dies(tmp_path):
     finally:
         if alive(child):
             os.kill(child, signal.SIGKILL)
+
+
+def test_desktop_exits_at_once_when_parent_already_gone(tmp_path):
+    # окно убили, пока Python ещё грузился: родитель уже не тот PID, что передало окно
+    p = subprocess.Popen(desktop_cmd(free_port(), tmp_path, "--exit-with-parent", "999999"),
+                         cwd=BACKEND, env=ENV, stderr=subprocess.PIPE, text=True)
+    try:
+        code = p.wait(10)
+    except subprocess.TimeoutExpired:
+        p.kill()
+        pytest.fail("бэкенд не ушёл, хотя родителя уже нет")
+    assert code in (0, -signal.SIGTERM), p.stderr.read()
 
 
 async def test_desktop_serves_without_bridge(tmp_path):

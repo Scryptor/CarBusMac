@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Шаблон для macos/build-app.sh: __VERSION__ и __BUILD__ подставляются при сборке. -->
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key><string>CarBUS</string>
+  <key>CFBundleDisplayName</key><string>CarBUS</string>
+  <key>CFBundleIdentifier</key><string>com.scryptor.carbus</string>
+  <key>CFBundleExecutable</key><string>CarBUS</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
+  <key>CFBundleShortVersionString</key><string>__VERSION__</string>
+  <key>CFBundleVersion</key><string>__BUILD__</string>
+  <key>CFBundleDevelopmentRegion</key><string>ru</string>
+  <key>LSMinimumSystemVersion</key><string>12.0</string>
+  <key>LSApplicationCategoryType</key><string>public.app-category.developer-tools</string>
+  <key>NSHighResolutionCapable</key><true/>
+  <key>NSHumanReadableCopyright</key><string>CarBUS for Mac — https://github.com/Scryptor/CarBusMac</string>
+  <!-- интерфейс и WebSocket идут с http://127.0.0.1:<порт> встроенного бэкенда -->
+  <key>NSAppTransportSecurity</key>
+  <dict><key>NSAllowsLocalNetworking</key><true/></dict>
+</dict>
+</plist>
