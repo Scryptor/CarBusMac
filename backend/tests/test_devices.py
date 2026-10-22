@@ -26,6 +26,22 @@ def listing(ports=None, exc=None):
     return fn
 
 
+async def test_mac_app_without_bridge_finds_usb_and_reports_bridge_off():
+    snap = await discover(CFG, scan=lambda: [HACKER, LG], listing=None, container=False)
+    assert snap["bridge"]["state"] == "off"
+    assert [(d["key"], d["selectable"]) for d in snap["devices"]] == [
+        ("usb:/dev/cu.usbmodem00000000001A1", True), ("usb:/dev/cu.usbmodem506NTBKGE1012", False)]
+    assert snap["hint"] == ""
+
+
+async def test_mac_app_without_bridge_and_device_asks_only_for_usb():
+    snap = await discover(CFG, scan=lambda: [LG], listing=None, container=False)
+    assert snap["bridge"]["state"] == "off"
+    assert snap["hint"] == "CAN-Hacker не найден. Подключите его к USB — он появится здесь сам."
+    for word in ("Мост", "мост", "Docker", "run-bridge"):
+        assert word not in snap["hint"]
+
+
 async def test_mac_docker_sees_the_device_through_the_bridge_only():
     snap = await discover(CFG, scan=lambda: [], listing=listing([HACKER, LG]), container=True)
     assert [(d["key"], d["selectable"]) for d in snap["devices"]] == [

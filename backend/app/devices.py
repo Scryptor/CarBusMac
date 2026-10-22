@@ -88,16 +88,19 @@ def not_found_hint(snap: Snapshot) -> str:
         return "Мост работает, но CAN-Hacker не подключён по USB."
     if bridge["state"] == "unknown":
         return ""
+    if bridge["state"] == "off":
+        return "CAN-Hacker не найден. Подключите его к USB — он появится здесь сам."
     return "CAN-Hacker не найден на USB."
 
 
 async def discover(cfg: dict[str, Any], *,
                    scan: Callable[[], list[dict[str, Any]]] | None = None,
-                   listing: Callable[[str, int, float], Awaitable[list[dict[str, Any]]]] = bridge_list,
+                   listing: Callable[[str, int, float], Awaitable[list[dict[str, Any]]]] | None = bridge_list,
                    container: bool | None = None) -> Snapshot:
     """Снимок: свои USB-порты и порты моста (один и тот же прибор, видный обоими путями, —
-    один раз, через USB напрямую)."""
-    snap = empty_snapshot(cfg, "ok")
+    один раз, через USB напрямую). listing=None — моста нет (программа для мака, app.desktop):
+    мост не опрашивается, его состояние «off»."""
+    snap = empty_snapshot(cfg, "ok" if listing else "off")
     if container is not None:
         snap["usb"]["in_container"] = container
     passthrough = snap["usb"]["in_container"]
@@ -108,14 +111,14 @@ async def discover(cfg: dict[str, Any], *,
         snap["usb"]["state"] = "unavailable"
     devices = [entry("usb", p) for p in local if isinstance(p, dict)]
     seen = {(d["path"], d["usb_serial"], d["product"]) for d in devices}
-    try:
-        remote = await listing(cfg["bridge_host"], int(cfg["bridge_port"]), BRIDGE_TIMEOUT_S)
-    except BridgeDown as e:
-        remote = []
-        snap["bridge"].update(state="down", message=str(e))
-    except (BridgeForeign, BridgeRefused) as e:
-        remote = []
-        snap["bridge"].update(state="foreign", message=str(e))
+    remote: list[dict[str, Any]] = []
+    if listing is not None:
+        try:
+            remote = await listing(cfg["bridge_host"], int(cfg["bridge_port"]), BRIDGE_TIMEOUT_S)
+        except BridgeDown as e:
+            snap["bridge"].update(state="down", message=str(e))
+        except (BridgeForeign, BridgeRefused) as e:
+            snap["bridge"].update(state="foreign", message=str(e))
     for p in remote:
         if isinstance(p, dict) and p.get("path"):
             d = entry("bridge", p)
