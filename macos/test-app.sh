@@ -6,12 +6,15 @@
 #   universal  каждый Mach-O в пакете x86_64 + arm64, подпись пакета цела
 #   read-only  (если дан .dmg) программа запускается прямо с примонтированного тома
 # У каждого случая свои данные и журналы (CARBUS_HOME) — во временной папке с пробелом и кириллицей.
+# CARBUS_ARCH=x86_64 — все случаи на Intel-части программы под Rosetta.
 #
 #   macos/test-app.sh macos/build/CarBUS.app [macos/build/CarBUS-<версия>.dmg]
 set -uo pipefail
 
 APP="$(cd "$(dirname "$1")" 2>/dev/null && pwd)/$(basename "$1")"
 DMG="${2:-}"
+RUN=()
+[ -n "${CARBUS_ARCH:-}" ] && RUN=(arch "-$CARBUS_ARCH")
 FAILS=0
 pass() { echo "PASS  $*"; }
 fail() { echo "FAIL  $*"; FAILS=$((FAILS + 1)); }
@@ -32,7 +35,7 @@ has_ready() { [ -n "$(ready_port "$1")" ]; }
 # запуск окна со снимком и выходом; печатает порт бэкенда
 run_snapshot() { # run_snapshot <программа.app> <CARBUS_HOME>
   CARBUS_HOME="$2" CARBUS_SNAPSHOT="$2/shot.png" CARBUS_QUIT_AFTER_SNAPSHOT=1 \
-    perl -e 'alarm 90; exec @ARGV' "$1/Contents/MacOS/CarBUS" >/dev/null 2>&1
+    perl -e 'alarm 90; exec @ARGV' ${RUN[@]+"${RUN[@]}"} "$1/Contents/MacOS/CarBUS" >/dev/null 2>&1
   ready_port "$2"
 }
 shot_ok() { [ -f "$1/shot.png" ] && [ "$(stat -f %z "$1/shot.png")" -gt 50000 ]; }
@@ -54,7 +57,7 @@ fi
 
 # --- orphan
 H="$(case_home)"
-CARBUS_HOME="$H" "$APP/Contents/MacOS/CarBUS" >/dev/null 2>&1 &
+CARBUS_HOME="$H" ${RUN[@]+"${RUN[@]}"} "$APP/Contents/MacOS/CarBUS" >/dev/null 2>&1 &
 WIN=$!
 if wait_for 60 has_ready "$H"; then
   # «готов» значит, что сервер уже отвечает, а не что в кэше остался ответ прошлого запуска

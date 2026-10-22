@@ -1,0 +1,60 @@
+# CarBUS.app для мака: на тег v* — собрать CarBUS-<версия>.dmg (один на Apple Silicon и Intel),
+# проверить (macos/test-app.sh, Intel-часть под Rosetta) и выложить в Releases.
+# Вручную (workflow_dispatch) — сборка и проверка; образ остаётся артефактом прогона.
+name: mac-app
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  dmg:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Интерфейс
+        working-directory: frontend
+        run: npm ci && npm run build
+
+      - name: Версия
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then v="${GITHUB_REF_NAME#v}"; else v=0.0.0; fi
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+
+      - name: CarBUS.app и .dmg
+        run: macos/build-app.sh --version "$VERSION" --dmg
+
+      - name: Проверка программы
+        run: macos/test-app.sh macos/build/CarBUS.app "macos/build/CarBUS-$VERSION.dmg"
+
+      - name: Intel (x86_64) под Rosetta
+        run: |
+          arch -x86_64 /usr/bin/true 2>/dev/null || sudo softwareupdate --install-rosetta --agree-to-license
+          R=macos/build/CarBUS.app/Contents/Resources
+          PYTHONPATH="$R/app/backend" PYTHONDONTWRITEBYTECODE=1 arch -x86_64 "$R/python/bin/python3" -c \
+            "import pydantic_core, uvloop, httptools, websockets, yaml, serial, carbus_async, app.desktop; print('x86_64: всё грузится')"
+          CARBUS_ARCH=x86_64 macos/test-app.sh macos/build/CarBUS.app
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: CarBUS-${{ env.VERSION }}
+          path: macos/build/CarBUS-*.dmg
+
+      - name: Выпуск в Releases
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "macos/build/CarBUS-$VERSION.dmg" --title "CarBUS $VERSION" --notes \
+            "Скачайте **CarBUS-$VERSION.dmg** ниже — один файл для любых маков (Apple Silicon и Intel), macOS 12 и новее. Как установить и открыть в первый раз, с картинками: https://github.com/$GITHUB_REPOSITORY/blob/main/docs/install-mac.md"

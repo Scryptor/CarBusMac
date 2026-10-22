@@ -4,10 +4,11 @@
 # (python-build-standalone) с бэкендом и собранным интерфейсом. Python и колёса ставятся для arm64
 # и x86_64 и сшиваются lipo — один пакет для любых маков. Подпись — ad-hoc.
 #
-#   macos/build-app.sh [--version 0.1.0]
+#   macos/build-app.sh [--version 0.1.0] [--dmg]
 #
 # Нужны: Xcode (swiftc), собранный интерфейс (cd frontend && npm ci && npm run build), интернет
-# (Python с GitHub, колёса с PyPI). Результат — macos/build/CarBUS.app; проверка — macos/test-app.sh.
+# (Python с GitHub, колёса с PyPI). Результат — macos/build/CarBUS.app (с --dmg — ещё
+# CarBUS-<версия>.dmg); проверка — macos/test-app.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -15,9 +16,11 @@ MAC="$ROOT/macos"
 WORK="$MAC/work"
 OUT="$MAC/build"
 VERSION=0.0.0
+MAKE_DMG=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --version) VERSION="$2"; shift 2 ;;
+    --dmg) MAKE_DMG=1; shift ;;
     *) echo "неизвестный ключ: $1" >&2; exit 2 ;;
   esac
 done
@@ -159,3 +162,16 @@ codesign --force -s - "$APP" 2>/dev/null
 codesign --verify --deep --strict "$APP"
 echo "подписано вложенных Mach-O: $signed"
 echo "пакет: $APP ($(du -sh "$APP" | cut -f1))"
+
+# 9. .dmg: программа и ярлык «Программы» — перетащить одно на другое
+if [ "$MAKE_DMG" = 1 ]; then
+  step ".dmg"
+  stage="$WORK/dmg"
+  rm -rf "$stage"
+  mkdir -p "$stage"
+  ditto "$APP" "$stage/CarBUS.app"
+  ln -s /Applications "$stage/Программы"
+  DMG="$OUT/CarBUS-$VERSION.dmg"
+  hdiutil create -quiet -volname CarBUS -srcfolder "$stage" -format UDZO -ov "$DMG"
+  echo "образ: $DMG ($(du -h "$DMG" | cut -f1))"
+fi
