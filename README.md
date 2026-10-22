@@ -3,21 +3,44 @@
 Порт десктопной **CarBUS Analyzer** (Windows) для программатора **CAN-Hacker v3.2**
 (HW_CH32) на macOS: монитор шины с подсветкой изменений, битовые карты, поток с записью
 трейсов, передача с триггерами, фильтры, отладчик трейсов, фоновое логирование.
-Бэкенд — Python/FastAPI и [`carbus-lib`](https://pypi.org/project/carbus-lib/) в Docker,
-интерфейс — в Chrome. Окна, подписи и хоткеи повторяют русскую версию десктопа (формы
-восстановлены из бинарника, см. `docs/reference/carbus-dfm/`).
+Для работы — обычная программа **CarBUS.app**: своё окно, прибор по USB, без Docker и
+Терминала. Внутри — бэкенд на Python/FastAPI и [`carbus-lib`](https://pypi.org/project/carbus-lib/)
+и веб-интерфейс; для разработки их же запускают в Docker и Chrome. Окна, подписи и хоткеи
+повторяют русскую версию десктопа (формы восстановлены из бинарника, см.
+`docs/reference/carbus-dfm/`).
 
 <p align="center">
   <img src="docs/screenshots/monitor.gif" width="100%" alt="Монитор: подсветка изменившихся байтов, битовая карта (F3) и окно «Данные сообщения» (Ctrl+F3)">
 </p>
 
-**Документация:** [Руководство пользователя](docs/user-guide.md) ·
+**Документация:** [Установка программы для Mac](docs/install-mac.md) ·
+[Руководство пользователя](docs/user-guide.md) ·
 [Устройство и разработка](docs/architecture.md) ·
 [Статус порта по формам десктопа](docs/reference/carbus-dfm/UI_MAP.md)
 
-## Запуск
+## Скачать для Mac
 
-### Быстрый запуск на Mac
+Обычная программа — без Docker, Python и Терминала, один файл для любых маков (Apple Silicon и
+Intel) с macOS 12 и новее:
+
+1. Скачайте `CarBUS-….dmg` со [страницы выпусков](https://github.com/Scryptor/CarBusMac/releases/latest).
+2. Откройте его и перетащите CarBUS в «Программы».
+3. В первый раз: откройте CarBUS → «Готово» → «Системные настройки» → «Конфиденциальность и
+   безопасность» → «Все равно открыть». Программа не подписана в Apple, поэтому так — один раз
+   на каждую версию.
+
+Подробно, с картинками, — [docs/install-mac.md](docs/install-mac.md). Прибор программа находит
+по USB сама, мост не нужен.
+
+Собрать `.dmg` самому — `macos/build-app.sh --dmg` (нужен Xcode), проверить —
+`macos/test-app.sh macos/build/CarBUS.app macos/build/CarBUS-0.0.0.dmg`. На тег `v*` его
+собирает, проверяет и выкладывает в выпуски `.github/workflows/mac-app.yml`.
+
+## Запуск из исходников (Docker)
+
+Для разработки и Linux.
+
+### Docker на Mac
 
 Нужны [Docker Desktop](https://www.docker.com/products/docker-desktop/) (или Colima), Google
 Chrome и CAN-Hacker v3.2 по USB.

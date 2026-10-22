@@ -77,13 +77,15 @@ carbus-lib), приветствия не ждёт: мост видит данн�
 **Снимок приборов** (`app/devices.py`): `discover` собирает свои USB-порты бэкенда
 (`source: "usb"`) и порты моста (`source: "bridge"`, адрес — из «Настроек устройства»);
 прибор, видный обоими путями, остаётся один — через USB напрямую. Снимок несёт состояние
-моста (`ok` / `down` — никто не слушает / `foreign` — отвечает не мост / `off` — демо),
+моста (`ok` / `down` — никто не слушает / `foreign` — отвечает не мост / `off` — моста нет:
+демо и программа для Mac, `discover(listing=None)`),
 команду запуска моста для Терминала мака (`bridge.command`: `cd <папка> && ./run-bridge.sh
 [порт]`, папка `bridge.project_dir` — из `CARBUS_HOST_DIR`, её задаёт docker-compose; без
 неё команда один раз клонирует проект с GitHub в `~/CarBusMac`) и готовую подсказку `hint`,
 если CAN-Hacker не найден. Интерфейс по снимку решает, что показать в «Что сделать»
 (`setupHelp` в `deviceModel.ts`): в Docker без моста — эту команду с кнопкой «Копировать»,
-при работающем мосте без прибора — «вставьте прибор в USB». `pick` выбирает прибор: явно
+при работающем мосте или без моста (`off`) и без прибора — «вставьте прибор в USB»; при `off`
+диалог прячет «Дополнительно» с адресом моста. `pick` выбирает прибор: явно
 выбранный в диалоге (ключ `bridge:/dev/…` или `usb:/dev/…`; если тот же порт теперь
 виден другим путём — его) или, если выбора нет, единственный CAN-Hacker; несколько —
 ошибка «выберите нужный».
@@ -243,6 +245,54 @@ happy-dom), иконки `lucide-preact`. Тяжёлой логики в бра�
 тема и шрифт таблиц — для первого кадра до ответа сервера). Высота дока передачи
 ограничивается при отрисовке размером окна (200 px … 65 % рабочей области), сохранённое
 значение при этом не меняется.
+
+## Программа для Mac (CarBUS.app)
+
+Для людей без Docker и Терминала (`docs/install-mac.md`; решения —
+`docs/superpowers/specs/2026-10-22-mac-app-design.md`).
+
+```
+CarBUS.app/Contents
+├── MacOS/CarBUS            окно на Swift (macos/CarBUS): AppKit + WKWebView, x86_64 + arm64
+├── Resources/python        python-build-standalone 3.12.15 + колёса бэкенда, тоже x86_64 + arm64
+├── Resources/app/backend   backend/app
+├── Resources/app/frontend  frontend/dist
+└── Info.plist              com.scryptor.carbus, macOS 12+, NSAllowsLocalNetworking
+```
+
+- **Окно** запускает `python -m app.desktop --port 47800 --data … --traces … --exit-with-parent
+  <PID окна>`, ждёт `GET /` = 200 и показывает интерфейс. Опрос — без кэша URLSession: его кэш
+  переживает перезапуск, и ответ прошлого запуска выдавал не поднявшийся сервер за готовый.
+  47800 занят — свободный порт от системы (раскладка окна в хранилище WebKit привязана к адресу и
+  тогда начинается заново). Выход (⌘Q, закрытие окна) — SIGTERM бэкенду, через 3 с SIGKILL;
+  бэкенд упал или не ответил за 30 с — страница с хвостом журнала и «Запустить снова». То, что
+  браузер умеет сам, окну даётся явно: меню «Правка» (⌘C/⌘V), `<input type=file>`, скачивания
+  (`WKDownload` → `NSSavePanel`), alert/confirm, внешние ссылки — в браузер по умолчанию.
+- **`app.desktop`** — `create_app(desktop_session_factory, discover=desktop_discover)`: мост
+  выключен (`discover(listing=None)`, состояние `off`), прибор — только свой USB
+  (`CarbusSession.usb`), без прибора — ошибка «Подключите его к USB». `watch_parent`: родитель
+  сменился (окно убито, в том числе пока Python ещё грузился) — SIGTERM себе, через 5 с —
+  `os._exit`; остановка uvicorn ограничена 3 с, открытый WebSocket убитого окна её не держит.
+- **Данные** — `~/Library/Application Support/CarBUS/{data,traces}`, журналы —
+  `~/Library/Logs/CarBUS/{app,backend}.log`; `CARBUS_HOME` (тесты) переносит всё в одну папку.
+  Не «Документы»: подпись ad-hoc меняется с каждой сборкой, и macOS после обновления снова
+  спрашивала бы доступ к защищённой папке.
+- **В свой пакет программа не пишет:** `.pyc` собраны при сборке (`--invalidation-mode
+  unchecked-hash`), бэкенд идёт с `PYTHONDONTWRITEBYTECODE=1`. Запись ломала бы подпись, а с
+  `.dmg` и при App Translocation пакет только для чтения.
+- **Сборка** — `macos/build-app.sh [--version X.Y.Z] [--dmg]`: Python обеих архитектур
+  (закреплённые релиз и sha256); колёса `[project].dependencies` с `constraints.txt` под macOS 12+
+  через `pip --target --platform …` (Rosetta не нужна); чистка (tkinter, тесты, pip); сшивка
+  `lipo` (разные наборы файлов у архитектур — ошибка сборки); окно `swiftc` под обе архитектуры;
+  `compileall`; подпись ad-hoc каждого Mach-O, затем пакета; `.dmg` (UDZO: CarBUS + ярлык
+  «Программы»). Значок — `macos/AppIcon.icns`, генератор — `macos/make-icon.swift`.
+- **Проверка** — `macos/test-app.sh <app> [<dmg>]`: ready, orphan (окно убито — бэкенд ушёл;
+  «готов» = сервер отвечает), port-busy, universal, read-only (запуск с `.dmg`);
+  `CARBUS_ARCH=x86_64` — всё на Intel-части под Rosetta. CI — `.github/workflows/mac-app.yml`: на
+  тег `v*` собирает, проверяет (и под Rosetta) и выкладывает `CarBUS-<версия>.dmg` в Releases.
+- **Без подписи Apple** первый запуск — «Все равно открыть» («Системные настройки» →
+  «Конфиденциальность и безопасность»), один раз на каждую скачанную версию; проверено на
+  macOS 27 с ad-hoc-пакетом, где вложенный Python тоже под карантином.
 
 ## Разработка
 
